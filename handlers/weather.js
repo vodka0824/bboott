@@ -39,6 +39,17 @@ let weatherCache = {
 };
 const CACHE_TIME = 60 * 60 * 1000; // 1小時
 
+// 毒舌回覆庫
+const TOXIC_RESPONSES = [
+    (city) => `他媽的我只能查台灣,你要查${city},怎麼不查查看你的包皮長度`,
+    (city) => `聽好了，我只懂台灣的天氣。${city}在哪我不知道，就像沒人知道你下半身在哪一樣。`,
+    (city) => `你是智障嗎？${city}不歸我管。去問別人，別來煩本小姐。`,
+    (city) => `查${city}？請左轉 Google，本群組不招待文盲。`,
+    (city) => `很抱歉，您的智商餘額不足以查詢${city}。請儲值後再試，或者滾。`,
+    (city) => `${city}？那是什麼鳥不生蛋的地方？我只服務台灣人，懂？`,
+    (city) => `你要查${city}？不如先去照照鏡子，看自己長得像不像要去${city}的人。`
+];
+
 // 取得 36 小時預報資料
 async function getForecast36h(cityName) {
     if (!CWA_API_KEY) return '⚠️ 請先設定 CWA_API_KEY';
@@ -69,7 +80,11 @@ async function getForecast36h(cityName) {
 
         // 3. 搜尋指定縣市
         const locationData = records.find(L => L.locationName === targetCity);
-        if (!locationData) return `❌ 找不到「${cityName}」的天氣資料，請輸入完整縣市名稱（如：台北市）。`;
+        if (!locationData) {
+            // Random Toxic Response
+            const randomResponse = TOXIC_RESPONSES[Math.floor(Math.random() * TOXIC_RESPONSES.length)];
+            return `❌ ${randomResponse(cityName)}`;
+        }
 
         // 4. 解析氣象因子
         // Wx: 天氣現象, PoP: 降雨機率, MinT: 最低溫, CI: 舒適度, MaxT: 最高溫

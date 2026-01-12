@@ -334,10 +334,18 @@ function buildTodoFlex(groupId, todos) {
 
             // 2. Content (Badge + Text)
             flexUtils.createBox('vertical', [
-                // Top Row: Badge + Priority
+                // Top Row: Badge + Priority + Date
                 flexUtils.createBox('horizontal', [
                     catBadge,
-                    flexUtils.createText({ text: '●', color: pColor, size: 'xs', gravity: 'center', flex: 0, margin: 'sm' })
+                    flexUtils.createText({ text: '●', color: pColor, size: 'xs', gravity: 'center', flex: 0, margin: 'sm' }),
+                    flexUtils.createText({
+                        text: item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' }) : '',
+                        color: '#AAAAAA',
+                        size: 'xs',
+                        gravity: 'center',
+                        flex: 0,
+                        margin: 'sm'
+                    })
                 ], { spacing: 'sm', margin: 'none' }),
 
                 // Bottom Row: Text

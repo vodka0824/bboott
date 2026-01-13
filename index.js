@@ -84,6 +84,7 @@ registerRoutes(router, {
 });
 
 async function handleCommonCommands(message, replyToken, sourceType, userId, groupId, messageObject = null) {
+  console.log(`[Webhook] Received: "${message}" from ${userId} in ${groupId || 'DM'}`);
   const isSuper = authUtils.isSuperAdmin(userId);
   const isGroup = (sourceType === 'group' || sourceType === 'room');
   const isAuthorizedGroup = isGroup ? await authUtils.isGroupAuthorized(groupId) : false;

@@ -3,7 +3,7 @@ steps:
     args:
       - 'run'
       - 'deploy'
-      - 'line-bot'
+      - 'linebot'
       - '--source'
       - '.'
       - '--region'

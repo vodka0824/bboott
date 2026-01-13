@@ -44,6 +44,7 @@ class CommandRouter {
             }
 
             if (!match) continue;
+            console.log(`[Router] Match found for "${message}": ${route.pattern}`);
 
             // 2. 條件檢查
             const { isGroupOnly, needAuth, adminOnly, feature, allowDM } = route.options;

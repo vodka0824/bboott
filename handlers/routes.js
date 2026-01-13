@@ -178,7 +178,7 @@ function registerRoutes(router, handlers) {
         if (period === '本月') type = 'monthly';
 
         await horoscopeHandler.handleHoroscope(ctx.replyToken, sign, type, ctx.userId, ctx.groupId);
-    }, { feature: 'horoscope' });
+    }, { feature: 'horoscope', allowDM: true });
 
     router.register('電影', async (ctx) => {
         if (!rateLimit.checkLimit(ctx.userId, 'movie')) {

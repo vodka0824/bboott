@@ -1,12 +1,21 @@
 const puppeteer = require('puppeteer');
 
-const HUB_URL = 'https://www.cosmopolitan.com/tw/horoscopes/today/';
-let BROWSER_INSTANCE = null;
+const FIXED_LINKS = {
+    '牡羊座': 'https://www.cosmopolitan.com/tw/horoscopes/today/a32681177/aries-today/',
+    '金牛座': 'https://www.cosmopolitan.com/tw/horoscopes/today/a32682953/taurus-today/',
+    '雙子座': 'https://www.cosmopolitan.com/tw/horoscopes/today/a32682972/gemini-today/',
+    '巨蟹座': 'https://www.cosmopolitan.com/tw/horoscopes/today/a32682992/cancer-today/',
+    '獅子座': 'https://www.cosmopolitan.com/tw/horoscopes/today/a32683022/leo-today/',
+    '處女座': 'https://www.cosmopolitan.com/tw/horoscopes/today/a32683069/virgo-today/',
+    '天秤座': 'https://www.cosmopolitan.com/tw/horoscopes/today/a32683119/libra-today/',
+    '天蠍座': 'https://www.cosmopolitan.com/tw/horoscopes/today/a32683141/scorpio-today/',
+    '射手座': 'https://www.cosmopolitan.com/tw/horoscopes/today/a32683172/sagittarius-today/',
+    '摩羯座': 'https://www.cosmopolitan.com/tw/horoscopes/today/a32683204/capricorn-today/',
+    '水瓶座': 'https://www.cosmopolitan.com/tw/horoscopes/today/a32683235/aquarius-today/',
+    '雙魚座': 'https://www.cosmopolitan.com/tw/horoscopes/today/a32683250/pisces-today/'
+};
 
-// Cache Hub Links
-let LINK_CACHE = {};
-let CACHE_TIMESTAMP = 0;
-const CACHE_DURATION = 3600 * 1000; // 1 hour
+let BROWSER_INSTANCE = null;
 
 const SIGN_MAP = {
     '牡羊座': '牡羊座', '白羊座': '牡羊座', 'aries': '牡羊座',
@@ -47,12 +56,6 @@ async function closeBrowser() {
 }
 
 async function getDailyLink(signName) {
-    const now = Date.now();
-    // Refresh cache if empty or expired
-    if (Object.keys(LINK_CACHE).length === 0 || (now - CACHE_TIMESTAMP) > CACHE_DURATION) {
-        await fetchDailyLinks();
-    }
-
     let cleanSign = signName.trim();
     for (const [key, val] of Object.entries(SIGN_MAP)) {
         if (cleanSign.includes(key) || cleanSign.toLowerCase() === key) {
@@ -60,70 +63,7 @@ async function getDailyLink(signName) {
             break;
         }
     }
-    return LINK_CACHE[cleanSign];
-}
-
-async function fetchDailyLinks() {
-    console.log('[Puppeteer] Fetching Hub Links...');
-    const browser = await getBrowser();
-    const page = await browser.newPage();
-
-    try {
-        // Block images/fonts to save bandwidth
-        await page.setRequestInterception(true);
-        page.on('request', (req) => {
-            if (['image', 'stylesheet', 'font'].includes(req.resourceType())) {
-                req.abort();
-            } else {
-                req.continue();
-            }
-        });
-
-        await page.goto(HUB_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
-
-        // Cosmo Hub looks pretty static, but let's be safe
-        const links = await page.evaluate(() => {
-            const map = {};
-            // Helper to identify sign from URL or Text
-            const identifySign = (url, text) => {
-                const combined = (url + ' ' + text).toLowerCase();
-                const S = [
-                    'aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo', 'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces',
-                    '牡羊', '金牛', '雙子', '巨蟹', '獅子', '處女', '天秤', '天蠍', '射手', '摩羯', '水瓶', '雙魚'
-                ];
-                const M = [
-                    '牡羊座', '金牛座', '雙子座', '巨蟹座', '獅子座', '處女座', '天秤座', '天蠍座', '射手座', '摩羯座', '水瓶座', '雙魚座'
-                ];
-                for (let i = 0; i < S.length; i++) {
-                    if (combined.includes(S[i])) return M[i % 12];
-                }
-                return null;
-            };
-
-            document.querySelectorAll('a').forEach(a => {
-                let href = a.getAttribute('href');
-                if (!href) return;
-                if (!href.startsWith('http')) href = 'https://www.cosmopolitan.com' + href;
-
-                // Specific pattern for daily article
-                if (href.includes('/today/') && href.match(/\/a\d+\//)) {
-                    const sign = identifySign(href, a.innerText);
-                    if (sign) map[sign] = href;
-                }
-            });
-            return map;
-        });
-
-        if (Object.keys(links).length > 0) {
-            LINK_CACHE = links;
-            CACHE_TIMESTAMP = Date.now();
-            console.log(`[Puppeteer] Cache updated: ${Object.keys(links).length} links`);
-        }
-    } catch (e) {
-        console.error(`[Puppeteer] Hub Error: ${e.message}`);
-    } finally {
-        await page.close();
-    }
+    return FIXED_LINKS[cleanSign];
 }
 
 async function fetchSignData(signName) {

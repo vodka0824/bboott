@@ -25,7 +25,7 @@ function registerRoutes(router, handlers) {
         settingsHandler,
         funHandler,
         tcatHandler,
-        horoscopeHandler,
+
         welcomeHandler,
         slotHandler,
         javdbHandler,   // JavDB 查詢功能 (可選模組)
@@ -160,27 +160,7 @@ function registerRoutes(router, handlers) {
         await lineUtils.replyFlex(ctx.replyToken, '本週油價', flex);
     }, { isGroupOnly: true, needAuth: true, feature: 'oil' });
 
-    // 星座運勢 (Simplified Command: "[Sign] [Period]")
-    // Valid signs and aliases
-    const SIGNS = [
-        '牡羊', '金牛', '雙子', '巨蟹', '獅子', '處女', '天秤', '天蠍', '射手', '摩羯', '水瓶', '雙魚',
-        '白羊', '天平', '人馬', '山羊',
-        '牡羊座', '金牛座', '雙子座', '巨蟹座', '獅子座', '處女座', '天秤座', '天蠍座', '射手座', '摩羯座', '水瓶座', '雙魚座'
-    ];
-    // 直接使用字面量正規表達式，避免 Cloud Run 環境下的 new RegExp 建構錯誤
-    // 匹配：[星座名] [可選:今日/本週/本周/本月]
-    const signRegex = /^(牡羊|金牛|雙子|巨蟹|獅子|處女|天秤|天蠍|射手|摩羯|水瓶|雙魚|白羊|天平|人馬|山羊|牡羊座|金牛座|雙子座|巨蟹座|獅子座|處女座|天秤座|天蠍座|射手座|摩羯座|水瓶座|雙魚座)(\s+(今日|本週|本周|本月))?$/;
 
-    router.register(signRegex, async (ctx, match) => {
-        const sign = match[1];
-        const period = match[3] || '今日'; // Default to daily
-
-        let type = 'daily';
-        if (['本週', '本周'].includes(period)) type = 'weekly';
-        if (period === '本月') type = 'monthly';
-
-        await horoscopeHandler.handleHoroscope(ctx.replyToken, sign, type, ctx.userId, ctx.groupId);
-    }, { feature: 'horoscope', allowDM: true });
 
     router.register('電影', async (ctx) => {
         if (!rateLimit.checkLimit(ctx.userId, 'movie')) {

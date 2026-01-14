@@ -13,35 +13,15 @@ app.post('/webhook', lineBot);
 // 健康檢查端點
 app.get('/', (req, res) => res.send('LINE Bot is running!'));
 
+
 // Cron Endpoints
-const cronHandler = require('./handlers/cron');
-const horoscopeHandler = require('./handlers/horoscope');
+// const cronHandler = require('./handlers/cron'); // Removed
+// const horoscopeHandler = require('./handlers/horoscope'); // Removed
 
-app.get('/api/cron/horoscope', cronHandler.handleHoroscopePrefetch);
+// app.get('/api/cron/horoscope', cronHandler.handleHoroscopePrefetch); // Removed
 
-// Prefetch endpoint for Cloud Scheduler (POST)
-app.post('/api/prefetch/horoscope', async (req, res) => {
-  try {
-    const { type = 'daily', secret } = req.body;
+// prefetch endpoint removed
 
-    // 簡單的密鑰驗證 (可選)
-    if (secret && secret !== process.env.PREFETCH_SECRET) {
-      return res.status(403).json({ error: 'Invalid secret' });
-    }
-
-    console.log(`[Prefetch] Starting horoscope prefetch: ${type}`);
-    await horoscopeHandler.prefetchAll(type);
-
-    res.json({
-      success: true,
-      message: `Prefetched ${type} horoscopes`,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    console.error('[Prefetch] Error:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {

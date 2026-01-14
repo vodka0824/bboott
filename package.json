@@ -18,8 +18,7 @@
     "express": "^4.18.2",
     "googleapis": "^126.0.0",
     "image-size": "^1.1.1",
-    "opencc-js": "^1.0.5",
-    "puppeteer": "^24.34.0"
+    "opencc-js": "^1.0.5"
   },
   "engines": {
     "node": ">=18.0.0"

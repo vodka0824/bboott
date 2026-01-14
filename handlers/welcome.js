@@ -152,11 +152,22 @@ async function buildWelcomeFlex(memberProfile, config) {
     });
 }
 
+const dedup = require('../utils/dedup');
+
 /**
  * 處理成員加入事件
  */
 async function handleMemberJoined(event) {
-    const { replyToken, source } = event;
+    const { replyToken, source, webhookEventId } = event;
+
+    // 1. Deduplication (Critical for avoiding double welcome)
+    // 使用 webhookEventId 作為全域鎖 (Atomic Lock)
+    // 如果鎖獲取失敗 (return false)，表示該事件正在處理或已處理過，直接忽略
+    const isLockAcquired = await dedup.acquireLock(webhookEventId);
+    if (!isLockAcquired) {
+        logger.warn(`[Welcome] Duplicate event ignored: ${webhookEventId}`);
+        return;
+    }
 
     // Safety check for source
     if (!source || !source.groupId) {
@@ -181,20 +192,16 @@ async function handleMemberJoined(event) {
         const config = await getWelcomeConfig(groupId);
         logger.debug(`[Welcome] Config for ${groupId}:`, config);
 
-        // Check if enabled (default true if config exists, or if config is null we assume enabled default?)
-        // Let's assume enabled by default unless explicitly disabled, or opt-in?
-        // User requested feature, assume opt-in or default ON. Let's start default ON for "Premium" feel.
-        // Spec said: "welcomeConfig { enabled: true }"
+        // Check if enabled
         if (config && config.enabled === false) {
             logger.info(`[Welcome] Welcome message disabled for group ${groupId}`);
             return;
         }
 
-        const bubbles = [];
-
-        for (const member of newMembers) {
+        // Optimize: Fetch all profiles in parallel
+        // 之前的 `for ... await` 是序列執行，若成員多或 API 慢會導致逾時重試
+        const bubblePromises = newMembers.map(async (member) => {
             try {
-                // Get User Profile (Need to wait a bit? sometimes immediate get profile fails? usually ok)
                 let profile = { displayName: '新成員' };
                 if (member.userId) {
                     try {
@@ -203,13 +210,16 @@ async function handleMemberJoined(event) {
                         logger.warn(`[Welcome] Failed to fetch profile for user ${member.userId}: ${e.message}`);
                     }
                 }
-
-                const bubble = await buildWelcomeFlex(profile, config);
-                bubbles.push(bubble);
+                return buildWelcomeFlex(profile, config);
             } catch (e) {
                 logger.error('[Welcome] Error building welcome bubble:', e);
+                return null;
             }
-        }
+        });
+
+        const results = await Promise.all(bubblePromises);
+        const bubbles = results.filter(b => b !== null);
+
 
         if (bubbles.length > 0) {
             logger.info(`[Welcome] Sending ${bubbles.length} welcome bubbles`);

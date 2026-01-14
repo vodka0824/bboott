@@ -181,7 +181,10 @@ function buildHoroscopeFlex(data, type = 'daily') {
                 }
 
                 starBox.push(flexUtils.createBox('baseline', [
-                    flexUtils.createText({ text: m.label, size: 'xs', color: '#555555', flex: 0, width: '40px' }),
+                    // Label wrapped in a Box to allow fixed width
+                    flexUtils.createBox('vertical', [
+                        flexUtils.createText({ text: m.label, size: 'xs', color: '#555555' })
+                    ], { width: '40px', flex: 0 }),
                     ...stars
                 ], { margin: 'xs' }));
             }

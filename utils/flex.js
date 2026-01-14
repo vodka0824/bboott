@@ -66,8 +66,7 @@ function createHeader(title, subtitle = '', color = '#000000', textColor = '#FFF
  */
 function createText({ text, size = 'sm', color = '#666666', weight = 'regular', align, margin, flex, gravity, wrap, action, decoration, position, offsetTop, offsetBottom,
     offsetStart,
-    offsetEnd,
-    width
+    offsetEnd
 }) {
     return {
         type: 'text',
@@ -86,8 +85,7 @@ function createText({ text, size = 'sm', color = '#666666', weight = 'regular', 
         offsetTop,
         offsetBottom,
         offsetStart,
-        offsetEnd,
-        width
+        offsetEnd
     };
 }
 

@@ -171,10 +171,19 @@ function buildHoroscopeFlex(data, type = 'daily') {
 
         map.forEach(m => {
             if (data.stars[m.key] !== undefined) {
-                starBox.push(flexUtils.createBox('horizontal', [
+                // Flatten structure: Baseline Box containing [Label, ...Stars]
+                // This avoids invalid nesting and ensures proper alignment
+                const stars = createStars(data.stars[m.key]);
+
+                // Add margin to the first star for spacing
+                if (stars.length > 0) {
+                    stars[0].margin = 'md';
+                }
+
+                starBox.push(flexUtils.createBox('baseline', [
                     flexUtils.createText({ text: m.label, size: 'xs', color: '#555555', flex: 0, width: '40px' }),
-                    flexUtils.createBox('horizontal', createStars(data.stars[m.key]), { flex: 1 })
-                ], { margin: 'xs', alignItems: 'center' }));
+                    ...stars
+                ], { margin: 'xs' }));
             }
         });
 

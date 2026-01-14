@@ -64,7 +64,11 @@ function createHeader(title, subtitle = '', color = '#000000', textColor = '#FFF
  * Create a standard Text Component
  * @param {Object} options
  */
-function createText({ text, size = 'sm', color = '#666666', weight = 'regular', align, margin, flex, gravity, wrap, action, decoration, position, offsetTop, offsetBottom, offsetStart, offsetEnd }) {
+function createText({ text, size = 'sm', color = '#666666', weight = 'regular', align, margin, flex, gravity, wrap, action, decoration, position, offsetTop, offsetBottom,
+    offsetStart,
+    offsetEnd,
+    width
+}) {
     return {
         type: 'text',
         text,
@@ -82,7 +86,8 @@ function createText({ text, size = 'sm', color = '#666666', weight = 'regular', 
         offsetTop,
         offsetBottom,
         offsetStart,
-        offsetEnd
+        offsetEnd,
+        width
     };
 }
 

@@ -87,12 +87,16 @@ async function fetchSignData(signName) {
             }
         });
 
-        await page.goto(url, { waitUntil: 'networkidle2', timeout: 45000 });
+        // Optimize: Use domcontentloaded instead of networkidle2 to skip waiting for ads/trackers
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
-        // Wait for the dynamic content
+        // Wait for the dynamic content specifically
         try {
-            await page.waitForSelector('ul li', { timeout: 5000 });
-        } catch (e) { /* ignore timeout, maybe content already there */ }
+            // Wait for list items (lucky numbers etc) or headers (stars)
+            await page.waitForSelector('ul li, h2', { timeout: 8000 });
+        } catch (e) {
+            console.warn('[Puppeteer] Selector timeout, attempting extraction anyway...');
+        }
 
         const result = await page.evaluate(() => {
             const data = {

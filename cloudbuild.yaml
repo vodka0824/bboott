@@ -12,7 +12,7 @@ steps:
       - '--min-instances'
       - '0'
       - '--memory'
-      - '512Mi'
+      - '1GiB'
 
 options:
   logging: CLOUD_LOGGING_ONLY

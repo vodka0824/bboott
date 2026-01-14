@@ -180,13 +180,13 @@ function buildHoroscopeFlex(data, type = 'daily') {
                     stars[0].margin = 'md';
                 }
 
-                starBox.push(flexUtils.createBox('baseline', [
+                starBox.push(flexUtils.createBox('horizontal', [
                     // Label wrapped in a Box to allow fixed width
                     flexUtils.createBox('vertical', [
                         flexUtils.createText({ text: m.label, size: 'xs', color: '#555555' })
                     ], { width: '40px', flex: 0 }),
                     ...stars
-                ], { margin: 'xs' }));
+                ], { margin: 'xs', alignItems: 'center' }));
             }
         });
 

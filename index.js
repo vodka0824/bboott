@@ -6,7 +6,7 @@ const { Firestore } = require('@google-cloud/firestore');
 const axios = require('axios');
 
 // === Axios 全域設定（防止請求阻塞，降低 Cloud Run CPU 消耗） ===
-axios.defaults.timeout = 5000; // 5 秒 timeout
+axios.defaults.timeout = 20000; // 20 秒 timeout (配合 Cloud Run 環境與 LINE Reply Token 30s 限制)
 axios.defaults.headers.common['User-Agent'] = 'LINE-Bot/1.0';
 
 // === 1. 設定區 (從設定檔讀取) ===

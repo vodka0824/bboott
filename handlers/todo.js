@@ -433,12 +433,12 @@ function buildTaskCreationFlex(groupId, item) {
         body: flexUtils.createBox('vertical', [
             header,
             stateRow,
-            flexUtils.createSeparator({ margin: 'md' }),
+            flexUtils.createSeparator('md'),
             flexUtils.createText({ text: '設定相關分類：', size: 'xs', color: '#AAAAAA', margin: 'md' }),
             flexUtils.createBox('horizontal', catButtons, { spacing: 'sm', margin: 'sm' }),
             flexUtils.createText({ text: '設定重要性：', size: 'xs', color: '#AAAAAA', margin: 'md' }),
             flexUtils.createBox('horizontal', priButtons, { spacing: 'sm', margin: 'sm' }),
-            flexUtils.createSeparator({ margin: 'xl' }),
+            flexUtils.createSeparator('xl'),
             viewBoardBtn
         ])
     });

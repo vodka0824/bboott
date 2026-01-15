@@ -3,7 +3,7 @@
  */
 
 // === 環境變數 ===
-const CHANNEL_ACCESS_TOKEN = process.env.LINE_TOKEN;
+const CHANNEL_ACCESS_TOKEN = process.env.LINE_TOKEN || process.env.CHANNEL_ACCESS_TOKEN;
 const GEMINI_API_KEY = process.env.GEMINI_KEY;
 const ADMIN_USER_ID = process.env.ADMIN_USER_ID;
 const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
@@ -54,9 +54,9 @@ const CACHE_DURATION = {
  */
 function validateEnvironment() {
     const required = {
-        'LINE_TOKEN': CHANNEL_ACCESS_TOKEN,
-        'ADMIN_USER_ID': ADMIN_USER_ID,
-        'GOOGLE_CLOUD_PROJECT': GOOGLE_CLOUD_PROJECT
+        'CHANNEL_ACCESS_TOKEN': CHANNEL_ACCESS_TOKEN,
+        'ADMIN_USER_ID': ADMIN_USER_ID
+        // 'GOOGLE_CLOUD_PROJECT': GOOGLE_CLOUD_PROJECT // Optional
     };
 
     const missing = [];

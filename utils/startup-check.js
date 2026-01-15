@@ -9,7 +9,6 @@
 const REQUIRED_ENV_VARS = {
     'LINE_TOKEN': 'LINE Bot Channel Access Token',
     'CHANNEL_ACCESS_TOKEN': 'LINE Bot Channel Access Token (alternative)',
-    'GOOGLE_CLOUD_PROJECT': 'Google Cloud Project ID',
     'ADMIN_USER_ID': 'LINE Bot Admin User ID'
 };
 

@@ -185,7 +185,7 @@ function createItemRow(groupId, item, currentPhase) {
     const isPriorityHigh = item.priority === 'high';
 
     // Category Badge
-    const catKey = item.category || 'other';
+    const catKey = item.category || 'new'; // Default to new if missing
     const catInfo = getCatInfo(catKey);
 
     const catBadge = flexUtils.createBox('vertical', [
@@ -216,8 +216,15 @@ function createItemRow(groupId, item, currentPhase) {
         flex: 1
     });
 
+    // Priority Label Helper
+    const getPriorityLabel = (p) => {
+        if (p === 'high') return '急件';
+        if (p === 'low') return '不急';
+        return '一般';
+    };
+
     // Status Metadata Row
-    const pColor = item.priority === 'high' ? COLORS.DANGER : (item.priority === 'medium' ? COLORS.WARNING : COLORS.SUCCESS);
+    const pColor = item.priority === 'high' ? COLORS.DANGER : (item.priority === 'low' ? COLORS.SUCCESS : COLORS.WARNING);
 
     const metaParts = [
         catBadge,
@@ -344,7 +351,7 @@ function buildTodoFlex(groupId, todos) {
         const bodyContents = [];
         rows.forEach((r, i) => {
             bodyContents.push(r);
-            if (i < rows.length - 1) bodyContents.push(flexUtils.createSeparator());
+            if (i < rows.length - 1) bodyContents.push(flexUtils.createSeparator('md'));
         });
 
         return flexUtils.createBubble({
@@ -368,8 +375,13 @@ function buildTodoFlex(groupId, todos) {
 // --- Creation Confirmation Flex ---
 function buildTaskCreationFlex(groupId, item) {
     const { COLORS } = flexUtils;
-    const isPriorityHigh = item.priority === 'high';
-    const catInfo = getCatInfo(item.category || 'other');
+    const catInfo = getCatInfo(item.category || 'new');
+
+    const getPriorityLabel = (p) => {
+        if (p === 'high') return '急件';
+        if (p === 'low') return '不急';
+        return '一般';
+    };
 
     // Header: Item Text
     const header = flexUtils.createBox('vertical', [
@@ -381,7 +393,7 @@ function buildTaskCreationFlex(groupId, item) {
     const stateRow = flexUtils.createBox('horizontal', [
         flexUtils.createText({ text: `${catInfo.icon} ${catInfo.label}`, size: 'sm', color: '#666666', flex: 0 }),
         flexUtils.createText({ text: ` | `, size: 'sm', color: '#DDDDDD', flex: 0 }),
-        flexUtils.createText({ text: `${PRIORITY_EMOJI[item.priority] || '🟢'} ${item.priority === 'high' ? '急件' : (item.priority === 'medium' ? '普通' : '一般')}`, size: 'sm', color: '#666666', flex: 0 })
+        flexUtils.createText({ text: `${PRIORITY_EMOJI[item.priority] || '🟡'} ${getPriorityLabel(item.priority)}`, size: 'sm', color: '#666666', flex: 0 })
     ], { spacing: 'sm', margin: 'md', alignItems: 'center' });
 
     // Buttons: Category
@@ -402,8 +414,8 @@ function buildTaskCreationFlex(groupId, item) {
     // Buttons: Priority
     const priButtons = [
         { key: 'high', label: '急件', color: COLORS.DANGER },
-        { key: 'medium', label: '普通', color: COLORS.WARNING },
-        { key: 'low', label: '一般', color: COLORS.SUCCESS }
+        { key: 'medium', label: '一般', color: COLORS.WARNING },
+        { key: 'low', label: '不急', color: COLORS.SUCCESS }
     ].map(p => {
         const isSelected = item.priority === p.key;
         return flexUtils.createButton({
@@ -491,7 +503,11 @@ async function handleTodoPostback(ctx, data) {
                 },
                 {
                     type: 'action',
-                    action: { type: 'postback', label: '🟢 設為普通', data: `action=update_meta&gid=${groupId}&id=${id}&p=low`, displayText: '更新為：普通' }
+                    action: { type: 'postback', label: '🟡 設為一般', data: `action=update_meta&gid=${groupId}&id=${id}&p=medium`, displayText: '更新為：一般' }
+                },
+                {
+                    type: 'action',
+                    action: { type: 'postback', label: '🟢 設為不急', data: `action=update_meta&gid=${groupId}&id=${id}&p=low`, displayText: '更新為：不急' }
                 },
                 {
                     type: 'action',
@@ -555,7 +571,7 @@ async function handleTodoCommand(replyToken, groupId, userId, text) {
         const msg = text.trim();
 
         // 1. Dashboard
-        if (msg === '待辦' || msg === '待辦事項') {
+        if (msg === '待辦' || msg === '待辦事項' || msg === '待機') {
             const list = await getTodoList(targetId);
             const flex = buildTodoFlex(targetId, list);
             const flexMsg = flexUtils.createFlexMessage('待辦看板', flex);
@@ -564,23 +580,65 @@ async function handleTodoCommand(replyToken, groupId, userId, text) {
         }
 
         // 2. Add New
-        if (msg.startsWith('待辦 ')) {
-            let content = msg.replace(/^待辦\s+/, '').trim();
-            let priority = 'low';
-            let category = 'other';
+        // Support '待辦' or '待機'
+        if (msg.startsWith('待辦 ') || msg.startsWith('待機 ')) {
+            const rawContent = msg.replace(/^(待辦|待機)\s+/, '').trim();
 
-            // Simple parser
-            if (content.match(/(!|\[)?(高|急|high|🔴)(!|\])?/i)) priority = 'high';
-            if (content.match(/(新機|新組|組裝|new|🆕)/i)) category = 'new';
-            if (content.match(/(維修|檢測|重灌|repair|fix|🔧)/i)) category = 'repair';
+            // New Parsing Logic
+            // Split by spaces but preserve quoted text if later needed (not needed now per spec)
+            // Just split by spaces
+            const tokens = rawContent.split(/\s+/);
 
-            // Cleanup keywords from content is complex, let's just keep the full text for now or simple replace
-            // A bit too complex to implement perfect regex cleaner in one go without potential data loss, 
-            // so we trust the user input mostly.
+            let priority = 'medium'; // Default: 一般
+            let category = 'new';    // Default: 新機
+            let contentParts = [];
 
-            if (content) {
-                const newItem = await addTodo(targetId, content, userId, priority, category);
-                // Use Creation Confirmation Flex instead of full board
+            // Keywords
+            const KEYWORDS = {
+                priority: {
+                    high: ['急件', '急', '高', 'high', '🔴'],
+                    medium: ['一般', '普', '中', 'medium', '🟡'],
+                    low: ['不急', '低', 'low', '🟢']
+                },
+                category: {
+                    new: ['新機', '新組', '組裝', 'new', '🆕'],
+                    repair: ['維修', '檢測', '重灌', 'repair', 'fix', '🔧'],
+                    other: ['其他', 'other', '📋']
+                }
+            };
+
+            for (const token of tokens) {
+                let matched = false;
+
+                // Check Priority
+                for (const [key, words] of Object.entries(KEYWORDS.priority)) {
+                    if (words.some(w => token.toLowerCase().includes(w) || token === `[${w}]`)) {
+                        priority = key;
+                        matched = true;
+                        break;
+                    }
+                }
+                if (matched) continue;
+
+                // Check Category
+                for (const [key, words] of Object.entries(KEYWORDS.category)) {
+                    if (words.some(w => token.toLowerCase().includes(w) || token === `[${w}]`)) {
+                        category = key;
+                        matched = true;
+                        break;
+                    }
+                }
+                if (matched) continue;
+
+                // If not matched, it's content
+                contentParts.push(token);
+            }
+
+            const finalContent = contentParts.join(' ');
+
+            if (finalContent) {
+                const newItem = await addTodo(targetId, finalContent, userId, priority, category);
+                // Use Creation Confirmation Flex
                 const flex = buildTaskCreationFlex(targetId, newItem);
                 const flexMsg = flexUtils.createFlexMessage('新增待辦確認', flex);
 

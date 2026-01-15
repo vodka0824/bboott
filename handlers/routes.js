@@ -135,7 +135,8 @@ function registerRoutes(router, handlers) {
             data.includes('action=update_priority') ||
             data.includes('action=set_status') ||
             data.includes('action=show_detail') ||
-            data.includes('action=update_meta'),
+            data.includes('action=update_meta') ||
+            data.includes('action=view_board'),
         async (ctx) => {
             await todoHandler.handleTodoPostback(ctx, ctx.postbackData);
         }

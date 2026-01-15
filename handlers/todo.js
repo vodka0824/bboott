@@ -365,6 +365,85 @@ function buildTodoFlex(groupId, todos) {
     return flexUtils.createCarousel(bubbles);
 }
 
+// --- Creation Confirmation Flex ---
+function buildTaskCreationFlex(groupId, item) {
+    const { COLORS } = flexUtils;
+    const isPriorityHigh = item.priority === 'high';
+    const catInfo = getCatInfo(item.category || 'other');
+
+    // Header: Item Text
+    const header = flexUtils.createBox('vertical', [
+        flexUtils.createText({ text: '✅ 已新增待辦事項', weight: 'bold', color: COLORS.SUCCESS, size: 'sm' }),
+        flexUtils.createText({ text: item.text, weight: 'bold', size: 'xl', wrap: true, margin: 'md' })
+    ]);
+
+    // Current State
+    const stateRow = flexUtils.createBox('horizontal', [
+        flexUtils.createText({ text: `${catInfo.icon} ${catInfo.label}`, size: 'sm', color: '#666666', flex: 0 }),
+        flexUtils.createText({ text: ` | `, size: 'sm', color: '#DDDDDD', flex: 0 }),
+        flexUtils.createText({ text: `${PRIORITY_EMOJI[item.priority] || '🟢'} ${item.priority === 'high' ? '急件' : (item.priority === 'medium' ? '普通' : '一般')}`, size: 'sm', color: '#666666', flex: 0 })
+    ], { spacing: 'sm', margin: 'md', alignItems: 'center' });
+
+    // Buttons: Category
+    const catButtons = Object.entries(CATEGORY_INFO).map(([key, info]) => {
+        const isSelected = item.category === key;
+        return flexUtils.createButton({
+            action: {
+                type: 'postback',
+                label: info.label,
+                data: `action=update_meta&gid=${groupId}&id=${item.createdAt}&c=${key}&mode=creation`
+            },
+            style: isSelected ? 'primary' : 'secondary',
+            color: isSelected ? info.color : '#AAAAAA',
+            height: 'sm'
+        });
+    });
+
+    // Buttons: Priority
+    const priButtons = [
+        { key: 'high', label: '急件', color: COLORS.DANGER },
+        { key: 'medium', label: '普通', color: COLORS.WARNING },
+        { key: 'low', label: '一般', color: COLORS.SUCCESS }
+    ].map(p => {
+        const isSelected = item.priority === p.key;
+        return flexUtils.createButton({
+            action: {
+                type: 'postback',
+                label: p.label,
+                data: `action=update_meta&gid=${groupId}&id=${item.createdAt}&p=${p.key}&mode=creation`
+            },
+            style: isSelected ? 'primary' : 'secondary',
+            color: isSelected ? p.color : '#AAAAAA',
+            height: 'sm'
+        });
+    });
+
+    // View Board Button (Exit Creation Mode)
+    const viewBoardBtn = flexUtils.createButton({
+        action: {
+            type: 'postback',
+            label: '查看完整看板',
+            data: `action=view_board&gid=${groupId}`
+        },
+        style: 'link',
+        height: 'sm'
+    });
+
+    return flexUtils.createBubble({
+        body: flexUtils.createBox('vertical', [
+            header,
+            stateRow,
+            flexUtils.createSeparator({ margin: 'md' }),
+            flexUtils.createText({ text: '設定相關分類：', size: 'xs', color: '#AAAAAA', margin: 'md' }),
+            flexUtils.createBox('horizontal', catButtons, { spacing: 'sm', margin: 'sm' }),
+            flexUtils.createText({ text: '設定重要性：', size: 'xs', color: '#AAAAAA', margin: 'md' }),
+            flexUtils.createBox('horizontal', priButtons, { spacing: 'sm', margin: 'sm' }),
+            flexUtils.createSeparator({ margin: 'xl' }),
+            viewBoardBtn
+        ])
+    });
+}
+
 
 // --- POSTBACK HANDLER ---
 
@@ -428,15 +507,32 @@ async function handleTodoPostback(ctx, data) {
     }
     else if (action === 'update_meta') {
         const p = params.get('p');
-        const res = await updateMeta(groupId, id, { priority: p });
+        const c = params.get('c'); // Capture category
+        const mode = params.get('mode'); // Capture mode
+
+        const res = await updateMeta(groupId, id, { priority: p, category: c });
         if (res.success) {
-            const list = await getTodoList(groupId);
-            const flex = buildTodoFlex(groupId, list);
-            const flexMsg = flexUtils.createFlexMessage('待辦看板更新', flex);
-            await lineUtils.replyToLine(ctx.replyToken, [flexMsg]);
+            if (mode === 'creation') {
+                // Return the creation card again (updated)
+                const flex = buildTaskCreationFlex(groupId, res.item);
+                const flexMsg = flexUtils.createFlexMessage('待辦事項更新', flex);
+                await lineUtils.replyToLine(ctx.replyToken, [flexMsg]);
+            } else {
+                // Return full board
+                const list = await getTodoList(groupId);
+                const flex = buildTodoFlex(groupId, list);
+                const flexMsg = flexUtils.createFlexMessage('待辦看板更新', flex);
+                await lineUtils.replyToLine(ctx.replyToken, [flexMsg]);
+            }
         } else {
             await lineUtils.replyText(ctx.replyToken, `❌ ${res.message}`);
         }
+    }
+    else if (action === 'view_board') {
+        const list = await getTodoList(groupId);
+        const flex = buildTodoFlex(groupId, list);
+        const flexMsg = flexUtils.createFlexMessage('待辦看板', flex);
+        await lineUtils.replyToLine(ctx.replyToken, [flexMsg]);
     }
     // Legacy support
     else if (action === 'complete_todo' || action === 'delete_todo') {
@@ -484,14 +580,11 @@ async function handleTodoCommand(replyToken, groupId, userId, text) {
 
             if (content) {
                 const newItem = await addTodo(targetId, content, userId, priority, category);
-                const list = await getTodoList(targetId);
-                const flex = buildTodoFlex(targetId, list);
-                const flexMsg = flexUtils.createFlexMessage('待辦看板更新', flex);
+                // Use Creation Confirmation Flex instead of full board
+                const flex = buildTaskCreationFlex(targetId, newItem);
+                const flexMsg = flexUtils.createFlexMessage('新增待辦確認', flex);
 
-                await lineUtils.replyToLine(replyToken, [
-                    { type: 'text', text: `✅ 已新增: ${newItem.text}` },
-                    flexMsg
-                ]);
+                await lineUtils.replyToLine(replyToken, [flexMsg]);
             }
             return;
         }

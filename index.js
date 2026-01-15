@@ -44,7 +44,6 @@ const currencyHandler = require('./handlers/currency');
 const leaderboardHandler = require('./handlers/leaderboard');
 const settingsHandler = require('./handlers/settings');
 const funHandler = require('./handlers/fun');
-const horoscopeHandler = require('./handlers/horoscope');
 const welcomeHandler = require('./handlers/welcome');
 const slotHandler = require('./handlers/slot');
 const javdbHandler = require('./handlers/javdb');
@@ -76,7 +75,6 @@ registerRoutes(router, {
   settingsHandler,
   funHandler,
   tcatHandler,
-  horoscopeHandler,
   welcomeHandler,
   slotHandler,
   javdbHandler,

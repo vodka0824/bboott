@@ -127,12 +127,15 @@ function registerRoutes(router, handlers) {
         }
     );
 
-    // 待辦事項 Postback（包含分類與重要性更新）
+    // 待辦事項 Postback（包含新的 Kanban 動作）
     router.registerPostback(
         (data) => data.includes('action=complete_todo') ||
             data.includes('action=delete_todo') ||
             data.includes('action=update_category') ||
-            data.includes('action=update_priority'),
+            data.includes('action=update_priority') ||
+            data.includes('action=set_status') ||
+            data.includes('action=show_detail') ||
+            data.includes('action=update_meta'),
         async (ctx) => {
             await todoHandler.handleTodoPostback(ctx, ctx.postbackData);
         }

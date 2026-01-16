@@ -465,7 +465,8 @@ async function handleTodoPostback(ctx, data) {
     const groupId = params.get('gid') || params.get('groupId');
     const id = params.get('id');
 
-    if (!groupId || !id) return;
+    if (!groupId) return;
+    if (!id && action !== 'view_board') return;
 
     if (action === 'set_status') {
         const newStatus = params.get('s');

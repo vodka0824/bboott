@@ -1,0 +1,180 @@
+{
+  "type": "bubble",
+  "body": {
+    "type": "box",
+    "layout": "vertical",
+    "contents": [
+      {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {
+            "type": "text",
+            "text": "✅ 已新增待辦事項",
+            "size": "sm",
+            "color": "#00B900",
+            "weight": "bold"
+          },
+          {
+            "type": "text",
+            "text": "測試案件",
+            "size": "xl",
+            "color": "#666666",
+            "weight": "bold",
+            "margin": "md",
+            "wrap": true
+          }
+        ]
+      },
+      {
+        "type": "box",
+        "layout": "horizontal",
+        "contents": [
+          {
+            "type": "text",
+            "text": "📋 其他",
+            "size": "sm",
+            "color": "#666666",
+            "weight": "regular",
+            "flex": 0
+          },
+          {
+            "type": "text",
+            "text": " | ",
+            "size": "sm",
+            "color": "#DDDDDD",
+            "weight": "regular",
+            "flex": 0
+          },
+          {
+            "type": "text",
+            "text": "🟢 一般",
+            "size": "sm",
+            "color": "#666666",
+            "weight": "regular",
+            "flex": 0
+          }
+        ],
+        "spacing": "sm",
+        "margin": "md",
+        "alignItems": "center"
+      },
+      {
+        "type": "separator",
+        "margin": "md"
+      },
+      {
+        "type": "text",
+        "text": "設定相關分類：",
+        "size": "xs",
+        "color": "#AAAAAA",
+        "weight": "regular",
+        "margin": "md"
+      },
+      {
+        "type": "box",
+        "layout": "horizontal",
+        "contents": [
+          {
+            "type": "button",
+            "action": {
+              "type": "postback",
+              "label": "新機",
+              "data": "action=update_meta&gid=group1&id=1234567890&c=new&mode=creation"
+            },
+            "style": "secondary",
+            "color": "#AAAAAA",
+            "height": "sm"
+          },
+          {
+            "type": "button",
+            "action": {
+              "type": "postback",
+              "label": "維修",
+              "data": "action=update_meta&gid=group1&id=1234567890&c=repair&mode=creation"
+            },
+            "style": "secondary",
+            "color": "#AAAAAA",
+            "height": "sm"
+          },
+          {
+            "type": "button",
+            "action": {
+              "type": "postback",
+              "label": "其他",
+              "data": "action=update_meta&gid=group1&id=1234567890&c=other&mode=creation"
+            },
+            "style": "primary",
+            "color": "#808080",
+            "height": "sm"
+          }
+        ],
+        "spacing": "sm",
+        "margin": "sm"
+      },
+      {
+        "type": "text",
+        "text": "設定重要性：",
+        "size": "xs",
+        "color": "#AAAAAA",
+        "weight": "regular",
+        "margin": "md"
+      },
+      {
+        "type": "box",
+        "layout": "horizontal",
+        "contents": [
+          {
+            "type": "button",
+            "action": {
+              "type": "postback",
+              "label": "急件",
+              "data": "action=update_meta&gid=group1&id=1234567890&p=high&mode=creation"
+            },
+            "style": "secondary",
+            "color": "#AAAAAA",
+            "height": "sm"
+          },
+          {
+            "type": "button",
+            "action": {
+              "type": "postback",
+              "label": "普通",
+              "data": "action=update_meta&gid=group1&id=1234567890&p=medium&mode=creation"
+            },
+            "style": "secondary",
+            "color": "#AAAAAA",
+            "height": "sm"
+          },
+          {
+            "type": "button",
+            "action": {
+              "type": "postback",
+              "label": "一般",
+              "data": "action=update_meta&gid=group1&id=1234567890&p=low&mode=creation"
+            },
+            "style": "primary",
+            "color": "#00B900",
+            "height": "sm"
+          }
+        ],
+        "spacing": "sm",
+        "margin": "sm"
+      },
+      {
+        "type": "separator",
+        "margin": "xl"
+      },
+      {
+        "type": "button",
+        "action": {
+          "type": "postback",
+          "label": "查看完整看板",
+          "data": "action=view_board&gid=group1"
+        },
+        "style": "link",
+        "height": "sm"
+      }
+    ]
+  }
+}

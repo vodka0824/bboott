@@ -365,6 +365,11 @@ function registerRoutes(router, handlers) {
 
     // === 5. 娛樂/AI (Authorized Group or SuperAdmin Private) ===
 
+    // 講台語
+    router.register(/^講台語(\s+.*)?$/, async (ctx, match) => {
+        await taigiHandler.handleTaigi(ctx.replyToken, match[0]);
+    }, { isGroupOnly: true, feature: 'taigi' });
+
     // AI
     router.register(/^AI\s+(.+)$/, async (ctx, match) => {
         const text = await aiHandler.getGeminiReply(match[1]);

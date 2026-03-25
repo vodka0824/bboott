@@ -237,21 +237,19 @@ async function getLeaderboard(groupId) {
 async function getUserRank(groupId, userId) {
     const leaders = await fetchAndCacheLeaderboard(groupId);
 
-    // Sort logic must match the main leaderboard sorting to get correct rank
-    // Assuming 'messageCount' is the primary rank metric
-    const sortedLeaders = [...leaders].sort((a, b) => (b.messageCount || 0) - (a.messageCount || 0));
+    // Calculate Rank based on messageCount
+    const validLeaders = leaders.filter(l => (l.messageCount || 0) > 0);
+    const sortedLeaders = validLeaders.sort((a, b) => b.messageCount - a.messageCount);
 
-    // Calculate Rank
-    // Filter out inactive users (messageCount 0) if that's the rule?
-    // Current logic: simple index + 1
     const index = sortedLeaders.findIndex(u => u.id === userId);
 
-    let userStats = null;
-    let rank = 0;
+    // Retrieve userStats whether ranked or not
+    const fullIndex = leaders.findIndex(u => u.id === userId);
+    const userStats = fullIndex !== -1 ? leaders[fullIndex] : null;
 
+    let rank = 0;
     if (index !== -1) {
         rank = index + 1;
-        userStats = sortedLeaders[index];
     }
 
     return { rank, stats: userStats };
@@ -283,7 +281,7 @@ function buildRankBubble(title, leaders, userRank, valueKey, unit, color, userId
         ], { margin: 'xs' })
     );
 
-    let footer = null;
+    let footer = undefined;
     if (userRank.rank > 0) {
         footer = flexUtils.createBox('vertical', [
             flexUtils.createText({ text: `📊 你的排名: 第 ${userRank.rank} 名 (${userRank.stats?.[valueKey] || 0} ${unit})`, size: 'xxs', color: '#1E88E5', align: 'center' })
@@ -298,12 +296,14 @@ function buildRankBubble(title, leaders, userRank, valueKey, unit, color, userId
         flexUtils.createText({ text: unit, size: 'xxs', color: '#FFFFFF', align: 'end', flex: 1, gravity: 'bottom' })
     ], { backgroundColor: color, paddingAll: '8px' });
 
-    return flexUtils.createBubble({
+    const bubbleOpts = {
         size: 'micro',
         header: customHeader,
-        body: flexUtils.createBox('vertical', rows, { paddingAll: '6px' }),
-        footer: footer
-    });
+        body: flexUtils.createBox('vertical', rows, { paddingAll: '6px' })
+    };
+    if (footer) bubbleOpts.footer = footer;
+
+    return flexUtils.createBubble(bubbleOpts);
 }
 
 /**
@@ -312,51 +312,54 @@ function buildRankBubble(title, leaders, userRank, valueKey, unit, color, userId
 function buildLeaderboardFlex(leaders, userRank, userId) {
     const bubbles = [];
 
+    // Helper to get sorted and filtered lists
+    const getValidLeaders = (key) => leaders.filter(l => (l[key] || 0) > 0).sort((a, b) => b[key] - a[key]);
+
     // 1. 發言排行榜
-    const msgLeaders = [...leaders].sort((a, b) => (b.messageCount || 0) - (a.messageCount || 0));
+    const msgLeaders = getValidLeaders('messageCount');
     bubbles.push(buildRankBubble('🏆 發言榜', msgLeaders,
         { rank: getRank(msgLeaders, userId), stats: userRank.stats },
         'messageCount', '則', '#FFD700', userId));
 
     // 2. 抽圖總榜
-    const imgLeaders = [...leaders].sort((a, b) => (b.totalImageCount || 0) - (a.totalImageCount || 0));
+    const imgLeaders = getValidLeaders('totalImageCount');
     bubbles.push(buildRankBubble('📸 抽圖總榜', imgLeaders,
         { rank: getRank(imgLeaders, userId), stats: userRank.stats },
         'totalImageCount', '次', '#FF334B', userId));
 
     // 3. 各類別分開
     // 奶子
-    const breastLeaders = [...leaders].sort((a, b) => (b.image_奶子 || 0) - (a.image_奶子 || 0));
+    const breastLeaders = getValidLeaders('image_奶子');
     bubbles.push(buildRankBubble('👙 奶子榜', breastLeaders,
         { rank: getRank(breastLeaders, userId), stats: userRank.stats },
         'image_奶子', '次', '#FF69B4', userId));
 
     // 美尻
-    const buttLeaders = [...leaders].sort((a, b) => (b.image_美尻 || 0) - (a.image_美尻 || 0));
+    const buttLeaders = getValidLeaders('image_美尻');
     bubbles.push(buildRankBubble('🍑 美尻榜', buttLeaders,
         { rank: getRank(buttLeaders, userId), stats: userRank.stats },
         'image_美尻', '次', '#FF8da1', userId));
 
     // 絕對領域
-    const zettaiLeaders = [...leaders].sort((a, b) => (b.image_絕對領域 || 0) - (a.image_絕對領域 || 0));
+    const zettaiLeaders = getValidLeaders('image_絕對領域');
     bubbles.push(buildRankBubble('👗 絕對領域', zettaiLeaders,
         { rank: getRank(zettaiLeaders, userId), stats: userRank.stats },
         'image_絕對領域', '次', '#9C27B0', userId));
 
     // 黑絲
-    const heisiLeaders = [...leaders].sort((a, b) => (b.image_黑絲 || 0) - (a.image_黑絲 || 0));
+    const heisiLeaders = getValidLeaders('image_黑絲');
     bubbles.push(buildRankBubble('🦵 黑絲榜', heisiLeaders,
         { rank: getRank(heisiLeaders, userId), stats: userRank.stats },
         'image_黑絲', '次', '#333333', userId));
 
     // 白絲 (Replaced Foot)
-    const baisiLeaders = [...leaders].sort((a, b) => (b.image_白絲 || 0) - (a.image_白絲 || 0));
+    const baisiLeaders = getValidLeaders('image_白絲');
     bubbles.push(buildRankBubble('🦶 白絲榜', baisiLeaders,
         { rank: getRank(baisiLeaders, userId), stats: userRank.stats },
         'image_白絲', '次', '#AAAAAA', userId));
 
     // JK
-    const jkLeaders = [...leaders].sort((a, b) => (b.image_JK || 0) - (a.image_JK || 0));
+    const jkLeaders = getValidLeaders('image_JK');
     bubbles.push(buildRankBubble('🎀 JK榜', jkLeaders,
         { rank: getRank(jkLeaders, userId), stats: userRank.stats },
         'image_JK', '次', '#1a237e', userId));
@@ -367,8 +370,7 @@ function buildLeaderboardFlex(leaders, userRank, userId) {
     };
 }
 
-function getRank(list, userId) {
-    const validList = list.filter(u => (u[Object.keys(u).find(k => k.startsWith('image_') || k.endsWith('Count'))] || 0) > 0);
+function getRank(validList, userId) {
     const index = validList.findIndex(u => u.id === userId);
     return index >= 0 ? index + 1 : 0;
 }
@@ -390,7 +392,7 @@ async function handleLeaderboard(replyToken, groupId, userId) {
 async function handleMyRank(replyToken, groupId, userId) {
     const { rank, stats } = await getUserRank(groupId, userId);
 
-    if (rank === 0 || !stats) {
+    if (!stats) {
         await lineUtils.replyText(replyToken, '❌ 你尚未有互動記錄');
         return;
     }
@@ -410,7 +412,7 @@ async function handleMyRank(replyToken, groupId, userId) {
                     margin: 'lg',
                     contents: [
                         { type: 'text', text: '排名', size: 'md', color: '#666666' },
-                        { type: 'text', text: `第 ${rank} 名`, size: 'md', weight: 'bold', align: 'end', color: '#FFD700' }
+                        { type: 'text', text: rank > 0 ? `第 ${rank} 名` : '未上榜', size: 'md', weight: 'bold', align: 'end', color: '#FFD700' }
                     ]
                 },
                 {

@@ -1,5 +1,9 @@
 /**
  * 統一錯誤處理模組
+ * 
+ * 安全原則：
+ * - 使用者只看到通用的友善訊息，不暴露任何技術細節
+ * - 完整的錯誤堆疊只推送給管理員私訊，以及寫入伺服器日誌
  */
 const { ADMIN_USER_ID } = require('../config/constants');
 const lineUtils = require('./line');
@@ -8,30 +12,81 @@ const logger = require('./logger');
 /**
  * 處理錯誤
  * @param {Error} error 錯誤物件
- * @param {Object} context 上下文 (包含 replyToken, userId, etc.)
+ * @param {Object} context 上下文 (包含 replyToken, groupId, userId, etc.)
  */
 async function handleError(error, context) {
-    // 1. 記錄錯誤
-    logger.error('[System Error]', error);
-
-    const { replyText, userId, message } = context || {};
-
-    // 2. 回覆用戶 (若尚未回覆)
-    if (replyText) {
-        try {
-            await replyText('⚠️ 系統發生錯誤，管理員已收到通知，請稍後再試。');
-        } catch (replyError) {
-            logger.error('[ErrorHandler] Failed to reply to user', replyError);
+    // 1. 記錄完整錯誤到伺服器日誌（僅後端可見）
+    logger.error('[System Error]', {
+        message: error.message,
+        stack: error.stack,
+        context: {
+            userId: context?.userId,
+            groupId: context?.groupId,
+            command: context?.message
         }
+    });
+
+    const { replyToken, groupId, userId, message } = context || {};
+
+    // 2. 建構詳細錯誤回報訊息
+    let detailMessage = {
+        type: 'text'
+    };
+
+    const errorLocation = error.stack ? error.stack.split('\n')[1]?.trim() : 'N/A';
+    const reportBody = [
+        `🚨 系統錯誤通報`,
+        `━━━━━━━━━━━━━`,
+        `👤 使用者：${userId || 'Unknown'}`,
+        `💬 指令：${message || 'N/A'}`,
+        `🔴 錯誤：${error.message}`,
+        `📁 位置：${errorLocation}`
+    ].join('\n');
+
+    // 如果是群組，且設定了管理員 ID，則加上 TAG
+    if (ADMIN_USER_ID && groupId) {
+        const tagText = '@管理員 ';
+        detailMessage.text = tagText + reportBody;
+        detailMessage.mention = {
+            mentionees: [
+                {
+                    index: 0,
+                    length: tagText.length,
+                    userId: ADMIN_USER_ID
+                }
+            ]
+        };
+    } else {
+        detailMessage.text = reportBody;
     }
 
-    // 3. 通知管理員
-    if (ADMIN_USER_ID) {
+    // 3. 發送錯誤通報（優先使用 replyToken 回覆，若失敗或沒有則使用 pushMessage）
+    if (replyToken) {
         try {
-            const errorMsg = `🚨 系統異常通報\n\n使用者: ${userId || 'Unknown'}\n訊息: ${message || 'N/A'}\n錯誤: ${error.message}\nStack: ${error.stack ? error.stack.split('\n')[1].trim() : 'N/A'}`;
-            await lineUtils.pushMessage(ADMIN_USER_ID, [{ type: 'text', text: errorMsg }]);
-        } catch (pushError) {
-            logger.error('[ErrorHandler] Failed to notify admin', pushError);
+            await lineUtils.replyToLine(replyToken, [detailMessage]);
+        } catch (replyError) {
+            logger.error('[ErrorHandler] Reply failed, attempting push to group/user', { error: replyError.message });
+            // 回覆失敗（例如 replyToken 已過期），改用主動推播
+            if (groupId) {
+                lineUtils.pushMessage(groupId, [detailMessage]).catch(pushErr => {
+                    logger.error('[ErrorHandler] Push to group failed', { error: pushErr.message });
+                });
+            } else if (userId) {
+                lineUtils.pushMessage(userId, [detailMessage]).catch(pushErr => {
+                    logger.error('[ErrorHandler] Push to user failed', { error: pushErr.message });
+                });
+            }
+        }
+    } else {
+        // 沒有 replyToken，直接使用推播
+        if (groupId) {
+            lineUtils.pushMessage(groupId, [detailMessage]).catch(pushErr => {
+                logger.error('[ErrorHandler] Push to group failed', { error: pushErr.message });
+            });
+        } else if (userId) {
+            lineUtils.pushMessage(userId, [detailMessage]).catch(pushErr => {
+                logger.error('[ErrorHandler] Push to user failed', { error: pushErr.message });
+            });
         }
     }
 }

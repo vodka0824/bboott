@@ -1,0 +1,2004 @@
+{
+  "type": "flex",
+  "altText": "📊 綜合排行榜 (財富 / 賭狗 / 債務)",
+  "contents": {
+    "type": "carousel",
+    "contents": [
+      {
+        "type": "bubble",
+        "size": "mega",
+        "header": {
+          "type": "box",
+          "layout": "vertical",
+          "paddingAll": "16px",
+          "background": {
+            "type": "linearGradient",
+            "angle": "0deg",
+            "startColor": "#FFFDE7",
+            "endColor": "#FFF9C4"
+          },
+          "contents": [
+            {
+              "type": "text",
+              "text": "🏆 財富排行榜 (Top 10)",
+              "weight": "bold",
+              "size": "lg",
+              "color": "#F57F17",
+              "align": "center"
+            },
+            {
+              "type": "text",
+              "text": "WEALTH RANK • 社會富豪",
+              "size": "xxs",
+              "color": "#F57F17",
+              "align": "center",
+              "margin": "xs",
+              "weight": "bold"
+            }
+          ]
+        },
+        "body": {
+          "type": "box",
+          "layout": "vertical",
+          "contents": [
+            {
+              "type": "box",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "margin": "md",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "🥇",
+                  "size": "sm",
+                  "weight": "bold",
+                  "color": "#D4AF37",
+                  "flex": 2,
+                  "align": "center"
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 6,
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "王耀德",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#212121",
+                      "wrap": true
+                    },
+                    {
+                      "type": "box",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "margin": "xs",
+                      "spacing": "md",
+                      "contents": [
+                        {
+                          "type": "box",
+                          "layout": "vertical",
+                          "backgroundColor": "#F5F5F5",
+                          "cornerRadius": "md",
+                          "paddingStart": "6px",
+                          "paddingEnd": "6px",
+                          "paddingTop": "2px",
+                          "paddingBottom": "2px",
+                          "contents": [
+                            {
+                              "type": "text",
+                              "text": "市議員",
+                              "size": "xxs",
+                              "color": "#616161",
+                              "weight": "bold"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": "「比爾蓋天」",
+                          "size": "xxs",
+                          "color": "#8E24AA",
+                          "weight": "bold"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 4,
+                  "alignItems": "flex-end",
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "12.7億",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#E65100"
+                    },
+                    {
+                      "type": "text",
+                      "text": "資產",
+                      "size": "xxs",
+                      "color": "#9E9E9E",
+                      "margin": "xs"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "separator",
+              "margin": "sm",
+              "color": "#EEEEEE"
+            },
+            {
+              "type": "box",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "margin": "md",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "🥈",
+                  "size": "sm",
+                  "weight": "bold",
+                  "color": "#C0C0C0",
+                  "flex": 2,
+                  "align": "center"
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 6,
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "珩哥",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#212121",
+                      "wrap": true
+                    },
+                    {
+                      "type": "box",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "margin": "xs",
+                      "spacing": "md",
+                      "contents": [
+                        {
+                          "type": "box",
+                          "layout": "vertical",
+                          "backgroundColor": "#F5F5F5",
+                          "cornerRadius": "md",
+                          "paddingStart": "6px",
+                          "paddingEnd": "6px",
+                          "paddingTop": "2px",
+                          "paddingBottom": "2px",
+                          "contents": [
+                            {
+                              "type": "text",
+                              "text": "市議員",
+                              "size": "xxs",
+                              "color": "#616161",
+                              "weight": "bold"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": "「富可敵國」",
+                          "size": "xxs",
+                          "color": "#8E24AA",
+                          "weight": "bold"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 4,
+                  "alignItems": "flex-end",
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "10.9億",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#E65100"
+                    },
+                    {
+                      "type": "text",
+                      "text": "資產",
+                      "size": "xxs",
+                      "color": "#9E9E9E",
+                      "margin": "xs"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "separator",
+              "margin": "sm",
+              "color": "#EEEEEE"
+            },
+            {
+              "type": "box",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "margin": "md",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "🥉",
+                  "size": "sm",
+                  "weight": "bold",
+                  "color": "#CD7F32",
+                  "flex": 2,
+                  "align": "center"
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 6,
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "黃子睿",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#212121",
+                      "wrap": true
+                    },
+                    {
+                      "type": "box",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "margin": "xs",
+                      "spacing": "md",
+                      "contents": [
+                        {
+                          "type": "box",
+                          "layout": "vertical",
+                          "backgroundColor": "#F5F5F5",
+                          "cornerRadius": "md",
+                          "paddingStart": "6px",
+                          "paddingEnd": "6px",
+                          "paddingTop": "2px",
+                          "paddingBottom": "2px",
+                          "contents": [
+                            {
+                              "type": "text",
+                              "text": "市議員",
+                              "size": "xxs",
+                              "color": "#616161",
+                              "weight": "bold"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": "「富可敵國」",
+                          "size": "xxs",
+                          "color": "#8E24AA",
+                          "weight": "bold"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 4,
+                  "alignItems": "flex-end",
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "10.3億",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#E65100"
+                    },
+                    {
+                      "type": "text",
+                      "text": "資產",
+                      "size": "xxs",
+                      "color": "#9E9E9E",
+                      "margin": "xs"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "separator",
+              "margin": "sm",
+              "color": "#EEEEEE"
+            },
+            {
+              "type": "box",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "margin": "md",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "4.",
+                  "size": "sm",
+                  "weight": "bold",
+                  "color": "#757575",
+                  "flex": 2,
+                  "align": "center"
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 6,
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "Coconut林明漳",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#212121",
+                      "wrap": true
+                    },
+                    {
+                      "type": "box",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "margin": "xs",
+                      "spacing": "md",
+                      "contents": [
+                        {
+                          "type": "box",
+                          "layout": "vertical",
+                          "backgroundColor": "#F5F5F5",
+                          "cornerRadius": "md",
+                          "paddingStart": "6px",
+                          "paddingEnd": "6px",
+                          "paddingTop": "2px",
+                          "paddingBottom": "2px",
+                          "contents": [
+                            {
+                              "type": "text",
+                              "text": "黑道老大",
+                              "size": "xxs",
+                              "color": "#616161",
+                              "weight": "bold"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": "「富可敵國」",
+                          "size": "xxs",
+                          "color": "#8E24AA",
+                          "weight": "bold"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 4,
+                  "alignItems": "flex-end",
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "8.1億",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#E65100"
+                    },
+                    {
+                      "type": "text",
+                      "text": "資產",
+                      "size": "xxs",
+                      "color": "#9E9E9E",
+                      "margin": "xs"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "separator",
+              "margin": "sm",
+              "color": "#EEEEEE"
+            },
+            {
+              "type": "box",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "margin": "md",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "5.",
+                  "size": "sm",
+                  "weight": "bold",
+                  "color": "#757575",
+                  "flex": 2,
+                  "align": "center"
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 6,
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "佳豪𝕲𝖎𝖓",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#212121",
+                      "wrap": true
+                    },
+                    {
+                      "type": "box",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "margin": "xs",
+                      "spacing": "md",
+                      "contents": [
+                        {
+                          "type": "box",
+                          "layout": "vertical",
+                          "backgroundColor": "#F5F5F5",
+                          "cornerRadius": "md",
+                          "paddingStart": "6px",
+                          "paddingEnd": "6px",
+                          "paddingTop": "2px",
+                          "paddingBottom": "2px",
+                          "contents": [
+                            {
+                              "type": "text",
+                              "text": "市議員",
+                              "size": "xxs",
+                              "color": "#616161",
+                              "weight": "bold"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": "「富可敵國」",
+                          "size": "xxs",
+                          "color": "#8E24AA",
+                          "weight": "bold"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 4,
+                  "alignItems": "flex-end",
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "7.4億",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#E65100"
+                    },
+                    {
+                      "type": "text",
+                      "text": "資產",
+                      "size": "xxs",
+                      "color": "#9E9E9E",
+                      "margin": "xs"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "separator",
+              "margin": "sm",
+              "color": "#EEEEEE"
+            },
+            {
+              "type": "box",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "margin": "md",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "6.",
+                  "size": "sm",
+                  "weight": "bold",
+                  "color": "#757575",
+                  "flex": 2,
+                  "align": "center"
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 6,
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "Kai Yu",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#212121",
+                      "wrap": true
+                    },
+                    {
+                      "type": "box",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "margin": "xs",
+                      "spacing": "md",
+                      "contents": [
+                        {
+                          "type": "box",
+                          "layout": "vertical",
+                          "backgroundColor": "#F5F5F5",
+                          "cornerRadius": "md",
+                          "paddingStart": "6px",
+                          "paddingEnd": "6px",
+                          "paddingTop": "2px",
+                          "paddingBottom": "2px",
+                          "contents": [
+                            {
+                              "type": "text",
+                              "text": "警察",
+                              "size": "xxs",
+                              "color": "#616161",
+                              "weight": "bold"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": "「富可敵國」",
+                          "size": "xxs",
+                          "color": "#8E24AA",
+                          "weight": "bold"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 4,
+                  "alignItems": "flex-end",
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "7.0億",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#E65100"
+                    },
+                    {
+                      "type": "text",
+                      "text": "資產",
+                      "size": "xxs",
+                      "color": "#9E9E9E",
+                      "margin": "xs"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "separator",
+              "margin": "sm",
+              "color": "#EEEEEE"
+            },
+            {
+              "type": "box",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "margin": "md",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "7.",
+                  "size": "sm",
+                  "weight": "bold",
+                  "color": "#757575",
+                  "flex": 2,
+                  "align": "center"
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 6,
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "Stanyan王訢諺",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#212121",
+                      "wrap": true
+                    },
+                    {
+                      "type": "box",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "margin": "xs",
+                      "spacing": "md",
+                      "contents": [
+                        {
+                          "type": "box",
+                          "layout": "vertical",
+                          "backgroundColor": "#F5F5F5",
+                          "cornerRadius": "md",
+                          "paddingStart": "6px",
+                          "paddingEnd": "6px",
+                          "paddingTop": "2px",
+                          "paddingBottom": "2px",
+                          "contents": [
+                            {
+                              "type": "text",
+                              "text": "警察",
+                              "size": "xxs",
+                              "color": "#616161",
+                              "weight": "bold"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": "「富可敵國」",
+                          "size": "xxs",
+                          "color": "#8E24AA",
+                          "weight": "bold"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 4,
+                  "alignItems": "flex-end",
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "6.4億",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#E65100"
+                    },
+                    {
+                      "type": "text",
+                      "text": "資產",
+                      "size": "xxs",
+                      "color": "#9E9E9E",
+                      "margin": "xs"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "separator",
+              "margin": "sm",
+              "color": "#EEEEEE"
+            },
+            {
+              "type": "box",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "margin": "md",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "8.",
+                  "size": "sm",
+                  "weight": "bold",
+                  "color": "#757575",
+                  "flex": 2,
+                  "align": "center"
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 6,
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "E&C",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#212121",
+                      "wrap": true
+                    },
+                    {
+                      "type": "box",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "margin": "xs",
+                      "spacing": "md",
+                      "contents": [
+                        {
+                          "type": "box",
+                          "layout": "vertical",
+                          "backgroundColor": "#F5F5F5",
+                          "cornerRadius": "md",
+                          "paddingStart": "6px",
+                          "paddingEnd": "6px",
+                          "paddingTop": "2px",
+                          "paddingBottom": "2px",
+                          "contents": [
+                            {
+                              "type": "text",
+                              "text": "市議員",
+                              "size": "xxs",
+                              "color": "#616161",
+                              "weight": "bold"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": "「富可敵國」",
+                          "size": "xxs",
+                          "color": "#8E24AA",
+                          "weight": "bold"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 4,
+                  "alignItems": "flex-end",
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "5.8億",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#E65100"
+                    },
+                    {
+                      "type": "text",
+                      "text": "資產",
+                      "size": "xxs",
+                      "color": "#9E9E9E",
+                      "margin": "xs"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "separator",
+              "margin": "sm",
+              "color": "#EEEEEE"
+            },
+            {
+              "type": "box",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "margin": "md",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "9.",
+                  "size": "sm",
+                  "weight": "bold",
+                  "color": "#757575",
+                  "flex": 2,
+                  "align": "center"
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 6,
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "正",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#212121",
+                      "wrap": true
+                    },
+                    {
+                      "type": "box",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "margin": "xs",
+                      "spacing": "md",
+                      "contents": [
+                        {
+                          "type": "box",
+                          "layout": "vertical",
+                          "backgroundColor": "#F5F5F5",
+                          "cornerRadius": "md",
+                          "paddingStart": "6px",
+                          "paddingEnd": "6px",
+                          "paddingTop": "2px",
+                          "paddingBottom": "2px",
+                          "contents": [
+                            {
+                              "type": "text",
+                              "text": "市議員",
+                              "size": "xxs",
+                              "color": "#616161",
+                              "weight": "bold"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": "「富可敵國」",
+                          "size": "xxs",
+                          "color": "#8E24AA",
+                          "weight": "bold"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 4,
+                  "alignItems": "flex-end",
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "5.6億",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#E65100"
+                    },
+                    {
+                      "type": "text",
+                      "text": "資產",
+                      "size": "xxs",
+                      "color": "#9E9E9E",
+                      "margin": "xs"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "separator",
+              "margin": "sm",
+              "color": "#EEEEEE"
+            },
+            {
+              "type": "box",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "margin": "md",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "10.",
+                  "size": "sm",
+                  "weight": "bold",
+                  "color": "#757575",
+                  "flex": 2,
+                  "align": "center"
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 6,
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "La fin",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#212121",
+                      "wrap": true
+                    },
+                    {
+                      "type": "box",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "margin": "xs",
+                      "spacing": "md",
+                      "contents": [
+                        {
+                          "type": "box",
+                          "layout": "vertical",
+                          "backgroundColor": "#F5F5F5",
+                          "cornerRadius": "md",
+                          "paddingStart": "6px",
+                          "paddingEnd": "6px",
+                          "paddingTop": "2px",
+                          "paddingBottom": "2px",
+                          "contents": [
+                            {
+                              "type": "text",
+                              "text": "市議員",
+                              "size": "xxs",
+                              "color": "#616161",
+                              "weight": "bold"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": "「富可敵國」",
+                          "size": "xxs",
+                          "color": "#8E24AA",
+                          "weight": "bold"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 4,
+                  "alignItems": "flex-end",
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "4.6億",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#E65100"
+                    },
+                    {
+                      "type": "text",
+                      "text": "資產",
+                      "size": "xxs",
+                      "color": "#9E9E9E",
+                      "margin": "xs"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "paddingAll": "lg",
+          "backgroundColor": "#FFFFFF"
+        }
+      },
+      {
+        "type": "bubble",
+        "size": "mega",
+        "header": {
+          "type": "box",
+          "layout": "vertical",
+          "paddingAll": "16px",
+          "background": {
+            "type": "linearGradient",
+            "angle": "0deg",
+            "startColor": "#FCE4EC",
+            "endColor": "#F8BBD0"
+          },
+          "contents": [
+            {
+              "type": "text",
+              "text": "🎲 賭狗排行榜 (Top 10)",
+              "weight": "bold",
+              "size": "lg",
+              "color": "#C2185B",
+              "align": "center"
+            },
+            {
+              "type": "text",
+              "text": "GAMBLER RANK • 歷史總投注",
+              "size": "xxs",
+              "color": "#C2185B",
+              "align": "center",
+              "margin": "xs",
+              "weight": "bold"
+            }
+          ]
+        },
+        "body": {
+          "type": "box",
+          "layout": "vertical",
+          "contents": [
+            {
+              "type": "box",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "margin": "md",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "🥇",
+                  "size": "sm",
+                  "weight": "bold",
+                  "color": "#D4AF37",
+                  "flex": 2,
+                  "align": "center"
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 6,
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "荼靡海味",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#212121",
+                      "wrap": true
+                    },
+                    {
+                      "type": "box",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "margin": "xs",
+                      "spacing": "md",
+                      "contents": [
+                        {
+                          "type": "box",
+                          "layout": "vertical",
+                          "backgroundColor": "#F5F5F5",
+                          "cornerRadius": "md",
+                          "paddingStart": "6px",
+                          "paddingEnd": "6px",
+                          "paddingTop": "2px",
+                          "paddingBottom": "2px",
+                          "contents": [
+                            {
+                              "type": "text",
+                              "text": "市議員",
+                              "size": "xxs",
+                              "color": "#616161",
+                              "weight": "bold"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": "391 次賭博",
+                          "size": "xxs",
+                          "color": "#757575",
+                          "weight": "bold"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 4,
+                  "alignItems": "flex-end",
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "375.2億",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#C2185B"
+                    },
+                    {
+                      "type": "text",
+                      "text": "總投注",
+                      "size": "xxs",
+                      "color": "#9E9E9E",
+                      "margin": "xs"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "separator",
+              "margin": "sm",
+              "color": "#EEEEEE"
+            },
+            {
+              "type": "box",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "margin": "md",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "🥈",
+                  "size": "sm",
+                  "weight": "bold",
+                  "color": "#C0C0C0",
+                  "flex": 2,
+                  "align": "center"
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 6,
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "林智盛",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#212121",
+                      "wrap": true
+                    },
+                    {
+                      "type": "box",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "margin": "xs",
+                      "spacing": "md",
+                      "contents": [
+                        {
+                          "type": "box",
+                          "layout": "vertical",
+                          "backgroundColor": "#F5F5F5",
+                          "cornerRadius": "md",
+                          "paddingStart": "6px",
+                          "paddingEnd": "6px",
+                          "paddingTop": "2px",
+                          "paddingBottom": "2px",
+                          "contents": [
+                            {
+                              "type": "text",
+                              "text": "一般市民",
+                              "size": "xxs",
+                              "color": "#616161",
+                              "weight": "bold"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": "2026 次賭博",
+                          "size": "xxs",
+                          "color": "#757575",
+                          "weight": "bold"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 4,
+                  "alignItems": "flex-end",
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "197.9億",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#C2185B"
+                    },
+                    {
+                      "type": "text",
+                      "text": "總投注",
+                      "size": "xxs",
+                      "color": "#9E9E9E",
+                      "margin": "xs"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "separator",
+              "margin": "sm",
+              "color": "#EEEEEE"
+            },
+            {
+              "type": "box",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "margin": "md",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "🥉",
+                  "size": "sm",
+                  "weight": "bold",
+                  "color": "#CD7F32",
+                  "flex": 2,
+                  "align": "center"
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 6,
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "Kuo Chung",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#212121",
+                      "wrap": true
+                    },
+                    {
+                      "type": "box",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "margin": "xs",
+                      "spacing": "md",
+                      "contents": [
+                        {
+                          "type": "box",
+                          "layout": "vertical",
+                          "backgroundColor": "#F5F5F5",
+                          "cornerRadius": "md",
+                          "paddingStart": "6px",
+                          "paddingEnd": "6px",
+                          "paddingTop": "2px",
+                          "paddingBottom": "2px",
+                          "contents": [
+                            {
+                              "type": "text",
+                              "text": "軍人",
+                              "size": "xxs",
+                              "color": "#616161",
+                              "weight": "bold"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": "441 次賭博",
+                          "size": "xxs",
+                          "color": "#757575",
+                          "weight": "bold"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 4,
+                  "alignItems": "flex-end",
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "104.0億",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#C2185B"
+                    },
+                    {
+                      "type": "text",
+                      "text": "總投注",
+                      "size": "xxs",
+                      "color": "#9E9E9E",
+                      "margin": "xs"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "separator",
+              "margin": "sm",
+              "color": "#EEEEEE"
+            },
+            {
+              "type": "box",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "margin": "md",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "4.",
+                  "size": "sm",
+                  "weight": "bold",
+                  "color": "#757575",
+                  "flex": 2,
+                  "align": "center"
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 6,
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "禹量",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#212121",
+                      "wrap": true
+                    },
+                    {
+                      "type": "box",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "margin": "xs",
+                      "spacing": "md",
+                      "contents": [
+                        {
+                          "type": "box",
+                          "layout": "vertical",
+                          "backgroundColor": "#F5F5F5",
+                          "cornerRadius": "md",
+                          "paddingStart": "6px",
+                          "paddingEnd": "6px",
+                          "paddingTop": "2px",
+                          "paddingBottom": "2px",
+                          "contents": [
+                            {
+                              "type": "text",
+                              "text": "市議員",
+                              "size": "xxs",
+                              "color": "#616161",
+                              "weight": "bold"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": "2539 次賭博",
+                          "size": "xxs",
+                          "color": "#757575",
+                          "weight": "bold"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 4,
+                  "alignItems": "flex-end",
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "100.8億",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#C2185B"
+                    },
+                    {
+                      "type": "text",
+                      "text": "總投注",
+                      "size": "xxs",
+                      "color": "#9E9E9E",
+                      "margin": "xs"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "separator",
+              "margin": "sm",
+              "color": "#EEEEEE"
+            },
+            {
+              "type": "box",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "margin": "md",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "5.",
+                  "size": "sm",
+                  "weight": "bold",
+                  "color": "#757575",
+                  "flex": 2,
+                  "align": "center"
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 6,
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "台中小馬",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#212121",
+                      "wrap": true
+                    },
+                    {
+                      "type": "box",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "margin": "xs",
+                      "spacing": "md",
+                      "contents": [
+                        {
+                          "type": "box",
+                          "layout": "vertical",
+                          "backgroundColor": "#F5F5F5",
+                          "cornerRadius": "md",
+                          "paddingStart": "6px",
+                          "paddingEnd": "6px",
+                          "paddingTop": "2px",
+                          "paddingBottom": "2px",
+                          "contents": [
+                            {
+                              "type": "text",
+                              "text": "一般市民",
+                              "size": "xxs",
+                              "color": "#616161",
+                              "weight": "bold"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": "1815 次賭博",
+                          "size": "xxs",
+                          "color": "#757575",
+                          "weight": "bold"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 4,
+                  "alignItems": "flex-end",
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "87.4億",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#C2185B"
+                    },
+                    {
+                      "type": "text",
+                      "text": "總投注",
+                      "size": "xxs",
+                      "color": "#9E9E9E",
+                      "margin": "xs"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "separator",
+              "margin": "sm",
+              "color": "#EEEEEE"
+            },
+            {
+              "type": "box",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "margin": "md",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "6.",
+                  "size": "sm",
+                  "weight": "bold",
+                  "color": "#757575",
+                  "flex": 2,
+                  "align": "center"
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 6,
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "鍾Jeff",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#212121",
+                      "wrap": true
+                    },
+                    {
+                      "type": "box",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "margin": "xs",
+                      "spacing": "md",
+                      "contents": [
+                        {
+                          "type": "box",
+                          "layout": "vertical",
+                          "backgroundColor": "#F5F5F5",
+                          "cornerRadius": "md",
+                          "paddingStart": "6px",
+                          "paddingEnd": "6px",
+                          "paddingTop": "2px",
+                          "paddingBottom": "2px",
+                          "contents": [
+                            {
+                              "type": "text",
+                              "text": "軍人",
+                              "size": "xxs",
+                              "color": "#616161",
+                              "weight": "bold"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": "261 次賭博",
+                          "size": "xxs",
+                          "color": "#757575",
+                          "weight": "bold"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 4,
+                  "alignItems": "flex-end",
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "75.9億",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#C2185B"
+                    },
+                    {
+                      "type": "text",
+                      "text": "總投注",
+                      "size": "xxs",
+                      "color": "#9E9E9E",
+                      "margin": "xs"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "separator",
+              "margin": "sm",
+              "color": "#EEEEEE"
+            },
+            {
+              "type": "box",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "margin": "md",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "7.",
+                  "size": "sm",
+                  "weight": "bold",
+                  "color": "#757575",
+                  "flex": 2,
+                  "align": "center"
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 6,
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "澄澄YoYo",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#212121",
+                      "wrap": true
+                    },
+                    {
+                      "type": "box",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "margin": "xs",
+                      "spacing": "md",
+                      "contents": [
+                        {
+                          "type": "box",
+                          "layout": "vertical",
+                          "backgroundColor": "#F5F5F5",
+                          "cornerRadius": "md",
+                          "paddingStart": "6px",
+                          "paddingEnd": "6px",
+                          "paddingTop": "2px",
+                          "paddingBottom": "2px",
+                          "contents": [
+                            {
+                              "type": "text",
+                              "text": "軍人",
+                              "size": "xxs",
+                              "color": "#616161",
+                              "weight": "bold"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": "810 次賭博",
+                          "size": "xxs",
+                          "color": "#757575",
+                          "weight": "bold"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 4,
+                  "alignItems": "flex-end",
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "40.2億",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#C2185B"
+                    },
+                    {
+                      "type": "text",
+                      "text": "總投注",
+                      "size": "xxs",
+                      "color": "#9E9E9E",
+                      "margin": "xs"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "separator",
+              "margin": "sm",
+              "color": "#EEEEEE"
+            },
+            {
+              "type": "box",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "margin": "md",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "8.",
+                  "size": "sm",
+                  "weight": "bold",
+                  "color": "#757575",
+                  "flex": 2,
+                  "align": "center"
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 6,
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "!🌟宗楷🌟!",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#212121",
+                      "wrap": true
+                    },
+                    {
+                      "type": "box",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "margin": "xs",
+                      "spacing": "md",
+                      "contents": [
+                        {
+                          "type": "box",
+                          "layout": "vertical",
+                          "backgroundColor": "#F5F5F5",
+                          "cornerRadius": "md",
+                          "paddingStart": "6px",
+                          "paddingEnd": "6px",
+                          "paddingTop": "2px",
+                          "paddingBottom": "2px",
+                          "contents": [
+                            {
+                              "type": "text",
+                              "text": "市議員",
+                              "size": "xxs",
+                              "color": "#616161",
+                              "weight": "bold"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": "217 次賭博",
+                          "size": "xxs",
+                          "color": "#757575",
+                          "weight": "bold"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 4,
+                  "alignItems": "flex-end",
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "39.1億",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#C2185B"
+                    },
+                    {
+                      "type": "text",
+                      "text": "總投注",
+                      "size": "xxs",
+                      "color": "#9E9E9E",
+                      "margin": "xs"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "separator",
+              "margin": "sm",
+              "color": "#EEEEEE"
+            },
+            {
+              "type": "box",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "margin": "md",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "9.",
+                  "size": "sm",
+                  "weight": "bold",
+                  "color": "#757575",
+                  "flex": 2,
+                  "align": "center"
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 6,
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "E&C",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#212121",
+                      "wrap": true
+                    },
+                    {
+                      "type": "box",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "margin": "xs",
+                      "spacing": "md",
+                      "contents": [
+                        {
+                          "type": "box",
+                          "layout": "vertical",
+                          "backgroundColor": "#F5F5F5",
+                          "cornerRadius": "md",
+                          "paddingStart": "6px",
+                          "paddingEnd": "6px",
+                          "paddingTop": "2px",
+                          "paddingBottom": "2px",
+                          "contents": [
+                            {
+                              "type": "text",
+                              "text": "市議員",
+                              "size": "xxs",
+                              "color": "#616161",
+                              "weight": "bold"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": "802 次賭博",
+                          "size": "xxs",
+                          "color": "#757575",
+                          "weight": "bold"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 4,
+                  "alignItems": "flex-end",
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "32.5億",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#C2185B"
+                    },
+                    {
+                      "type": "text",
+                      "text": "總投注",
+                      "size": "xxs",
+                      "color": "#9E9E9E",
+                      "margin": "xs"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "separator",
+              "margin": "sm",
+              "color": "#EEEEEE"
+            },
+            {
+              "type": "box",
+              "layout": "horizontal",
+              "alignItems": "center",
+              "margin": "md",
+              "contents": [
+                {
+                  "type": "text",
+                  "text": "10.",
+                  "size": "sm",
+                  "weight": "bold",
+                  "color": "#757575",
+                  "flex": 2,
+                  "align": "center"
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 6,
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "正",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#212121",
+                      "wrap": true
+                    },
+                    {
+                      "type": "box",
+                      "layout": "horizontal",
+                      "alignItems": "center",
+                      "margin": "xs",
+                      "spacing": "md",
+                      "contents": [
+                        {
+                          "type": "box",
+                          "layout": "vertical",
+                          "backgroundColor": "#F5F5F5",
+                          "cornerRadius": "md",
+                          "paddingStart": "6px",
+                          "paddingEnd": "6px",
+                          "paddingTop": "2px",
+                          "paddingBottom": "2px",
+                          "contents": [
+                            {
+                              "type": "text",
+                              "text": "市議員",
+                              "size": "xxs",
+                              "color": "#616161",
+                              "weight": "bold"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "text",
+                          "text": "3563 次賭博",
+                          "size": "xxs",
+                          "color": "#757575",
+                          "weight": "bold"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "box",
+                  "layout": "vertical",
+                  "flex": 4,
+                  "alignItems": "flex-end",
+                  "contents": [
+                    {
+                      "type": "text",
+                      "text": "30.3億",
+                      "size": "sm",
+                      "weight": "bold",
+                      "color": "#C2185B"
+                    },
+                    {
+                      "type": "text",
+                      "text": "總投注",
+                      "size": "xxs",
+                      "color": "#9E9E9E",
+                      "margin": "xs"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "paddingAll": "lg",
+          "backgroundColor": "#FFFFFF"
+        }
+      },
+      {
+        "type": "bubble",
+        "size": "mega",
+        "header": {
+          "type": "box",
+          "layout": "vertical",
+          "paddingAll": "16px",
+          "background": {
+            "type": "linearGradient",
+            "angle": "0deg",
+            "startColor": "#4CAF50"
+          },
+          "contents": [
+            {
+              "type": "text",
+              "text": "💸 跑路債務榜 (Top 10)",
+              "weight": "bold",
+              "size": "lg",
+              "align": "center"
+            }
+          ]
+        },
+        "body": {
+          "type": "box",
+          "layout": "vertical",
+          "contents": [
+            {
+              "type": "text",
+              "size": "md",
+              "color": "#555555",
+              "weight": "regular",
+              "align": "center",
+              "margin": "md",
+              "wrap": true,
+              "text": "🎉 目前沒有任何人負債！大家都很富有！"
+            }
+          ],
+          "paddingAll": "xl",
+          "backgroundColor": "#FFFFFF"
+        }
+      }
+    ]
+  }
+}

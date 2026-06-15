@@ -14,10 +14,15 @@ const REQUIRED_ENV_VARS = {
 
 // 建議但非必要的環境變數
 const OPTIONAL_ENV_VARS = {
+    'LINE_CHANNEL_SECRET': 'LINE Bot Channel Secret (強烈建議設定，用於驗證 Webhook 請求來源)',
+    'MONGODB_URI': 'MongoDB 連線字串 (預設: mongodb://localhost:27017/linebot)',
     'GEMINI_KEY': 'Google Gemini API Key (for AI features)',
     'CWA_API_KEY': 'Central Weather Administration API Key',
     'GOOGLE_PLACES_API_KEY': 'Google Places API Key',
     'MOENV_API_KEY': 'Ministry of Environment API Key',
+    'GROQ_KEY': 'Groq API Key (for AI features)',
+    'GOOGLE_DRIVE_API_KEY': 'Google Drive API Key',
+    'BASE_URL': 'Bot 公開存取網址 (ngrok URL 等)',
     'CRON_KEY': 'Cron Job Secret Key',
     'PREFETCH_SECRET': 'Prefetch Secret Key'
 };

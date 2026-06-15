@@ -4,7 +4,8 @@
 const axios = require('axios');
 const logger = require('./logger');
 
-// 環保署 API{ MOENV_API_KEY } = require('../config/constants');
+// 環保署 API
+const { MOENV_API_KEY } = require('../config/constants');
 
 // Memory Cache
 let aqiCache = {
@@ -30,10 +31,14 @@ async function fetchAQI() {
         const url = `https://data.moenv.gov.tw/api/v2/aqx_p_432?api_key=${MOENV_API_KEY}&limit=1000&sort=ImportDate desc&format=JSON`;
         const res = await axios.get(url);
 
-        if (res.data && res.data.records) {
+        if (res.data && Array.isArray(res.data.records)) {
             aqiCache.data = res.data.records;
             aqiCache.lastUpdated = now;
             return res.data.records;
+        } else if (res.data && Array.isArray(res.data)) {
+            aqiCache.data = res.data;
+            aqiCache.lastUpdated = now;
+            return res.data;
         } else {
             logger.error('[AQI] API response format error');
             return [];

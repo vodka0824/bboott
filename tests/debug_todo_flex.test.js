@@ -3,7 +3,7 @@ const todoHandler = require('../handlers/todo');
 const flexUtils = require('../utils/flex');
 
 // Mock dependencies
-jest.mock('../utils/firestore', () => ({
+jest.mock('../utils/db', () => ({
     db: {
         collection: jest.fn()
     },

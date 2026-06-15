@@ -48,10 +48,22 @@ const welcomeHandler = require('./handlers/welcome');
 const slotHandler = require('./handlers/slot');
 const javdbHandler = require('./handlers/javdb');
 const enchantHandler = require('./handlers/enchant'); // 天堂衝裝遊戲
+const economyHandler = require('./handlers/economy');
+const rpgHandler = require('./handlers/rpg');
+const jailHandler = require('./handlers/jail');
+const equipmentHandler = require('./handlers/equipment');
+const policeHandler = require('./handlers/police');
+const robberyHandler = require('./handlers/robberyHandler');
+const mafiaHandler = require('./handlers/mafia');
+const worldcupHandler = require('./handlers/worldcup');
+const atonementHandler = require('./handlers/atonement');
+const auctionHandler = require('./handlers/auction');
+const horoscopeHandler = require('./handlers/horoscope');
+
 
 // === Router Imports ===
 const router = require('./utils/router');
-const registerRoutes = require('./handlers/routes');
+const registerRoutes = require('./routes');
 
 // === Firestore 初始化 ===
 const db = new Firestore();
@@ -78,7 +90,18 @@ registerRoutes(router, {
   welcomeHandler,
   slotHandler,
   javdbHandler,
-  enchantHandler // Register Enchant Handler
+  enchantHandler,
+  economyHandler,
+  rpgHandler,
+  jailHandler,
+  equipmentHandler,
+  policeHandler,
+  robberyHandler,
+  mafiaHandler,
+  worldcupHandler,
+  atonementHandler,
+  auctionHandler,
+  horoscopeHandler
 });
 
 async function handleCommonCommands(message, replyToken, sourceType, userId, groupId, messageObject = null) {

@@ -29,17 +29,17 @@ const mockCollectionFn = jest.fn(() => ({
     doc: mockDocFn
 }));
 
-// Intercept Firestore constructor
-jest.mock('@google-cloud/firestore', () => {
-    return {
-        Firestore: jest.fn().mockImplementation(() => ({
-            collection: mockCollectionFn
-        })),
+// Intercept DB
+jest.mock('../utils/db', () => ({
+    db: {
+        collection: mockCollectionFn
+    },
+    Firestore: {
         FieldValue: {
             serverTimestamp: jest.fn()
         }
-    };
-});
+    }
+}));
 
 // Import handler AFTER mocking
 const welcomeHandler = require('../handlers/welcome');

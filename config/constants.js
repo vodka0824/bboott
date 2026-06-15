@@ -5,18 +5,23 @@
 // === 環境變數 ===
 const CHANNEL_ACCESS_TOKEN = process.env.LINE_TOKEN || process.env.CHANNEL_ACCESS_TOKEN;
 const GEMINI_API_KEY = process.env.GEMINI_KEY;
+const GROQ_API_KEY = process.env.GROQ_KEY;
 const ADMIN_USER_ID = process.env.ADMIN_USER_ID;
 const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY;
 // CWA 中央氣象署 API (需申請: https://opendata.cwa.gov.tw/user/authkey)
 const CWA_API_KEY = process.env.CWA_API_KEY || '';
 const CWA_API_HOST = 'https://opendata.cwa.gov.tw/api';
 
-// MOENV 環境部 API (空氣品質) - 需在 Cloud Run 環境變數設定
+// MOENV 環境部 API (空氣品質) - 需在環境變數設定
 const MOENV_API_KEY = process.env.MOENV_API_KEY || '';
 
-// Cloud Tasks 設定 (Deprecated)
-const GOOGLE_CLOUD_PROJECT = process.env.GOOGLE_CLOUD_PROJECT || process.env.GCP_PROJECT;
-// const CLOUD_RUN_SERVICE_URL = process.env.CLOUD_RUN_SERVICE_URL;
+// MongoDB 設定
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017';
+const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME || 'linebot';
+
+// 本地 URL 設定
+const BASE_URL = process.env.BASE_URL || 'http://localhost:8080';
+
 
 
 // === 爬蟲來源網址 ===
@@ -41,7 +46,7 @@ const KEYWORD_MAP = {
 
 // === 快取時間設定 ===
 const CACHE_DURATION = {
-    DRIVE: 60 * 60 * 1000,        // 1 小時
+    DRIVE: 1 * 60 * 1000,         // 1 分鐘
     GROUP: 5 * 60 * 1000,         // 5 分鐘
     ADMIN: 5 * 60 * 1000,         // 5 分鐘
     TODO: 5 * 60 * 1000,          // 5 分鐘
@@ -55,8 +60,9 @@ const CACHE_DURATION = {
 function validateEnvironment() {
     const required = {
         'CHANNEL_ACCESS_TOKEN': CHANNEL_ACCESS_TOKEN,
-        'ADMIN_USER_ID': ADMIN_USER_ID
-        // 'GOOGLE_CLOUD_PROJECT': GOOGLE_CLOUD_PROJECT // Optional
+        'ADMIN_USER_ID': ADMIN_USER_ID,
+        'MONGODB_URI': MONGODB_URI,
+        'BASE_URL': BASE_URL
     };
 
     const missing = [];
@@ -68,7 +74,7 @@ function validateEnvironment() {
 
     if (missing.length > 0) {
         console.error('❌ 缺少必要的環境變數：', missing.join(', '));
-        console.error('請在 Cloud Run 或 .env 檔案中設定這些變數');
+        console.error('請在 .env 檔案中設定這些變數');
         throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
     }
 
@@ -81,13 +87,15 @@ validateEnvironment();
 module.exports = {
     CHANNEL_ACCESS_TOKEN,
     GEMINI_API_KEY,
+    GROQ_API_KEY,
     ADMIN_USER_ID,
     GOOGLE_PLACES_API_KEY,
     CWA_API_KEY,
     CWA_API_HOST,
     MOENV_API_KEY,
-    GOOGLE_CLOUD_PROJECT,
-    // CLOUD_RUN_SERVICE_URL,
+    MONGODB_URI,
+    MONGODB_DB_NAME,
+    BASE_URL,
     CRAWLER_URLS,
     KEYWORD_MAP,
     CACHE_DURATION

@@ -1,6 +1,6 @@
 const lineUtils = require('../utils/line');
 const flexUtils = require('../utils/flex');
-const { db } = require('../utils/firestore');
+const { db } = require('../utils/db');
 
 // --- Game Config ---
 const COLLECTION_NAME = 'lineage_users';

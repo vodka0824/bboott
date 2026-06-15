@@ -37,7 +37,7 @@ const mockFirestore = { FieldValue: { arrayUnion: () => { } } };
 
 const flexUtils = require('../utils/flex');
 // I need to see todo.js imports again.
-// Line 4: const { db, Firestore } = require('../utils/firestore');
+// Line 4: const { db, Firestore } = require('../utils/db');
 // Line 5: const flexUtils = require('../utils/flex');
 // Line 6: const lineUtils = require('../utils/line');
 

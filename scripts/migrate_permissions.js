@@ -1,4 +1,4 @@
-const { db } = require('../utils/firestore');
+const { db } = require('../utils/db');
 
 const DRY_RUN = process.argv.includes('--dry-run');
 

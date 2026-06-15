@@ -1,6 +1,5 @@
-const { Firestore } = require('@google-cloud/firestore');
+const { db, Firestore } = require('./db');
 const logger = require('./logger');
-const db = new Firestore();
 
 const STATE_EXPIRY = 5 * 60 * 1000; // 5 minutes
 
@@ -15,7 +14,7 @@ async function setUserState(userId, action, data = {}) {
         action,
         ...data,
         createdAt: Firestore.FieldValue.serverTimestamp(),
-        expiresAt: Firestore.Timestamp.fromDate(expiresAt)
+        expiresAt: expiresAt.toISOString()
     });
 }
 
@@ -30,8 +29,12 @@ async function getUserState(userId) {
         const state = doc.data();
         const now = new Date();
 
-        // 檢查是否過期
-        if (state.expiresAt.toDate() < now) {
+        // 檢查是否過期（相容 ISO 字串與 Date 物件）
+        const expiresAt = state.expiresAt instanceof Date
+            ? state.expiresAt
+            : new Date(state.expiresAt);
+
+        if (expiresAt < now) {
             await clearUserState(userId);
             return null;
         }

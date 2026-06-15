@@ -1,0 +1,38 @@
+# 任務清單 - Flex 訊息總資產與冷卻時間提示升級
+
+- `[x]` 1. 👮 警政黑幫系統 (`handlers/police.js`)
+  - `[x]` 1.1 修改 `handleAssassinatePolice` 失敗分支回傳 `newBalance`
+  - `[x]` 1.2 在暗殺成功與失敗的 Flex 卡片加上結算總資產
+- `[x]` 2. 🔒 監獄系統 (`handlers/jail.js`)
+  - `[x]` 2.1 修改 `confirmBail` (自己交保) 交易與 Flex，加入結算總資產
+  - `[x]` 2.2 修改 `confirmBailOther` (保釋他人) 交易與 Flex，加入付款人結算總資產
+  - `[x]` 2.3 修改 `handleJailbreak` 失敗 Flex，加上 10 分鐘冷卻時間提示 (已修復 nested bubble duplicate 語法 Bug)
+  - `[x]` 2.4 修改 `handleDropSoap` 交易與 Flex，成功加上結算總資產，成功/失敗加上 10 分鐘冷卻時間提示
+  - `[x]` 2.5 修改 `handleLabor` 交易與 Flex，有摸到錢時加上結算總資產，且不論結果加上 5 分鐘冷卻時間提示
+  - `[x]` 2.6 修改 `handleVisit` (探監) 交易與 Flex，成功/失敗皆加上付款人結算總資產
+  - `[x]` 2.7 修改 `confirmBribe` (賄賂) 交易與 Flex，成功/失敗皆加上結算總資產
+- `[x]` 3. 🦹‍♂️ 搶劫偷竊系統 (`handlers/robberyHandler.js`)
+  - `[x]` 3.1 修改 `executeRobTransaction` 回傳 `newFromBalance`, `newTargetBalance` 與 `cooldownMs`
+  - `[x]` 3.2 修改 `buildRobResultBubble`，在所有卡片中加上冷卻時間提示
+  - `[x]` 3.3 修改 `buildRobResultBubble`，在有財產增減的卡片中加上搶劫者/被搶者的結算
+  - `[x]` 4.1 修改 `dailyCheckIn` (每日簽到) Flex，調整總餘額文字並加上跨日冷卻時間提示
+  - `[x]` 4.2 修改 `begCoin` (乞討) Flex，調整餘額文字並加上跨日冷卻時間提示
+  - `[x]` 4.3 修改 `handleHarvestLeeks` (收割韭菜) Flex，調整餘額文字並加上 24 小時冷卻時間提示
+  - `[x]` 4.4 修改 `handleRigBidding` (議員圍標) 餘額計算，在 Flex 中顯示結算總資產與 12 小時冷卻提示
+  - `[x]` 4.5 修改 `handleEmbezzle` (議員詐領) 餘額計算，在 Flex 中顯示結算總資產與 2 小時冷卻提示
+- `[x]` 5. ⚒️ 皇家裝備店 (`handlers/equipment.js`)
+  - `[x]` 5.1 修改 `buyEquipmentPostback` 交易與 Flex，加上結算總資產
+  - `[x]` 5.2 修改 `buyScrollsPostback` 交易與 Flex，加上結算總資產
+  - `[x]` 5.3 修改 `buyAndSafeEnchantPostback` 交易回傳 `newBalance`
+  - `[x]` 5.4 修改 `buildSingleEnchantBubble`，新增 `newBalance` 參數並在卡片中顯示總資產
+- `[x]` 6. 🎰 21點 遊戲優化 (`handlers/blackjack.js`)
+  - `[x]` 6.1 修改 `startGame` 以儲存 `newBalanceAfterBet` 到 active game 之中
+  - `[x]` 6.2 修改 `stand` 及停牌/爆牌邏輯，計算 `finalBalance`
+  - `[x]` 6.3 修改 `buildBlackjackFlex` 顯示結算總資產
+- `[x]` 7. 🧪 測試與驗證
+  - `[x]` 7.1 本地語法檢測 `node --check`
+  - `[x]` 7.2 執行 Flex JSON Schema 驗證模擬 (已將所有修改之 handler 行為加入 test_flex_generation.js 執行成功)
+  - `[x]` 7.3 撰寫 `walkthrough.md`
+- `[x]` 8. 🚨 額外 Bug 修復：綜合排行榜 (`handlers/economy.js`)
+  - `[x]` 8.1 修正 `showAllLeaderboards` 中調用未定義之 `getProfessionSuffix` 導致的崩潰問題
+  - `[x]` 8.2 於本地測試腳本中加入 `showAllLeaderboards` 測試案例並完美通過驗證

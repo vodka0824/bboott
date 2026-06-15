@@ -3,6 +3,8 @@
  * 統一管理日誌輸出，支援分級和環境控制
  */
 
+const util = require('util');
+
 const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
 
 // 日誌級別優先順序
@@ -21,52 +23,51 @@ class Logger {
     /**
      * Debug 級別日誌（開發用）
      */
-    debug(message, meta = {}) {
+    debug(...args) {
         if (this.currentLevel <= LEVELS.debug) {
-            console.log(`[DEBUG] ${message}`, meta);
+            process.stdout.write(`[DEBUG] ${util.format(...args)}\n`);
         }
     }
 
     /**
      * Info 級別日誌（一般資訊）
      */
-    info(message, meta = {}) {
+    info(...args) {
         if (this.currentLevel <= LEVELS.info) {
-            console.log(`[INFO] ${message}`, meta);
+            process.stdout.write(`[INFO] ${util.format(...args)}\n`);
         }
     }
 
     /**
      * Warning 級別日誌（警告）
      */
-    warn(message, meta = {}) {
+    warn(...args) {
         if (this.currentLevel <= LEVELS.warn) {
-            console.warn(`[WARN] ${message}`, meta);
+            process.stderr.write(`[WARN] ${util.format(...args)}\n`);
         }
     }
 
     /**
      * Error 級別日誌（錯誤）
      */
-    /**
-     * Error 級別日誌（錯誤）
-     */
-    error(message, error = null) {
+    error(...args) {
         if (this.currentLevel <= LEVELS.error) {
-            if (error) {
-                // Robust error handling: Check if it's a real Error object
-                const isErrorObj = error instanceof Error;
-                const meta = isErrorObj ? {
+            if (args.length === 2 && args[1] instanceof Error) {
+                const message = args[0];
+                const error = args[1];
+                const meta = {
                     message: error.message,
                     stack: error.stack,
                     ...(error.response?.data && { apiError: error.response.data })
-                } : {
-                    rawError: typeof error === 'object' ? JSON.stringify(error) : String(error)
                 };
-
-                console.error(`[ERROR] ${message}`, meta);
+                process.stderr.write(`[ERROR] ${message} ${util.inspect(meta)}\n`);
+            } else if (args.length === 2 && typeof args[1] === 'object') {
+                const message = args[0];
+                const error = args[1];
+                const meta = { rawError: JSON.stringify(error) };
+                process.stderr.write(`[ERROR] ${message} ${util.inspect(meta)}\n`);
             } else {
-                console.error(`[ERROR] ${message}`);
+                process.stderr.write(`[ERROR] ${util.format(...args)}\n`);
             }
         }
     }

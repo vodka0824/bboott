@@ -1,20 +1,31 @@
 /**
  * 授權邏輯模組
  */
-const { db, Firestore } = require('./firestore');
+const crypto = require('crypto'); // P0-10 修復：密碼學安全隨機數產生器
+const { db, Firestore } = require('./db');
 const { CachedCheck } = require('./cache');
 const { ADMIN_USER_ID, CACHE_DURATION } = require('../config/constants');
 const logger = require('./logger');
 
 // === 快取實例 ===
-const groupCache = new CachedCheck(CACHE_DURATION.GROUP); // 基礎授權快取
-const adminCache = new CachedCheck(CACHE_DURATION.ADMIN);
+const groupCache = new CachedCheck(CACHE_DURATION.GROUP, async () => {
+    const snapshot = await db.collection('groups').where('status', '==', 'active').get();
+    return snapshot.docs.map(doc => doc.id);
+}); // 基礎授權快取
+
+const adminCache = new CachedCheck(CACHE_DURATION.ADMIN, async () => {
+    const snapshot = await db.collection('admins').get();
+    return snapshot.docs.map(doc => doc.id);
+});
+
 const todoCache = new CachedCheck(CACHE_DURATION.TODO);
 const restaurantCache = new CachedCheck(CACHE_DURATION.RESTAURANT);
 const weatherCache = new CachedCheck(CACHE_DURATION.GROUP); // 天氣功能快取
-const blacklistCache = new CachedCheck(5 * 60 * 1000); // 5 minutes cache for blacklist
 
-// 功能開關快取 (Key: groupId, Value: Set of disabled features)
+const blacklistCache = new CachedCheck(5 * 60 * 1000, async () => {
+    const snapshot = await db.collection('blacklist').get();
+    return snapshot.docs.map(doc => doc.id);
+}); // 5 minutes cache for blacklist
 const featureToggleCache = new Map();
 let featureToggleCacheLastUpdated = 0;
 
@@ -42,10 +53,31 @@ const FEATURE_HIERARCHY = {
             leaderboard: '群組排行榜'
         }
     },
-    // 獨立功能 (Admin Zone or Standalone)
+    economy: {
+        label: '經濟與RPG',
+        items: {
+            bank: '哭幣銀行 (簽到/轉帳/搶劫)',
+            rpg: 'RPG商店與裝備',
+            atonement: '懺悔與神明系統',
+            auction: '玩家拍賣場'
+        }
+    },
+    gambling: {
+        label: '賭場與博弈',
+        items: {
+            casino: '哭霸娛樂城總開關',
+            multiplayer: '多人賭桌 (21點/射龍門/百家樂等)',
+            slot: '老虎機',
+            dice: '十八啦',
+            roulette: '尊爵輪盤',
+            horse: '賽馬場',
+            worldcup: '運彩系統',
+            lottery: '抽獎系統'
+        }
+    },
     todo: {
         label: '待辦事項',
-        items: {} // No sub-items for now or simple on/off
+        items: {}
     }
 };
 
@@ -67,21 +99,31 @@ const LEGACY_MAP = {
     'image': 'entertainment.fun',
     'lottery': 'entertainment.fun',
     'ai': 'entertainment.voice',
-    'taigi': 'entertainment.voice'
+    'taigi': 'entertainment.voice',
+    
+    // Economy
+    'rpg': 'economy.rpg',
+    'bank': 'economy.bank',
+    'atonement': 'economy.atonement',
+    'auction': 'economy.auction',
+
+    // Gambling
+    'casino': 'gambling.casino',
+    'lottery': 'gambling.lottery',
+    'worldcup': 'gambling.worldcup'
 };
 
+let groupRefreshPromise = null;
 async function isGroupAuthorized(groupId) {
-    // 優化版: 改為事件驅動刷新,避免定期全量查詢
-
-    // 首次載入時載入所有群組 (修復條件)
     if (groupCache.cache.size === 0) {
-        await refreshGroupCache();
+        if (!groupRefreshPromise) {
+            groupRefreshPromise = refreshGroupCache().finally(() => {
+                groupRefreshPromise = null;
+            });
+        }
+        await groupRefreshPromise;
     }
-
-    const result = groupCache.has(groupId);
-
-    // 直接檢查快取
-    return result;
+    return groupCache.has(groupId);
 }
 
 // 新增: 事件驅動的快取刷新函式
@@ -124,15 +166,15 @@ async function refreshGroupCache() {
 }
 
 
-// Code Gen removed for brevity (keep existing import) but rewriting helper functions:
-
+/**
+ * P0-10 修復：使用 crypto.randomBytes() 產生密碼學安全的階次碼
+ * 取代不安全的 Math.random()
+ */
 function generateRandomCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let code = '';
-    for (let i = 0; i < 8; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return code;
+    return Array.from(crypto.randomBytes(8))
+        .map(b => chars[b % chars.length])
+        .join('');
 }
 
 async function createRegistrationCode(userId) {
@@ -160,12 +202,9 @@ async function registerGroup(code, groupId, userId) {
     const codeData = codeDoc.data();
     if (codeData.used) return { success: false, message: '❌ 此註冊碼已被使用' };
 
-    await codeRef.update({
-        used: true,
-        usedBy: groupId,
-        usedByUser: userId,
-        usedAt: Firestore.FieldValue.serverTimestamp()
-    });
+    // P0-3 修復：TOCTOU 原子防護
+    const lockResult = await attemptToLockCode(codeRef, codeDoc, groupId, userId);
+    if (!lockResult.success) return lockResult;
 
     // Initialize with Full Hierarchy Defaults (All ON)
     const initialFeatures = {
@@ -176,6 +215,14 @@ async function registerGroup(code, groupId, userId) {
         entertainment: {
             enabled: true,
             voice: true, fun: true, leaderboard: true
+        },
+        economy: {
+            enabled: true,
+            bank: true, rpg: true, atonement: true, auction: true
+        },
+        gambling: {
+            enabled: true,
+            casino: true, multiplayer: true, slot: true, dice: true, roulette: true, horse: true, worldcup: true, lottery: true
         },
         todo: {
             enabled: true
@@ -200,6 +247,24 @@ async function registerGroup(code, groupId, userId) {
     logger.info('[Auth] New group registered (cache updated incrementally)', { groupId });
 
     return { success: true, message: '✅ 群組授權成功！' };
+}
+
+/**
+ * 嘗試將 code 標記為「使用中」，防止 TOCTOU Race Condition
+ */
+async function attemptToLockCode(codeRef, codeDoc, groupId, userId) {
+    try {
+        await codeRef.update({
+            used: true,
+            usedBy: groupId,
+            usedByUser: userId,
+            usedAt: Firestore.FieldValue.serverTimestamp()
+        });
+        return { success: true };
+    } catch (err) {
+        logger.warn('[Auth] Code lock failed - possible duplicate request', { error: err.message });
+        return { success: false, message: '❌ 此註冊碼已被使用' };
+    }
 }
 
 /**
@@ -293,15 +358,7 @@ function isFeatureEnabled(groupId, featureKey) {
 async function isAdmin(userId) {
     if (userId === ADMIN_USER_ID) return true;
 
-    if (adminCache.isExpired()) {
-        try {
-            const snapshot = await db.collection('admins').get();
-            adminCache.update(snapshot.docs.map(doc => doc.id));
-            logger.info('[Admin] Admin list reloaded', { count: adminCache.cache.size });
-        } catch (error) {
-            logger.error('[Admin] Failed to load admin list', error);
-        }
-    }
+    await adminCache.ensureFresh();
 
     return adminCache.has(userId);
 }
@@ -338,15 +395,7 @@ async function isBlacklisted(userId) {
     // Super Admin cannot be blacklisted
     if (userId === ADMIN_USER_ID) return false;
 
-    if (blacklistCache.isExpired()) {
-        try {
-            const snapshot = await db.collection('blacklist').get();
-            blacklistCache.update(snapshot.docs.map(doc => doc.id));
-            logger.info('[Auth] Blacklist reloaded', { count: blacklistCache.cache.size });
-        } catch (error) {
-            logger.error('[Auth] Failed to load blacklist', error);
-        }
-    }
+    await blacklistCache.ensureFresh();
     return blacklistCache.has(userId);
 }
 

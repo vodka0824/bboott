@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: line-bot-app
+    restart: always
+    environment:
+      - PORT=8080
+      - MONGODB_URI=mongodb://db:27017/linebot
+      # --- 本地 URL 設定 ---
+      - BASE_URL=${BASE_URL}
+      # --- LINE 設定 ---
+      - LINE_TOKEN=${LINE_TOKEN}
+      - ADMIN_USER_ID=${ADMIN_USER_ID}
+      - GEMINI_KEY=${GEMINI_KEY}
+      - GOOGLE_DRIVE_API_KEY=${GOOGLE_DRIVE_API_KEY}
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./public:/app/public
+    depends_on:
+      - db
+
+  db:
+    image: mongo:latest
+    container_name: line-bot-db
+    restart: always
+    volumes:
+      - ./mongo-data:/data/db
+
+# 專案已改為 100% 完全本地化部署，不依賴任何外部雲端儲存空間。

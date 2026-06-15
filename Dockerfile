@@ -1,25 +1,37 @@
 FROM node:20-slim
 
-# Install latest chrome dev package and fonts to support major charsets (Chinese, Japanese, Arabic, Hebrew, Thai and a few others)
-# Note: this installs the necessary libs to make the bundled version of Chromium that Puppeteer
-# installs, work.
-RUN apt-get update \
-    && apt-get install -y wget gnupg \
-    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/googlechrome-linux-keyring.gpg \
-    && sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/googlechrome-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
-    && apt-get update \
-    && apt-get install -y google-chrome-stable fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 --no-install-recommends \
-    && rm -rf /var/lib/apt/lists/*
+# 為 OCI Always Free ARM 最佳化的輕量化 Dockerfile
+# 如果後續需要 Puppeteer，請在安裝時額外加入 chromium
 
 WORKDIR /app
 
+# 先複製依賴設定，利用 Docker layers 快取
 COPY package*.json ./
-# Puppeteer installation note:
-# Puppeteer by default installs a local copy of Chromium. 
-# We rely on this behavior.
-RUN npm install --production
 
+# 安裝生產環境依賴
+RUN npm ci --only=production
+
+# 安裝 Chromium 以支援 Puppeteer
+RUN apt-get update && apt-get install -y \
+    chromium \
+    fonts-ipafont-gothic fonts-wqy-zenhei fonts-thai-tlwg fonts-kacst fonts-freefont-ttf libxss1 \
+    --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
+# 複製其餘程式碼
 COPY . .
 
+# 建立非 root 用戶以增加安全性 (P0-8 修復)
+RUN groupadd -r pptruser && useradd -r -g pptruser -G audio,video pptruser \
+    && mkdir -p /home/pptruser/Downloads \
+    && chown -R pptruser:pptruser /home/pptruser \
+    && chown -R pptruser:pptruser /app
+
+# 切換到非 root 用戶
+USER pptruser
+
+# LINE Bot 預設端口
 EXPOSE 8080
+
+# 啟動命令
 CMD ["npm", "start"]

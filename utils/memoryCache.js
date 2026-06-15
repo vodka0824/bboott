@@ -1,59 +1,47 @@
 /**
- * LRU Memory Cache with TTL support
- * 用於減少 Firestore 讀取與外部 API 呼叫，提升回應速度並降低 Cloud Run CPU 使用
+ * Unified Cache System (LRU Memory + Redis Adapter)
+ * 保留同步 API (.get, .set, .delete) 以相容舊程式碼
+ * 提供非同步 API (.getAsync, .setAsync, .deleteAsync) 供全域狀態或需要 Redis 分散式的場景使用
  */
 
 class LRUCache {
-    /**
-     * @param {number} maxSize - 最大快取項目數（預設 100）
-     */
-    constructor(maxSize = 100) {
+    constructor(maxSize = 2000) {
         this.cache = new Map();
         this.maxSize = maxSize;
         this.hits = 0;
         this.misses = 0;
     }
 
-    /**
-     * 取得快取值
-     * @param {string} key - 快取鍵值
-     * @returns {*} 快取的值，若不存在或過期則返回 null
-     */
-    get(key) {
+    get(key, allowStale = false) {
         if (!this.cache.has(key)) {
             this.misses++;
             return null;
         }
 
         const item = this.cache.get(key);
-
-        // 檢查是否過期
         if (Date.now() > item.expiry) {
+            if (allowStale) {
+                this.misses++;
+                return { value: item.value, isStale: true };
+            }
             this.cache.delete(key);
             this.misses++;
             return null;
         }
 
-        // LRU: 移到最後（最近使用）
         this.cache.delete(key);
         this.cache.set(key, item);
         this.hits++;
+        
+        if (allowStale) return { value: item.value, isStale: false };
         return item.value;
     }
 
-    /**
-     * 設定快取值
-     * @param {string} key - 快取鍵值
-     * @param {*} value - 要快取的值
-     * @param {number} ttlSeconds - 存活時間（秒），預設 300 秒（5 分鐘）
-     */
     set(key, value, ttlSeconds = 300) {
-        // 如果已存在,先刪除(更新)
         if (this.cache.has(key)) {
             this.cache.delete(key);
         }
 
-        // 如果超過最大容量,淘汰最舊的項目(第一個)
         if (this.cache.size >= this.maxSize) {
             const firstKey = this.cache.keys().next().value;
             this.cache.delete(firstKey);
@@ -65,42 +53,87 @@ class LRUCache {
         });
     }
 
-    /**
-     * 刪除快取項目
-     * @param {string} key - 快取鍵值
-     */
     delete(key) {
         this.cache.delete(key);
     }
 
-    /**
-     * 清除所有快取
-     */
     clear() {
         this.cache.clear();
         this.hits = 0;
         this.misses = 0;
     }
+}
 
-    /**
-     * 取得快取統計資訊
-     * @returns {object} 統計資訊
-     */
-    getStats() {
-        const total = this.hits + this.misses;
-        const hitRate = total > 0 ? (this.hits / total * 100).toFixed(2) : 0;
+let redisClient = null;
+let useRedis = false;
 
-        return {
-            size: this.cache.size,
-            maxSize: this.maxSize,
-            hits: this.hits,
-            misses: this.misses,
-            hitRate: `${hitRate}%`
-        };
+if (process.env.REDIS_URL) {
+    try {
+        const { createClient } = require('redis');
+        redisClient = createClient({ url: process.env.REDIS_URL });
+        redisClient.on('error', (err) => console.error('[Redis Error]', err));
+        redisClient.connect().then(() => {
+            console.log('✅ Connected to Redis');
+            useRedis = true;
+        }).catch(err => {
+            console.error('❌ Failed to connect to Redis, falling back to LRU Cache:', err);
+        });
+    } catch (e) {
+        console.warn('⚠️ Redis module not found or failed to initialize, falling back to LRU Cache.');
     }
 }
 
-// 建立全域單例實例 (容量從 100 調整至 200 以支援延長的 TTL)
-const memoryCache = new LRUCache(200);
+const localCache = new LRUCache(2000);
 
-module.exports = memoryCache;
+const cacheInterface = {
+    // 原始同步 API (僅操作本機記憶體)
+    get: (key, allowStale = false) => localCache.get(key, allowStale),
+    set: (key, value, ttlSeconds = 300) => localCache.set(key, value, ttlSeconds),
+    delete: (key) => localCache.delete(key),
+    clear: () => localCache.clear(),
+    get cache() { return localCache.cache; }, // 讓某些偷吃步直接用 .has 的檔案不出錯
+
+    // 擴充非同步 API (若有 Redis 則使用 Redis，否則使用本機記憶體)
+    async getAsync(key, allowStale = false) {
+        if (useRedis && redisClient) {
+            try {
+                const data = await redisClient.get(key);
+                if (data === null) return null;
+                const parsed = JSON.parse(data);
+                if (allowStale) return { value: parsed, isStale: false };
+                return parsed;
+            } catch (e) {
+                console.error('[Redis Get Error]', e);
+                return localCache.get(key, allowStale);
+            }
+        }
+        return localCache.get(key, allowStale);
+    },
+
+    async setAsync(key, value, ttlSeconds = 300) {
+        if (useRedis && redisClient) {
+            try {
+                const data = JSON.stringify(value);
+                await redisClient.setEx(key, ttlSeconds, data);
+                return;
+            } catch (e) {
+                console.error('[Redis Set Error]', e);
+            }
+        }
+        localCache.set(key, value, ttlSeconds);
+    },
+
+    async deleteAsync(key) {
+        if (useRedis && redisClient) {
+            try {
+                await redisClient.del(key);
+                return;
+            } catch (e) {
+                console.error('[Redis Delete Error]', e);
+            }
+        }
+        localCache.delete(key);
+    }
+};
+
+module.exports = cacheInterface;

@@ -127,6 +127,20 @@ const RATE_LIMITS = {
     // 圖片功能 - 防止濫用
     image: { limit: 10, window: 60000 },       // 圖片每分鐘 10 次
 
+    // 遊戲功能
+    slot: { limit: 1, window: 60000 },         // 拉霸每人每分鐘 1 次
+
+    // 賭場遊戲冷卻 (每 30 秒 1 次)
+    casino_slot:     { limit: 1, window: 30000 },
+    casino_dice:     { limit: 1, window: 30000 },
+    casino_blackjack:{ limit: 1, window: 30000 },
+    casino_baccarat: { limit: 1, window: 30000 },
+    casino_horse:    { limit: 1, window: 30000 },
+    casino_roulette: { limit: 1, window: 30000 },
+    casino_vipwheel: { limit: 1, window: 30000 },
+    casino_lottery:  { limit: 1, window: 30000 },
+    casino_enchant:  { limit: 1, window: 30000 },
+
     // 管理功能
     admin: { limit: 20, window: 60000 },       // 管理指令每分鐘 20 次
 
@@ -142,10 +156,33 @@ function checkLimit(userId, actionType) {
     return checkRateLimit(userId, actionType, config.limit, config.window);
 }
 
+/**
+ * 取得冷卻剩餘秒數（用於向玩家提示）
+ * @param {string} userId
+ * @param {string} gameKey - 例如 'casino_slot'
+ * @returns {number} 剩餘秒數，0 表示可以操作
+ */
+function getCooldownRemaining(userId, gameKey) {
+    const config = RATE_LIMITS[gameKey];
+    if (!config) return 0;
+
+    const key = `${userId}:${gameKey}`;
+    const now = Date.now();
+    const userActions = (rateLimitStore.get(key) || []).filter(t => now - t < config.window);
+
+    if (userActions.length >= config.limit && userActions.length > 0) {
+        const oldestInWindow = userActions[0]; // 修復 W-15: 最舊的時間戳在索引 0
+        const remaining = Math.ceil((config.window - (now - oldestInWindow)) / 1000);
+        return Math.max(0, remaining);
+    }
+    return 0;
+}
+
 module.exports = {
     checkRateLimit,
     getRemainingQuota,
     resetRateLimit,
     checkLimit,
+    getCooldownRemaining,
     RATE_LIMITS
 };

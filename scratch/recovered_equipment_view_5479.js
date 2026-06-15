@@ -1,0 +1,36 @@
+# 任務清單 - Flex 訊息總資產與冷卻時間升級
+
+- `[ ]` 1. 👮 警政黑幫系統 (`handlers/police.js`)
+  - `[ ]` 1.1 修改 `handleAssassinatePolice` 失敗分支回傳 `newBalance`
+  - `[ ]` 1.2 在暗殺成功與失敗的 Flex 卡片加上結算總資產
+- `[ ]` 2. 🔒 監獄系統 (`handlers/jail.js`)
+  - `[ ]` 2.1 修改 `confirmBail` (自己交保) 交易與 Flex，加入結算總資產
+  - `[ ]` 2.2 修改 `confirmBailOther` (保釋他人) 交易與 Flex，加入付款人結算總資產
+  - `[ ]` 2.3 修改 `handleJailbreak` 失敗 Flex，加上 10 分鐘冷卻時間提示
+  - `[ ]` 2.4 修改 `handleDropSoap` 交易與 Flex，成功加上結算總資產，成功/失敗加上 10 分鐘冷卻時間提示
+  - `[ ]` 2.5 修改 `handleLabor` 交易與 Flex，有摸到錢時加上結算總資產，且不論結果加上 5 分鐘冷卻時間提示
+  - `[ ]` 2.6 修改 `handleVisit` (探監) 交易與 Flex，成功/失敗皆加上付款人結算總資產
+  - `[ ]` 2.7 修改 `confirmBribe` (賄賂) 交易與 Flex，成功/失敗皆加上結算總資產
+- `[ ]` 3. 🦹‍♂️ 搶劫偷竊系統 (`handlers/robberyHandler.js`)
+  - `[ ]` 3.1 修改 `executeRobTransaction` 回傳 `newFromBalance`, `newTargetBalance` 與 `cooldownMs`
+  - `[ ]` 3.2 修改 `buildRobResultBubble`，在所有卡片中加上冷卻時間提示
+  - `[ ]` 3.3 修改 `buildRobResultBubble`，在有財產增減的卡片中加上搶劫者/被搶者的結算總資產
+- `[ ]` 4. 🏦 經濟與議員系統 (`handlers/economy.js`)
+  - `[ ]` 4.1 修改 `dailyCheckIn` (每日簽到) Flex，調整總餘額文字並加上跨日冷卻時間提示
+  - `[ ]` 4.2 修改 `begCoin` (乞討) Flex，調整餘額文字並加上跨日冷卻時間提示
+  - `[ ]` 4.3 修改 `handleHarvestLeeks` (收割韭菜) Flex，調整餘額文字並加上 24 小時冷卻時間提示
+  - `[ ]` 4.4 修改 `handleRigBidding` (議員圍標) 餘額計算，在 Flex 中顯示結算總資產與 12 小時冷卻提示
+  - `[ ]` 4.5 修改 `handleEmbezzle` (議員詐領) 餘額計算，在 Flex 中顯示結算總資產與 2 小時冷卻提示
+- `[ ]` 5. ⚒️ 皇家裝備店 (`handlers/equipment.js`)
+  - `[ ]` 5.1 修改 `buyEquipmentPostback` 交易與 Flex，加上結算總資產
+  - `[ ]` 5.2 修改 `buyScrollsPostback` 交易與 Flex，加上結算總資產
+  - `[ ]` 5.3 修改 `buyAndSafeEnchantPostback` 交易回傳 `newBalance`
+  - `[ ]` 5.4 修改 `buildSingleEnchantBubble`，新增 `newBalance` 參數並在卡片中顯示總資產
+- `[ ]` 6. 🎰 21點 遊戲優化 (`handlers/blackjack.js`)
+  - `[ ]` 6.1 修改 `startGame` 以儲存 `newBalanceAfterBet` 到 active game 之中
+  - `[ ]` 6.2 修改 `stand` 及停牌/爆牌邏輯，計算 `finalBalance`
+  - `[ ]` 6.3 修改 `buildBlackjackFlex` 顯示結算總資產
+- `[ ]` 7. 🧪 測試與驗證
+  - `[ ]` 7.1 本地語法檢測 `node --check`
+  - `[ ]` 7.2 執行 Flex JSON Schema 驗證模擬
+  - `[ ]` 7.3 撰寫 `walkthrough.md`

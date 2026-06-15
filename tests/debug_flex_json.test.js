@@ -6,7 +6,7 @@ process.env.GOOGLE_CLOUD_PROJECT = 'dummy_project';
 process.env.CHANNEL_ACCESS_TOKEN = 'dummy_token'; // Used in line.js
 
 // Mock Dependencies
-jest.mock('../utils/firestore', () => ({
+jest.mock('../utils/db', () => ({
     db: {
         collection: jest.fn(() => ({
             doc: jest.fn(() => ({

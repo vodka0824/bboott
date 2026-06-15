@@ -4,6 +4,8 @@
 const authUtils = require('./auth');
 const { handleError } = require('./errorHandler');
 
+const routeMiddlewares = require('../middlewares/routeChecks');
+
 class CommandRouter {
     constructor() {
         this.routes = [];
@@ -33,6 +35,13 @@ class CommandRouter {
         const { isGroup, isAuthorizedGroup, isSuper, groupId } = context;
 
         for (const route of this.routes) {
+            // 0. Keyword Fast-Path 檢查
+            if (route.options.keywords && route.options.keywords.length > 0) {
+                // 若 message 不包含任何一個 keyword，則直接跳過此路由
+                const hasKeyword = route.options.keywords.some(k => message.includes(k));
+                if (!hasKeyword) continue;
+            }
+
             // 1. 匹配檢查
             let match = null;
             if (typeof route.pattern === 'string') {
@@ -46,37 +55,36 @@ class CommandRouter {
             if (!match) continue;
             console.log(`[Router] Match found for "${message}": ${route.pattern}`);
 
-            // 2. 條件檢查
-            const { isGroupOnly, needAuth, adminOnly, feature, allowDM } = route.options;
+            // Middleware Pipeline
+            const pipeline = [
+                routeMiddlewares.checkDMMW,
+                routeMiddlewares.checkBasicAuthMW,
+                routeMiddlewares.checkFeatureToggleMW,
+                routeMiddlewares.checkCasinoMW,
+                routeMiddlewares.checkStatusBlockMW,
+                routeMiddlewares.checkJailMW,
+                routeMiddlewares.checkAdminMW
+            ];
 
-            // 超級管理員可以在私訊使用所有功能（除非明確禁止）
-            if (isSuper && !isGroup) {
-                // 繼續執行，超級管理員在私訊豁免所有檢查
-            } else {
-                // 一般用戶的檢查
-                if (isGroupOnly && !isGroup) continue;
-                if (needAuth && isGroup && !isAuthorizedGroup) continue;
-
-                // 私訊檢查：非超級管理員且不在 allowDM 白名單
-                if (!isGroup && !allowDM) continue;
-            }
-
-            if (adminOnly && !isSuper) continue;
-
-            // 3. 功能開關檢查（僅群組）
-            if (feature && isGroup && isAuthorizedGroup) {
-                // 檢查功能是否被停用
-                const featureEnabled = await authUtils.isFeatureEnabled(groupId, feature);
-                if (!featureEnabled) {
-                    continue;
+            let isBlocked = false;
+            for (const mw of pipeline) {
+                if (await mw(context, message, route)) {
+                    isBlocked = true;
+                    break;
                 }
             }
+            if (isBlocked) continue;
 
-            // 4. 管理員檢查 (Lazy Check)
-            const { needAdmin } = route.options;
-            if (needAdmin) {
-                const isAdmin = await authUtils.isAdmin(context.userId);
-                if (!isAdmin) continue;
+            // Optional Route-specific Middlewares
+            if (route.options.middlewares && Array.isArray(route.options.middlewares)) {
+                let customBlocked = false;
+                for (const mw of route.options.middlewares) {
+                    if (await mw(context, message, route)) {
+                        customBlocked = true;
+                        break;
+                    }
+                }
+                if (customBlocked) continue;
             }
 
             // 5. 執行處理
@@ -94,12 +102,25 @@ class CommandRouter {
     }
     /**
      * 註冊 Postback 處理
-     * @param {Function} predicate 判斷函式 (data) => boolean
+     * @param {string|Function} predicate 判斷字串或函式 (data) => boolean
      * @param {Function} handler 處理函式 (context) => Promise<void>
      */
     registerPostback(predicate, handler) {
         if (!this.postbackRoutes) this.postbackRoutes = [];
-        this.postbackRoutes.push({ predicate, handler });
+        
+        let finalPredicate = predicate;
+        if (typeof predicate === 'string') {
+            finalPredicate = (data) => {
+                try {
+                    const params = new URLSearchParams(data);
+                    return params.get('action') === predicate;
+                } catch (e) {
+                    return false;
+                }
+            };
+        }
+        
+        this.postbackRoutes.push({ predicate: finalPredicate, handler });
     }
 
     /**

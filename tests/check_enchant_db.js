@@ -1,4 +1,4 @@
-const { db } = require('../utils/firestore');
+const { db } = require('../utils/db');
 
 async function checkDB() {
     try {

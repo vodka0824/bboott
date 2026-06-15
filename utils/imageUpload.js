@@ -1,11 +1,9 @@
-const { Storage } = require('@google-cloud/storage');
+const fs = require('fs');
+const path = require('path');
 const axios = require('axios');
 const sizeOf = require('image-size');
-const logger = require('./logger'); // Added logger import
-const storage = new Storage();
+const logger = require('./logger');
 
-// 使用專案 ID 作為 bucket 名稱（Cloud Run 會自動創建）
-const BUCKET_NAME = process.env.GCS_BUCKET_NAME || 'my-line-bot-482407_cloudbuild';
 const LINE_CONTENT_API = 'https://api-data.line.me/v2/bot/message';
 
 /**
@@ -25,25 +23,27 @@ async function downloadImageFromLine(messageId, lineToken) {
 }
 
 /**
- * 上傳圖片到 Firebase Storage
+ * 儲存圖片，並回傳可存取的公開 URL (改用公開圖床 Catbox 避免 ngrok 攔截)
  */
 async function uploadToStorage(buffer, destination) {
-    const bucket = storage.bucket(BUCKET_NAME);
-    const file = bucket.file(destination);
+    try {
+        const FormData = require('form-data');
+        const form = new FormData();
+        form.append('reqtype', 'fileupload');
+        form.append('fileToUpload', buffer, { filename: 'welcome_image.jpg', contentType: 'image/jpeg' });
 
-    await file.save(buffer, {
-        metadata: {
-            contentType: 'image/jpeg',
-            cacheControl: 'public, max-age=31536000'
-        }
-    });
-
-    // 設定為公開可讀
-    await file.makePublic();
-
-    // 取得公開 URL
-    const publicUrl = `https://storage.googleapis.com/${BUCKET_NAME}/${destination}`;
-    return publicUrl;
+        const response = await axios.post('https://catbox.moe/user/api.php', form, {
+            headers: form.getHeaders(),
+            timeout: 30000
+        });
+        
+        const publicUrl = response.data;
+        logger.info(`[ImageUpload] Successfully uploaded to Catbox: ${publicUrl}`);
+        return publicUrl;
+    } catch (error) {
+        logger.error('[ImageUpload] Upload error:', error);
+        throw error;
+    }
 }
 
 /**
@@ -51,36 +51,30 @@ async function uploadToStorage(buffer, destination) {
  */
 async function processWelcomeImage(messageId, groupId, lineToken) {
     try {
-        logger.info(`[ImageUpload] Processing welcome image for group ${groupId}`);
+        logger.info(`[ImageUpload] Processing welcome image for group ${groupId} (Local)`);
 
-        // 1. 從 LINE 下載圖片
         const imageBuffer = await downloadImageFromLine(messageId, lineToken);
 
-        // 檢查檔案大小（10MB 限制）
         const MAX_SIZE = 10 * 1024 * 1024;
         if (imageBuffer.length > MAX_SIZE) {
             return { success: false, error: '圖片檔案過大（最大 10MB）' };
         }
 
-        // 2. 生成檔案路徑
         const currentPath = `welcome-images/${groupId}/current.jpg`;
 
-        // 3. 計算圖片比例
-        let aspectRatio = '1:1'; // Default
+        let aspectRatio = '1:1';
         try {
             const dimensions = sizeOf(imageBuffer);
             if (dimensions && dimensions.width && dimensions.height) {
-                // Ensure integers and format as W:H
                 aspectRatio = `${Math.round(dimensions.width)}:${Math.round(dimensions.height)}`;
             }
         } catch (e) {
             logger.warn('[ImageUpload] Failed to calculate aspect ratio', e);
         }
 
-        // 4. 上傳到 Storage
         const publicUrl = await uploadToStorage(imageBuffer, currentPath);
 
-        logger.info(`[ImageUpload] Successfully uploaded to ${publicUrl}`);
+        logger.info(`[ImageUpload] Successfully uploaded locally: ${publicUrl}`);
         return { success: true, url: publicUrl, aspectRatio: aspectRatio };
     } catch (error) {
         logger.error('[ImageUpload] Error', error);

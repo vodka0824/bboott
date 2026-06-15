@@ -1,5 +1,5 @@
 const todoHandler = require('../handlers/todo.js');
-const { db } = require('../utils/firestore');
+const { db } = require('../utils/db');
 
 // Mock Firestore
 // We need to mock the entire structure to test logic without real DB if possible,
@@ -47,7 +47,7 @@ const Firestore = { FieldValue: { arrayUnion: (item) => item } };
 `;
 
 // Replace require
-handlerCode = handlerCode.replace("const { db, Firestore } = require('../utils/firestore');", mockDbCode);
+handlerCode = handlerCode.replace("const { db, Firestore } = require('../utils/db');", mockDbCode);
 
 // Fix module.exports to only export what we need or just eval it
 // Let's write to `tests/temp_todo_handler.js`

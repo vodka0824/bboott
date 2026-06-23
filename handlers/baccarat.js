@@ -118,33 +118,33 @@ async function playBaccarat(replyToken, groupId, userId, betTargetStr, amountStr
             resultColor = flexUtils.COLORS.WIN;
             resultText = (isTie ? '🤝 押中和局！' : '🎉 贏了！') + taxMsg;
         } else if (isPush) {
-            resultColor = '#FF9800';
+            resultColor = flexUtils.COLORS.SECONDARY;
             resultText = '🤝 和局退款';
         }
 
         const betLabels = { banker: '莊家', player: '閒家', tie: '和局' };
 
         const contents = [
-            flexUtils.createText({ text: '🃏 皇家百家樂', size: 'xl', weight: 'bold', color: '#FFD700', align: 'center', margin: 'md' }),
+            flexUtils.createText({ text: '🃏 皇家百家樂', size: 'xl', weight: 'bold', color: flexUtils.COLORS.PRIMARY, align: 'center', margin: 'md' }),
             flexUtils.createSeparator('md'),
 
             // 莊家區
-            flexUtils.createText({ text: '🏦 莊家', size: 'sm', weight: 'bold', color: '#AAAAAA', margin: 'lg' }),
+            flexUtils.createText({ text: '🏦 莊家', size: 'sm', weight: 'bold', color: flexUtils.COLORS.TEXT_SUB, margin: 'lg' }),
             flexUtils.createText({
                 text: `${randSuit()} ${randSuit()}  →  ${points.banker} 點`,
                 size: 'xl', weight: 'bold',
-                color: outcome.key === 'banker' ? '#FFD700' : '#FFFFFF',
+                color: outcome.key === 'banker' ? flexUtils.COLORS.PRIMARY : flexUtils.COLORS.TEXT_MAIN,
                 align: 'center', margin: 'sm'
             }),
 
             flexUtils.createSeparator('md'),
 
             // 閒家區
-            flexUtils.createText({ text: '🧑 閒家', size: 'sm', weight: 'bold', color: '#AAAAAA', margin: 'md' }),
+            flexUtils.createText({ text: '🧑 閒家', size: 'sm', weight: 'bold', color: flexUtils.COLORS.TEXT_SUB, margin: 'md' }),
             flexUtils.createText({
                 text: `${randSuit()} ${randSuit()}  →  ${points.player} 點`,
                 size: 'xl', weight: 'bold',
-                color: outcome.key === 'player' ? '#FFD700' : '#FFFFFF',
+                color: outcome.key === 'player' ? flexUtils.COLORS.PRIMARY : flexUtils.COLORS.TEXT_MAIN,
                 align: 'center', margin: 'sm'
             }),
 
@@ -153,11 +153,11 @@ async function playBaccarat(replyToken, groupId, userId, betTargetStr, amountStr
             // 結果區
             flexUtils.createText({
                 text: `勝利方：${outcome.label}`,
-                size: 'lg', weight: 'bold', color: '#FFFFFF', align: 'center', margin: 'md'
+                size: 'lg', weight: 'bold', color: flexUtils.COLORS.TEXT_MAIN, align: 'center', margin: 'md'
             }),
             flexUtils.createText({
                 text: `你押注：${betLabels[betKey]}`,
-                size: 'sm', color: '#AAAAAA', align: 'center', margin: 'sm'
+                size: 'sm', color: flexUtils.COLORS.TEXT_SUB, align: 'center', margin: 'sm'
             }),
             flexUtils.createText({
                 text: resultText,
@@ -168,18 +168,18 @@ async function playBaccarat(replyToken, groupId, userId, betTargetStr, amountStr
         if (isWin) {
             contents.push(flexUtils.createText({
                 text: `獲得: +${winAmount.toLocaleString()} 哭幣`,
-                size: 'md', weight: 'bold', color: '#FFD700', align: 'center', margin: 'sm'
+                size: 'md', weight: 'bold', color: flexUtils.COLORS.PRIMARY, align: 'center', margin: 'sm'
             }));
         }
 
         contents.push(flexUtils.createText({
             text: `目前餘額: ${finalBalance.toLocaleString()}`,
-            size: 'xs', color: '#666666', align: 'center', margin: 'lg'
+            size: 'xs', color: flexUtils.COLORS.TEXT_MUTED, align: 'center', margin: 'lg'
         }));
 
         const bubble = flexUtils.createBubble({
             size: 'kilo',
-            body: flexUtils.createBox('vertical', contents, { backgroundColor: '#1A1A2E', paddingAll: 'xl' })
+            body: flexUtils.createBox('vertical', contents, { backgroundColor: flexUtils.COLORS.BG_CARD, paddingAll: 'xl' })
         });
 
         await lineUtils.replyFlex(replyToken, `百家樂：${outcome.label}獲勝`, bubble);

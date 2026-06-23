@@ -1,3 +1,4 @@
+const flexUtils = require('../utils/flex');
 /**
  * iTaigi 台語查詢模組
  */
@@ -61,8 +62,8 @@ function buildTaigiFlex(keyword, results) {
                 contents: [
                     { type: "text", text: "🗣️ iTaigi 台語辭典", weight: "bold", size: "lg", color: "#E65100" },
                     { type: "separator", margin: "md" },
-                    { type: "text", text: `查無「${keyword}」的台語發音`, size: "sm", color: "#666666", margin: "md", wrap: true },
-                    { type: "text", text: "請嘗試其他關鍵字", size: "xs", color: "#AAAAAA", margin: "sm" }
+                    { type: "text", text: `查無「${keyword}」的台語發音`, size: "sm", color: flexUtils.COLORS.TEXT_MUTED, margin: "md", wrap: true },
+                    { type: "text", text: "請嘗試其他關鍵字", size: "xs", color: flexUtils.COLORS.TEXT_SUB, margin: "sm" }
                 ],
                 paddingAll: "15px"
             }
@@ -77,7 +78,7 @@ function buildTaigiFlex(keyword, results) {
             type: "box",
             layout: "vertical",
             contents: [
-                { type: "text", text: `${keyword} 的台語唸法`, size: "sm", color: "#FFFFFF" }
+                { type: "text", text: `${keyword} 的台語唸法`, size: "sm", color: flexUtils.COLORS.TEXT_MAIN }
             ],
             backgroundColor: "#E65100",
             paddingAll: "12px"
@@ -86,7 +87,7 @@ function buildTaigiFlex(keyword, results) {
             type: "box",
             layout: "vertical",
             contents: [
-                { type: "text", text: "拼音", size: "xs", color: "#AAAAAA" },
+                { type: "text", text: "拼音", size: "xs", color: flexUtils.COLORS.TEXT_SUB },
                 { type: "text", text: `${r.hanzi}(${r.romanization})`, size: "xl", weight: "bold", color: "#333333", margin: "sm", wrap: true }
             ],
             paddingAll: "15px",
@@ -117,7 +118,7 @@ function buildTaigiFlex(keyword, results) {
                         uri: `https://itaigi.tw/chhoe?q=${encodeURIComponent(keyword)}`
                     },
                     style: "link",
-                    color: "#888888",
+                    color: flexUtils.COLORS.TEXT_MUTED,
                     height: "sm"
                 }
             ],
@@ -171,7 +172,7 @@ async function handleTaigi(replyToken, message) {
                 type: 'box',
                 layout: 'vertical',
                 contents: [
-                    { type: 'text', text: '🗣️ 愛呆丸講台語', weight: 'bold', size: 'md', color: '#FFFFFF' }
+                    { type: 'text', text: '🗣️ 愛呆丸講台語', weight: 'bold', size: 'md', color: flexUtils.COLORS.TEXT_MAIN }
                 ],
                 backgroundColor: '#E65100',
                 paddingAll: '12px'
@@ -180,7 +181,7 @@ async function handleTaigi(replyToken, message) {
                 type: 'box',
                 layout: 'vertical',
                 contents: [
-                    { type: 'text', text: `查詢: ${keyword}`, size: 'sm', color: '#888888' },
+                    { type: 'text', text: `查詢: ${keyword}`, size: 'sm', color: flexUtils.COLORS.TEXT_MUTED },
                     { type: 'separator', margin: 'md' },
                     ...displayResults.map((r, i) => ({
                         type: 'box',
@@ -189,7 +190,7 @@ async function handleTaigi(replyToken, message) {
                         contents: [
                             { type: 'text', text: `${i + 1}.`, size: 'sm', color: '#E65100', flex: 1 },
                             { type: 'text', text: r.hanzi, size: 'sm', weight: 'bold', flex: 3 },
-                            { type: 'text', text: r.romanization, size: 'sm', color: '#666666', flex: 4 }
+                            { type: 'text', text: r.romanization, size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, flex: 4 }
                         ]
                     }))
                 ],
@@ -199,7 +200,7 @@ async function handleTaigi(replyToken, message) {
                 type: 'box',
                 layout: 'vertical',
                 contents: [
-                    { type: 'text', text: '⬇️ 以下為發音音檔', size: 'xs', color: '#AAAAAA', align: 'center' }
+                    { type: 'text', text: '⬇️ 以下為發音音檔', size: 'xs', color: flexUtils.COLORS.TEXT_SUB, align: 'center' }
                 ],
                 paddingAll: '8px'
             }

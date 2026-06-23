@@ -1,6 +1,8 @@
 
+process.env.CHANNEL_ACCESS_TOKEN = 'dummy_token';
+process.env.ADMIN_USER_ID = 'dummy_admin';
+
 const todoHandler = require('../handlers/todo');
-const flexUtils = require('../utils/flex');
 
 // Mock dependencies
 jest.mock('../utils/db', () => ({
@@ -28,8 +30,8 @@ describe('Debug Todo Flex', () => {
         console.log('--- FLEX JSON END ---');
 
         expect(bubble).toBeDefined();
-        expect(bubble.type).toBe('bubble');
-        expect(bubble.body.type).toBe('box');
+        expect(bubble.type).toBe('carousel');
+        expect(bubble.contents).toBeDefined();
 
         // Deep inspection for valid properties only
         const traverse = (node) => {

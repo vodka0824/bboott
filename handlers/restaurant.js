@@ -1,3 +1,4 @@
+const flexUtils = require('../utils/flex');
 /**
  * 餐廳搜尋模組
  */
@@ -95,7 +96,7 @@ function buildRestaurantFlex(restaurants, address) {
                         layout: 'horizontal',
                         contents: [
                             { type: 'text', text: `⭐ ${r.rating}`, size: 'sm', color: '#FF8C00' },
-                            { type: 'text', text: `(${r.userRatingsTotal} 則)`, size: 'sm', color: '#888888' },
+                            { type: 'text', text: `(${r.userRatingsTotal} 則)`, size: 'sm', color: flexUtils.COLORS.TEXT_MUTED },
                             { type: 'text', text: priceText || '-', size: 'sm', align: 'end' }
                         ],
                         margin: 'sm'
@@ -104,7 +105,7 @@ function buildRestaurantFlex(restaurants, address) {
                         type: 'text',
                         text: r.vicinity,
                         size: 'xs',
-                        color: '#666666',
+                        color: flexUtils.COLORS.TEXT_MUTED,
                         wrap: true,
                         margin: 'sm'
                     },

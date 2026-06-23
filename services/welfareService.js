@@ -111,9 +111,12 @@ async function dailyCheckIn(replyToken, groupId, userId) {
     try {
         // 先在 Transaction 外取名字與屬性
         const memberName = await lineUtils.getGroupMemberName(groupId, userId);
-        const { getFinalPlayerStats } = require('./rpg');
+        const { getFinalPlayerStats } = require('../handlers/rpg');
         const stats = await getFinalPlayerStats(userId);
         const luk = stats.final.luk || 0;
+        
+        const { getMafiaBoss } = require('../handlers/profession');
+        const mafiaBoss = await getMafiaBoss();
         
         const result = await db.runTransaction(async (t) => {
             const { docRef, data } = await getUserProfile(t, userId, memberName);
@@ -155,23 +158,80 @@ async function dailyCheckIn(replyToken, groupId, userId) {
             let pension = 0;
             let rankName = '';
             if (data.militaryEnlistCount && data.militaryEnlistCount > 0) {
-                const { getMilitaryRankInfo } = require('./jail_redemption');
+                const { getMilitaryRankInfo } = require('./jailRedemptionService');
                 const rankInfo = getMilitaryRankInfo(data.militaryEnlistCount - 1);
                 pension = rankInfo.pension || 0;
                 rankName = rankInfo.name;
             }
 
-            const totalReward = reward + extraReward + lukBonus + pension;
+            const isPolice = data.isPolice === true;
+            const isCouncilor = data.councilorUntil && Date.now() < data.councilorUntil;
+            const isBoss = mafiaBoss && mafiaBoss.userId === userId;
+            const isMafia = data.isMafia || isBoss;
+            const isMilitary = data.militaryUntil && Date.now() < data.militaryUntil;
+            const isMonk = data.profession === 'monk';
+            const isTsmc = data.profession === 'tsmc';
+            
+            const isCivilian = !isPolice && !isCouncilor && !isMafia && !isMilitary && !isMonk && !isTsmc && pension === 0;
 
-            // 使用原子操作避免 Race Condition
-            t.update(docRef, {
-                kuCoin: db.FieldValue.increment(totalReward),
+            let rentSubsidy = 0;
+            if (isCivilian) {
+                rentSubsidy = 500000;
+            }
+
+            // 法師信徒供養金
+            let monkBonus = 0;
+            let followers = data.followers || 0;
+            if (isMonk && followers > 0) {
+                monkBonus = followers * 1000000;
+            }
+
+            // 台積電分紅
+            let tsmcBonus = 0;
+            let tsmcBase = 0;
+            let tsmcTitle = '';
+            let currentKpi = 0;
+
+            if (isTsmc) {
+                tsmcBase = 2000000; // 護國神山底薪 200萬
+                currentKpi = data.tsmcKpi || 0;
+                
+                if (currentKpi < 0) {
+                    tsmcTitle = '考績吃丙';
+                } else {
+                    tsmcBonus = currentKpi * 500000; // 每點 KPI 50萬
+                    if (currentKpi >= 100) tsmcTitle = '卷王工程師';
+                    else if (currentKpi > 0) tsmcTitle = '優秀工程師';
+                    else tsmcTitle = '平凡工程師';
+                }
+            }
+
+            const totalReward = reward + extraReward + lukBonus + pension + rentSubsidy + monkBonus + tsmcBase + tsmcBonus;
+
+            let deductAmount = 0;
+            let finalReward = totalReward;
+            if ((data.medicalDebt || 0) > 0) {
+                deductAmount = Math.min(totalReward, data.medicalDebt);
+                finalReward = totalReward - deductAmount;
+            }
+
+            const updates = {
+                kuCoin: db.FieldValue.increment(finalReward),
                 lastCheckIn: now.getTime(),
                 consecutiveDays: consecutiveDays,
                 displayName: memberName || data.displayName || data.name
-            });
+            };
+            if (deductAmount > 0) {
+                updates.medicalDebt = db.FieldValue.increment(-deductAmount);
+            }
+            if (isTsmc) {
+                updates.tsmcKpi = 0; // 每日結算後歸零
+            }
 
-            return { success: true, reward, extraReward, lukBonus, pension, rankName, consecutiveDays, totalReward, newBalance: (data.kuCoin || 0) + totalReward, name: memberName || data.displayName || data.name };
+            // 使用原子操作避免 Race Condition
+            t.update(docRef, updates);
+
+            return { success: true, reward, extraReward, lukBonus, pension, rankName, rentSubsidy, monkBonus, followers, tsmcBase, tsmcBonus, tsmcTitle, currentKpi, consecutiveDays, totalReward, finalReward, deductAmount, newBalance: (data.kuCoin || 0) + finalReward, name: memberName || data.displayName || data.name };
         });
 
         if (!result.success) {
@@ -186,7 +246,7 @@ async function dailyCheckIn(replyToken, groupId, userId) {
             flexUtils.createText({ text: `恭喜 ${result.name} !`, size: 'md', weight: 'bold', color: '#333333', align: 'center' }),
             flexUtils.createSeparator('md'),
             flexUtils.createBox('horizontal', [
-                flexUtils.createText({ text: `基本獲得`, size: 'sm', color: '#666666', align: 'start', flex: 1 }),
+                flexUtils.createText({ text: `基本獲得`, size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, align: 'start', flex: 1 }),
                 flexUtils.createText({ text: `+${result.reward.toLocaleString()} ${COIN_NAME}`, size: 'md', weight: 'bold', color: '#4CAF50', align: 'end', flex: 1 })
             ], { margin: 'md', alignItems: 'center' })
         ];
@@ -194,8 +254,8 @@ async function dailyCheckIn(replyToken, groupId, userId) {
         if (result.extraReward > 0) {
             bodyContents.push(
                 flexUtils.createBox('horizontal', [
-                    flexUtils.createText({ text: `🔥 連簽 ${result.consecutiveDays} 天`, size: 'sm', color: '#FF9800', align: 'start', flex: 1 }),
-                    flexUtils.createText({ text: `+${result.extraReward.toLocaleString()} ${COIN_NAME}`, size: 'md', weight: 'bold', color: '#FF9800', align: 'end', flex: 1 })
+                    flexUtils.createText({ text: `🔥 連簽 ${result.consecutiveDays} 天`, size: 'sm', color: flexUtils.COLORS.SECONDARY, align: 'start', flex: 1 }),
+                    flexUtils.createText({ text: `+${result.extraReward.toLocaleString()} ${COIN_NAME}`, size: 'md', weight: 'bold', color: flexUtils.COLORS.SECONDARY, align: 'end', flex: 1 })
                 ], { margin: 'sm', alignItems: 'center' })
             );
         }
@@ -218,6 +278,62 @@ async function dailyCheckIn(replyToken, groupId, userId) {
             );
         }
 
+        if (result.rentSubsidy > 0) {
+            bodyContents.push(
+                flexUtils.createBox('horizontal', [
+                    flexUtils.createText({ text: `🏠 平民租屋補助`, size: 'sm', color: '#00BCD4', align: 'start', flex: 1 }),
+                    flexUtils.createText({ text: `+${result.rentSubsidy.toLocaleString()} ${COIN_NAME}`, size: 'md', weight: 'bold', color: '#00BCD4', align: 'end', flex: 1 })
+                ], { margin: 'sm', alignItems: 'center' })
+            );
+        }
+
+        if (result.monkBonus > 0) {
+            bodyContents.push(
+                flexUtils.createBox('horizontal', [
+                    flexUtils.createText({ text: `🙏 信徒供養 (${result.followers}人)`, size: 'sm', color: '#FF9800', align: 'start', flex: 1 }),
+                    flexUtils.createText({ text: `+${result.monkBonus.toLocaleString()} ${COIN_NAME}`, size: 'md', weight: 'bold', color: '#FF9800', align: 'end', flex: 1 })
+                ], { margin: 'sm', alignItems: 'center' })
+            );
+        }
+
+        if (result.tsmcTitle === '考績吃丙') {
+            bodyContents.push(
+                flexUtils.createBox('horizontal', [
+                    flexUtils.createText({ text: `🧑‍💻 底薪 (護國神山)`, size: 'sm', color: '#009688', align: 'start', flex: 1 }),
+                    flexUtils.createText({ text: `+${result.tsmcBase.toLocaleString()} ${COIN_NAME}`, size: 'md', weight: 'bold', color: '#009688', align: 'end', flex: 1 })
+                ], { margin: 'sm', alignItems: 'center' }),
+                flexUtils.createBox('horizontal', [
+                    flexUtils.createText({ text: `📉 分紅 (${result.tsmcTitle})`, size: 'sm', color: '#795548', align: 'start', flex: 1 }),
+                    flexUtils.createText({ text: `被扣光了`, size: 'md', weight: 'bold', color: '#795548', align: 'end', flex: 1 })
+                ], { margin: 'sm', alignItems: 'center' })
+            );
+        } else if (result.tsmcBase > 0) {
+            bodyContents.push(
+                flexUtils.createBox('horizontal', [
+                    flexUtils.createText({ text: `🧑‍💻 底薪 (護國神山)`, size: 'sm', color: '#009688', align: 'start', flex: 1 }),
+                    flexUtils.createText({ text: `+${result.tsmcBase.toLocaleString()} ${COIN_NAME}`, size: 'md', weight: 'bold', color: '#009688', align: 'end', flex: 1 })
+                ], { margin: 'sm', alignItems: 'center' })
+            );
+            if (result.tsmcBonus > 0) {
+                bodyContents.push(
+                    flexUtils.createBox('horizontal', [
+                        flexUtils.createText({ text: `📈 分紅 (${result.tsmcTitle})`, size: 'sm', color: '#4CAF50', align: 'start', flex: 1 }),
+                        flexUtils.createText({ text: `+${result.tsmcBonus.toLocaleString()} ${COIN_NAME}`, size: 'md', weight: 'bold', color: '#4CAF50', align: 'end', flex: 1 })
+                    ], { margin: 'sm', alignItems: 'center' })
+                );
+            }
+        }
+
+        if (result.deductAmount > 0) {
+            bodyContents.push(
+                flexUtils.createSeparator('md'),
+                flexUtils.createBox('horizontal', [
+                    flexUtils.createText({ text: `🏥 醫療負債強制扣除`, size: 'sm', color: '#B71C1C', align: 'start', flex: 1 }),
+                    flexUtils.createText({ text: `-${result.deductAmount.toLocaleString()} ${COIN_NAME}`, size: 'md', weight: 'bold', color: '#B71C1C', align: 'end', flex: 1 })
+                ], { margin: 'md', alignItems: 'center' })
+            );
+        }
+
         const nextCheckIn = new Date();
         nextCheckIn.setDate(nextCheckIn.getDate() + 1);
         nextCheckIn.setHours(0, 0, 0, 0);
@@ -225,16 +341,17 @@ async function dailyCheckIn(replyToken, groupId, userId) {
 
         bodyContents.push(
             flexUtils.createSeparator('md'),
-            flexUtils.createText({ text: `💰 結算總資產：${result.newBalance.toLocaleString()} ${COIN_NAME}`, size: 'sm', weight: 'bold', color: '#1A1A1A', align: 'center', margin: 'md' }),
+            flexUtils.createText({ text: `💰 結算總資產：${result.newBalance.toLocaleString()} ${COIN_NAME}`, size: 'sm', weight: 'bold', color: flexUtils.COLORS.BG_CARD, align: 'center', margin: 'md' }),
             flexUtils.createText({ text: cdText, size: 'xs', color: '#4CAF50', align: 'center', margin: 'sm', wrap: true })
         );
 
         const bubble = flexUtils.createBubble({
             size: 'mega',
-            header: flexUtils.createHeader('📅 每日簽到成功', '', '#4CAF50', '#FFFFFF'),
+            header: flexUtils.createHeader('📅 每日簽到成功', '', '#4CAF50', flexUtils.COLORS.TEXT_MAIN),
             body: flexUtils.createBox('vertical', bodyContents, { paddingAll: '20px', backgroundColor: '#F1F8E9' })
         });
 
+        
         await lineUtils.replyFlex(replyToken, `📅 簽到成功！獲得 ${result.totalReward} ${COIN_NAME}`, bubble);
 
     } catch (e) {
@@ -246,7 +363,7 @@ async function dailyCheckIn(replyToken, groupId, userId) {
 async function begCoin(replyToken, groupId, userId) {
     try {
         const memberName = await lineUtils.getGroupMemberName(groupId, userId);
-        const { getFinalPlayerStats } = require('./rpg');
+        const { getFinalPlayerStats } = require('../handlers/rpg');
         const stats = await getFinalPlayerStats(userId);
         const luk = stats.final.luk || 0;
 
@@ -308,17 +425,30 @@ async function begCoin(replyToken, groupId, userId) {
                 reward = Math.floor(reward * (1 + (luk / 100)));
             }
 
-            t.update(docRef, {
-                kuCoin: db.FieldValue.increment(reward),
+            let deductAmount = 0;
+            let finalReward = reward;
+            if ((data.medicalDebt || 0) > 0) {
+                deductAmount = Math.min(reward, data.medicalDebt);
+                finalReward = reward - deductAmount;
+            }
+
+            const updates = {
+                kuCoin: db.FieldValue.increment(finalReward),
                 lastBeg: now.getTime(),
                 displayName: memberName || data.displayName || data.name
-            });
+            };
+            if (deductAmount > 0) {
+                updates.medicalDebt = db.FieldValue.increment(-deductAmount);
+            }
+
+            t.update(docRef, updates);
 
             return {
                 success: true,
-                reward,
+                reward: finalReward,
+                deductAmount,
                 tier,
-                newBalance: (data.kuCoin || 0) + reward,
+                newBalance: (data.kuCoin || 0) + finalReward,
                 name: memberName || data.displayName || data.name
             };
         });
@@ -341,7 +471,7 @@ async function begCoin(replyToken, groupId, userId) {
             '普通': '#9E9E9E', // 灰
             '稀有': '#2196F3', // 藍
             '史詩': '#9C27B0', // 紫
-            '傳說': '#FFD700'  // 金
+            '傳說': flexUtils.COLORS.PRIMARY  // 金
         };
         const bgColor = colorMap[tier.label] || '#9E9E9E';
 
@@ -350,21 +480,34 @@ async function begCoin(replyToken, groupId, userId) {
         nextBeg.setHours(0, 0, 0, 0);
         const cdText = `⏳ 冷卻時間：每日一次\n（可於 ${nextBeg.toLocaleDateString('zh-TW', { timeZone: 'Asia/Taipei' })} 00:00:00 後再次乞討）`;
 
+        const bodyItems = [
+            flexUtils.createText({ text: `${name} 跪在地上痛哭流涕，向神明祈求施捨...`, size: 'xs', color: flexUtils.COLORS.TEXT_MUTED, wrap: true }),
+            flexUtils.createSeparator('md'),
+            flexUtils.createText({ text: tierMessages[tier.label], size: 'sm', weight: 'bold', color: bgColor, margin: 'md', wrap: true }),
+            flexUtils.createText({ text: `✨ 獲得：${reward.toLocaleString()} 哭幣`, size: 'xl', weight: 'bold', color: flexUtils.COLORS.SECONDARY, margin: 'sm' })
+        ];
+
+        if (result.deductAmount > 0) {
+            bodyItems.push(
+                flexUtils.createSeparator('md'),
+                flexUtils.createText({ text: `🏥 系統強制徵收醫療負債：-${result.deductAmount.toLocaleString()} 哭幣`, size: 'sm', weight: 'bold', color: '#B71C1C', margin: 'md', wrap: true })
+            );
+        }
+
+        bodyItems.push(
+            flexUtils.createSeparator('md'),
+            flexUtils.createText({ text: `💰 結算總資產：${newBalance.toLocaleString()} 哭幣`, size: 'sm', weight: 'bold', color: flexUtils.COLORS.BG_CARD, margin: 'md' }),
+            flexUtils.createText({ text: cdText, size: 'xs', color: '#E74C3C', margin: 'xs', wrap: true }),
+            flexUtils.createText({ text: `拿去翻本吧，可憐蟲！不要再來煩我了！`, size: 'xs', color: flexUtils.COLORS.TEXT_SUB, margin: 'sm', wrap: true })
+        );
+
         const bubble = flexUtils.createBubble({
             size: 'mega',
-            header: flexUtils.createHeader(`🥺 神明施捨`, `${tier.emoji} ${tier.label}`, '#FFFFFF', bgColor),
-            body: flexUtils.createBox('vertical', [
-                flexUtils.createText({ text: `${name} 跪在地上痛哭流涕，向神明祈求施捨...`, size: 'xs', color: '#666666', wrap: true }),
-                flexUtils.createSeparator('md'),
-                flexUtils.createText({ text: tierMessages[tier.label], size: 'sm', weight: 'bold', color: bgColor, margin: 'md', wrap: true }),
-                flexUtils.createText({ text: `✨ 獲得：${reward.toLocaleString()} 哭幣`, size: 'xl', weight: 'bold', color: '#FF9800', margin: 'sm' }),
-                flexUtils.createSeparator('md'),
-                flexUtils.createText({ text: `💰 結算總資產：${newBalance.toLocaleString()} 哭幣`, size: 'sm', weight: 'bold', color: '#1A1A1A', margin: 'md' }),
-                flexUtils.createText({ text: cdText, size: 'xs', color: '#E74C3C', margin: 'xs', wrap: true }),
-                flexUtils.createText({ text: `拿去翻本吧，可憐蟲！不要再來煩我了！`, size: 'xs', color: '#AAAAAA', margin: 'sm', wrap: true })
-            ], { paddingAll: 'xl', backgroundColor: '#FAFAFA' })
+            header: flexUtils.createHeader(`🥺 神明施捨`, `${tier.emoji} ${tier.label}`, flexUtils.COLORS.BG_MAIN, bgColor),
+            body: flexUtils.createBox('vertical', bodyItems, { paddingAll: 'xl', backgroundColor: '#FAFAFA' })
         });
 
+        
         await lineUtils.replyFlex(replyToken, `神明施捨: ${tier.label}`, bubble);
     } catch (e) {
         console.error('[Economy] begCoin Error:', e);
@@ -381,7 +524,7 @@ async function claimEmergencyAid(replyToken, groupId, userId) {
             const { docRef, data } = await getUserProfile(t, userId, memberName);
 
             // 只有負債才能領
-            if ((data.kuCoin || 0) >= 0) {
+            if ((data.kuCoin || 0) >= 0 && !(data.medicalDebt > 0)) {
                 return { success: false, message: `❌ 你還有 ${(data.kuCoin || 0).toLocaleString()} 哭幣，沒有資格領急難救助金！` };
             }
 
@@ -404,17 +547,28 @@ async function claimEmergencyAid(replyToken, groupId, userId) {
                 return { success: false, message: spam.message };
             }
 
-            t.update(docRef, {
-                emergencyAid: db.FieldValue.increment(EMERGENCY_AMOUNT),
+            let deductAmount = 0;
+            let finalAid = EMERGENCY_AMOUNT;
+            if ((data.medicalDebt || 0) > 0) {
+                deductAmount = Math.min(EMERGENCY_AMOUNT, data.medicalDebt);
+                finalAid = EMERGENCY_AMOUNT - deductAmount;
+            }
+
+            const updates = {
                 lastEmergencyAid: now.getTime(),
                 displayName: memberName || data.displayName || data.name
-            });
+            };
+            if (finalAid > 0) updates.emergencyAid = db.FieldValue.increment(finalAid);
+            if (deductAmount > 0) updates.medicalDebt = db.FieldValue.increment(-deductAmount);
+
+            t.update(docRef, updates);
 
             return {
                 success: true,
                 name: memberName || data.displayName || data.name,
-                debtBefore: data.kuCoin || 0,
-                emergencyAid: EMERGENCY_AMOUNT
+                debtBefore: data.medicalDebt > 0 ? data.medicalDebt : (data.kuCoin || 0),
+                emergencyAid: finalAid,
+                deductAmount
             };
         });
 
@@ -424,18 +578,34 @@ async function claimEmergencyAid(replyToken, groupId, userId) {
             return;
         }
 
-        const { name, debtBefore, emergencyAid } = result;
+        const { name, debtBefore, emergencyAid, deductAmount } = result;
         const msgs = [
             `🆘 【急難救助金】`,
             `${name}，你目前負債 ${Math.abs(debtBefore).toLocaleString()} 哭幣。`,
             ``,
-            `政府決定發放緊急救助金 💸`,
-            `+${emergencyAid.toLocaleString()} 急難救助金（獨立帳戶）`,
-            ``,
-            `⚠️ 急難救助金優先於哭幣用於下注`,
-            `贏得的錢將回歸哭幣帳戶`,
-            `好好把握！翻身機會只有一次！`
+            `政府決定發放緊急救助金 💸`
         ];
+
+        if (deductAmount > 0) {
+            msgs.push(`🏥 (已被醫院強制查扣 ${deductAmount.toLocaleString()} 償還醫療負債)`);
+        }
+        
+        if (emergencyAid > 0) {
+            msgs.push(
+                `+${emergencyAid.toLocaleString()} 急難救助金（獨立帳戶）`,
+                ``,
+                `⚠️ 急難救助金優先於哭幣用於下注`,
+                `贏得的錢將回歸哭幣帳戶`,
+                `好好把握！翻身機會只有一次！`
+            );
+        } else {
+            msgs.push(
+                `+0 急難救助金`,
+                ``,
+                `⚠️ 救助金已全數被查扣還債，請明天再來領取！`
+            );
+        }
+
         await lineUtils.replyText(replyToken, msgs.join('\n'));
     } catch (e) {
         console.error('[Economy] claimEmergencyAid Error:', e);

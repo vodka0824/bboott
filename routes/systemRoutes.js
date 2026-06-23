@@ -144,9 +144,23 @@ module.exports = function (router, handlers) {
         await systemHandler.handleQueryCommand(ctx, fakeMatch);
     }, { isGroupOnly: false, needAuth: false, allowDM: true, keywords: ['說明'] });
 
-    router.register(/^(我的ID|我是誰)$/i, async (ctx) => {
-        await lineUtils.replyText(ctx.replyToken, `您的 LINE 帳號 ID 是：\n${ctx.userId}`);
-    }, { isGroupOnly: false, needAuth: false, allowDM: true, keywords: ['我的ID', '我是誰'] });
+    router.register(/^(?:我的ID|我是誰|查UID|查詢UID)(?:\s+@.+)?$/, async (ctx, match) => {
+        const mentionObj = ctx.messageObject && ctx.messageObject.mention;
+        if (mentionObj && mentionObj.mentionees && mentionObj.mentionees.length > 0) {
+            const targetId = mentionObj.mentionees[0].userId;
+            await lineUtils.replyText(ctx.replyToken, `指定的玩家 UID 是：\n${targetId}`);
+        } else {
+            await lineUtils.replyText(ctx.replyToken, `您的 UID 是：\n${ctx.userId}`);
+        }
+    }, { isGroupOnly: false, needAuth: false, allowDM: true, keywords: ['我的ID', '我是誰', '查UID', '查詢UID'] });
+
+    router.register(/^(?:查群組ID|查詢群組ID)$/, async (ctx) => {
+        if (ctx.groupId) {
+            await lineUtils.replyText(ctx.replyToken, `當前群組 ID 是：\n${ctx.groupId}`);
+        } else {
+            await lineUtils.replyText(ctx.replyToken, `❌ 您不在群組內，無法查詢群組 ID。`);
+        }
+    }, { isGroupOnly: false, needAuth: false, allowDM: false, keywords: ['查群組ID', '查詢群組ID'] });
 
     router.register(/^設定超級管理員\s+(.+)$/, async (ctx, match) => {
         const pwd = match[1].trim();

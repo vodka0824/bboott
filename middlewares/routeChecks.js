@@ -52,7 +52,11 @@ async function checkBasicAuthMW(context, message, route) {
         if (isGroupOnly) return true; // Blocked
     } else {
         if (isGroupOnly && !isGroup) return true;
-        if (needAuth && isGroup && !isAuthorizedGroup) return true;
+        if (needAuth && isGroup && !isAuthorizedGroup) {
+            const lineUtils = require('../utils/line');
+            await lineUtils.replyText(context.replyToken, '❌ 群組尚未授權！請向管理員索取「註冊碼」後輸入以開通機器人服務。');
+            return true;
+        }
         if (!isGroup && !allowDM && !routeAllowDM && !isDMOnly) return true;
     }
 
@@ -87,13 +91,20 @@ async function checkCasinoMW(context, message, route) {
         }
 
         try {
-            const { db } = require('./db');
+            const { db } = require('../utils/db');
             const policeDoc = await db.collection('economy_users').doc(userId).get();
-            if (policeDoc.exists && policeDoc.data().isPolice) {
-                await lineUtils.replyText(replyToken, '❌ 你是【警察】，嚴禁參與賭博！\n知法犯法罪加一等，想賭就先「辭職」吧！');
-                return true;
+            if (policeDoc.exists) {
+                const data = policeDoc.data();
+                if (data.isPolice) {
+                    await lineUtils.replyText(replyToken, '❌ 你是【警察】，嚴禁參與賭博！\n知法犯法罪加一等，想賭就先「辭職」吧！');
+                    return true;
+                }
+                if (data.profession === 'monk') {
+                    await lineUtils.replyText(replyToken, '❌ 佛門淨地，嚴禁賭博！\n出家人四大皆空，阿彌陀佛，請勿參與世俗賭局！');
+                    return true;
+                }
             }
-        } catch (e) { /* ignore */ }
+        } catch (e) { console.error('[Casino Check Error]', e); }
 
         if (!route.options.isMultiplayer) {
             if (!multiBlackjackHandler) multiBlackjackHandler = require('../handlers/multi_blackjack');
@@ -111,7 +122,7 @@ async function checkCasinoMW(context, message, route) {
 async function checkStatusBlockMW(context, message, route) {
     const { isSuper, replyToken } = context;
     if ((route.options.feature === 'casino' || route.options.feature === 'bank') && !isSuper) {
-        const jailRedemption = require('../handlers/jail_redemption');
+        const jailRedemption = require('../services/jailRedemptionService');
         if (jailRedemption.checkStatusBlock) {
             const blockResult = await jailRedemption.checkStatusBlock(context, route.options.feature);
             if (blockResult.blocked) {
@@ -127,16 +138,22 @@ async function checkStatusBlockMW(context, message, route) {
 
 // 6. 監獄狀態檢查
 async function checkJailMW(context, message, route) {
-    const { isSuper, userId } = context;
+    const { isSuper, userId, isGroup, isAuthorizedGroup, groupId } = context;
     if (!isSuper && typeof route.pattern !== 'function') {
+        // 如果是在群組內，且該群組關閉了遊戲模組(economy)，則不受監獄限制
+        if (isGroup && isAuthorizedGroup) {
+            const isEconomyEnabled = await authUtils.isFeatureEnabled(groupId, 'economy');
+            if (!isEconomyEnabled) return false;
+        }
+
         const jailHandler = require('../handlers/jail');
         const jailStatus = await jailHandler.checkJailStatus(userId);
         if (jailStatus.isJailed) {
-            const isAllowedCommand = /^(查詢|說明|交保|保釋|越獄|撿肥皂|勞動|勞動改造|探監|暴動|發起暴動|吹喇叭|幫典獄長吹喇叭|監獄名單|探監名單|查監獄|狀態|屬性|我的屬性|我的狀態|擺平|施壓|收割韭菜|拖下水)/.test(message);
+            const isAllowedCommand = /^(查詢|說明|交保|保釋|越獄|撿肥皂|勞動|勞動改造|探監|暴動|發起暴動|吹喇叭|幫典獄長吹喇叭|監獄名單|探監名單|查監獄|狀態|屬性|我的屬性|我的狀態|個人狀態|擺平|施壓|收割韭菜|拖下水|賄賂|查冷卻|我的冷卻|冷卻時間)/.test(message);
             if (!isAllowedCommand) {
                 if (rateLimit.checkRateLimit(userId, 'jail_warn', 1, 60000)) {
                     const remainingMins = Math.ceil((jailStatus.jailedUntil - Date.now()) / 60000);
-                    await jailHandler.replyJailMenu(context, remainingMins);
+                    await lineUtils.replyText(context.replyToken, `⛓️ 你還在監獄裡服刑中！剩餘刑期：${remainingMins} 分鐘\n\n可用指令：交保、越獄、撿肥皂、勞動改造、暴動、吹喇叭、賄賂、施壓`);
                 }
                 return true;
             }

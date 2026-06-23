@@ -240,7 +240,7 @@ async function showEquipmentShop(replyToken) {
                 flexUtils.createBox('horizontal', [
                     flexUtils.createBox('vertical', [
                         flexUtils.createText({ text: `[${variants[variant].subName}] ${variants[variant].name}`, size: 'sm', weight: 'bold', wrap: true }),
-                        flexUtils.createText({ text: statText, size: 'xs', color: '#888888' })
+                        flexUtils.createText({ text: statText, size: 'xs', color: flexUtils.COLORS.TEXT_MUTED })
                     ], { flex: 6, justifyContent: 'center' }),
                     flexUtils.createText({ text: `$100`, size: 'sm', color: '#D32F2F', weight: 'bold', flex: 2, align: 'center', gravity: 'center' }),
                     flexUtils.createButton({ 
@@ -257,8 +257,8 @@ async function showEquipmentShop(replyToken) {
 
         const bubble = flexUtils.createBubble({
             size: 'mega',
-            header: flexUtils.createHeader(`🏪 皇家裝備店 - ${config.chinese}`, '選擇裝備以購買', '#FF9800'),
-            body: flexUtils.createBox('vertical', items, { paddingAll: 'lg' })
+            header: flexUtils.createHeader(`🏪 皇家裝備店 - ${config.chinese}`, '選擇裝備以購買', flexUtils.COLORS.SECONDARY),
+            body: flexUtils.createBox('vertical', items, { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: 'lg'  })
         });
         bubbles.push(bubble);
     }
@@ -300,7 +300,7 @@ async function showEquipmentShop(replyToken) {
     const scrollBubble = flexUtils.createBubble({
         size: 'mega',
         header: flexUtils.createHeader(`📜 神秘卷軸商`, '強化裝備必備', '#9C27B0'),
-        body: flexUtils.createBox('vertical', scrollItems, { paddingAll: 'lg' })
+        body: flexUtils.createBox('vertical', scrollItems, { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: 'lg'  })
     });
     bubbles.push(scrollBubble);
 
@@ -484,7 +484,7 @@ async function showMyEquipments(replyToken, userId) {
                 if (mainEquip.level === 0) {
                     const reqId = generateReqId();
                     mainItems.push(flexUtils.createBox('horizontal', [
-                        flexUtils.createButton({ action: { type: 'postback', label: `🔨 直升+4 (扣4卷)`, data: `action=enchant_equip&type=${type}&slot=main&times=4&reqId=${reqId}` }, style: 'primary', height: 'sm', color: '#FF9800', margin: 'xs', flex: 3 }),
+                        flexUtils.createButton({ action: { type: 'postback', label: `🔨 直升+4 (扣4卷)`, data: `action=enchant_equip&type=${type}&slot=main&times=4&reqId=${reqId}` }, style: 'primary', height: 'sm', color: flexUtils.COLORS.SECONDARY, margin: 'xs', flex: 3 }),
                         flexUtils.createButton({ action: { type: 'postback', label: `卸下至備用`, data: `action=swap_equip&type=${type}` }, style: 'secondary', height: 'sm', margin: 'xs', flex: 2 })
                     ], { margin: 'sm' }));
                 } else if (mainEquip.level < 15) {
@@ -492,7 +492,7 @@ async function showMyEquipments(replyToken, userId) {
                     mainItems.push(flexUtils.createBox('horizontal', [
                         flexUtils.createButton({ action: { type: 'postback', label: `⚡衝`, data: `action=enchant_equip&type=${type}&slot=main&times=1&reqId=${reqId}` }, style: 'primary', height: 'sm', color: '#FF5722', margin: 'xs', flex: 1 }),
                         flexUtils.createButton({ action: { type: 'postback', label: `⚡連x3`, data: `action=enchant_equip&type=${type}&slot=main&times=3&reqId=${reqId}` }, style: 'secondary', height: 'sm', margin: 'xs', flex: 2 }),
-                        flexUtils.createButton({ action: { type: 'postback', label: `🔥連x5`, data: `action=enchant_equip&type=${type}&slot=main&times=5&reqId=${reqId}` }, style: 'primary', color: '#FF9800', height: 'sm', margin: 'xs', flex: 2 })
+                        flexUtils.createButton({ action: { type: 'postback', label: `🔥連x5`, data: `action=enchant_equip&type=${type}&slot=main&times=5&reqId=${reqId}` }, style: 'primary', color: flexUtils.COLORS.SECONDARY, height: 'sm', margin: 'xs', flex: 2 })
                     ], { margin: 'sm' }));
                     mainItems.push(flexUtils.createBox('horizontal', [
                         flexUtils.createButton({ action: { type: 'postback', label: `💥狂衝x8`, data: `action=enchant_equip&type=${type}&slot=main&times=8&reqId=${reqId}` }, style: 'primary', color: '#E91E63', height: 'sm', margin: 'xs', flex: 3 }),
@@ -505,7 +505,7 @@ async function showMyEquipments(replyToken, userId) {
                     ], { margin: 'sm', alignItems: 'center' }));
                 }
             } else {
-                mainItems.push(flexUtils.createText({ text: '無裝備', size: 'sm', color: '#AAAAAA', margin: 'sm', align: 'center' }));
+                mainItems.push(flexUtils.createText({ text: '無裝備', size: 'sm', color: flexUtils.COLORS.TEXT_SUB, margin: 'sm', align: 'center' }));
                 mainItems.push(flexUtils.createButton({ action: { type: 'message', label: '🏪 前往商店購買', text: '裝備店' }, style: 'secondary', height: 'sm', margin: 'sm' }));
             }
             
@@ -526,7 +526,7 @@ async function showMyEquipments(replyToken, userId) {
                 if (backupEquip.level === 0) {
                     const reqId = generateReqId();
                     backupItems.push(flexUtils.createBox('horizontal', [
-                        flexUtils.createButton({ action: { type: 'postback', label: `🔨 直升+4 (扣4卷)`, data: `action=enchant_equip&type=${type}&slot=backup&times=4&reqId=${reqId}` }, style: 'primary', height: 'sm', color: '#FF9800', margin: 'xs', flex: 3 }),
+                        flexUtils.createButton({ action: { type: 'postback', label: `🔨 直升+4 (扣4卷)`, data: `action=enchant_equip&type=${type}&slot=backup&times=4&reqId=${reqId}` }, style: 'primary', height: 'sm', color: flexUtils.COLORS.SECONDARY, margin: 'xs', flex: 3 }),
                         flexUtils.createButton({ action: { type: 'postback', label: `替換上陣`, data: `action=swap_equip&type=${type}` }, style: 'secondary', height: 'sm', margin: 'xs', flex: 2 })
                     ], { margin: 'sm' }));
                 } else if (backupEquip.level < 15) {
@@ -534,7 +534,7 @@ async function showMyEquipments(replyToken, userId) {
                     backupItems.push(flexUtils.createBox('horizontal', [
                         flexUtils.createButton({ action: { type: 'postback', label: `⚡衝`, data: `action=enchant_equip&type=${type}&slot=backup&times=1&reqId=${reqId}` }, style: 'primary', height: 'sm', color: '#FF5722', margin: 'xs', flex: 1 }),
                         flexUtils.createButton({ action: { type: 'postback', label: `⚡連x3`, data: `action=enchant_equip&type=${type}&slot=backup&times=3&reqId=${reqId}` }, style: 'secondary', height: 'sm', margin: 'xs', flex: 2 }),
-                        flexUtils.createButton({ action: { type: 'postback', label: `🔥連x5`, data: `action=enchant_equip&type=${type}&slot=backup&times=5&reqId=${reqId}` }, style: 'primary', color: '#FF9800', height: 'sm', margin: 'xs', flex: 2 })
+                        flexUtils.createButton({ action: { type: 'postback', label: `🔥連x5`, data: `action=enchant_equip&type=${type}&slot=backup&times=5&reqId=${reqId}` }, style: 'primary', color: flexUtils.COLORS.SECONDARY, height: 'sm', margin: 'xs', flex: 2 })
                     ], { margin: 'sm' }));
                     backupItems.push(flexUtils.createBox('horizontal', [
                         flexUtils.createButton({ action: { type: 'postback', label: `💥狂衝x8`, data: `action=enchant_equip&type=${type}&slot=backup&times=8&reqId=${reqId}` }, style: 'primary', color: '#E91E63', height: 'sm', margin: 'xs', flex: 3 }),
@@ -547,7 +547,7 @@ async function showMyEquipments(replyToken, userId) {
                     ], { margin: 'sm', alignItems: 'center' }));
                 }
             } else {
-                backupItems.push(flexUtils.createText({ text: '無裝備', size: 'sm', color: '#AAAAAA', margin: 'sm', align: 'center' }));
+                backupItems.push(flexUtils.createText({ text: '無裝備', size: 'sm', color: flexUtils.COLORS.TEXT_SUB, margin: 'sm', align: 'center' }));
             }
             
             bodyItems.push(flexUtils.createBox('vertical', backupItems, { backgroundColor: '#FAFAFA', paddingAll: 'md', cornerRadius: 'md', margin: 'md' }));
@@ -816,7 +816,7 @@ async function buyEquipmentPostback(replyToken, type, grade, userId, groupId) {
             flexUtils.createText({ text: `[${equipName}]`, size: 'lg', weight: 'bold', color: '#1976D2', margin: 'sm' }),
             flexUtils.createText({ text: `初始屬性加成：${formatEquipStats(type, grade, 0)}`, size: 'sm', margin: 'md' }),
             flexUtils.createSeparator('md'),
-            flexUtils.createText({ text: `💰 結算總資產：${result.newBalance.toLocaleString()} 哭幣`, size: 'sm', weight: 'bold', color: '#1A1A1A', margin: 'md' })
+            flexUtils.createText({ text: `💰 結算總資產：${result.newBalance.toLocaleString()} 哭幣`, size: 'sm', weight: 'bold', color: flexUtils.COLORS.BG_CARD, margin: 'md' })
         ], { paddingAll: 'xl' });
         
         const reqId = generateReqId();
@@ -826,7 +826,15 @@ async function buyEquipmentPostback(replyToken, type, grade, userId, groupId) {
         ], { paddingAll: 'md' });
         
         const bubble = flexUtils.createBubble({ size: 'mega', header, body, footer });
-        await lineUtils.replyFlex(replyToken, '購買裝備成功', bubble);
+        
+        const quickReply = {
+            items: [
+                { type: 'action', action: { type: 'message', label: '⚔️ 更換武器', text: '裝備 武器' } },
+                { type: 'action', action: { type: 'message', label: '🛡️ 更換防具', text: '裝備 防具' } },
+                { type: 'action', action: { type: 'message', label: '🔨 強化', text: '強化' } }
+            ]
+        };
+        await lineUtils.replyFlex(replyToken, '購買裝備成功', bubble, [], quickReply);
     } catch (e) {
         console.error('[Equipment] buyEquipmentPostback Error:', e);
         await lineUtils.replyText(replyToken, '❌ 購買裝備失敗。');
@@ -869,7 +877,7 @@ async function buyScrollsPostback(replyToken, scrollKey, amount, userId, groupId
             flexUtils.createText({ text: `花費 ${price} 哭幣購買了：`, size: 'sm', color: '#555555' }),
             flexUtils.createText({ text: `${amount} 張 ${displayScrollName}`, size: 'lg', weight: 'bold', color: '#1976D2', margin: 'sm' }),
             flexUtils.createSeparator('md'),
-            flexUtils.createText({ text: `💰 結算總資產：${result.newBalance.toLocaleString()} 哭幣`, size: 'sm', weight: 'bold', color: '#1A1A1A', margin: 'sm' }),
+            flexUtils.createText({ text: `💰 結算總資產：${result.newBalance.toLocaleString()} 哭幣`, size: 'sm', weight: 'bold', color: flexUtils.COLORS.BG_CARD, margin: 'sm' }),
             flexUtils.createSeparator('md'),
             flexUtils.createText({ text: `目前剩餘卷軸：`, size: 'sm', weight: 'bold', margin: 'md' }),
             flexUtils.createText({ text: `📜 武卷: ${scrolls.weapon} | 📜 防卷: ${scrolls.armor} | 📜 飾品卷: ${scrolls.accessory}`, size: 'xs', margin: 'sm' })
@@ -880,7 +888,15 @@ async function buyScrollsPostback(replyToken, scrollKey, amount, userId, groupId
         ], { paddingAll: 'md' });
         
         const bubble = flexUtils.createBubble({ size: 'mega', header, body, footer });
-        await lineUtils.replyFlex(replyToken, '購買卷軸成功', bubble);
+        
+        const quickReply = {
+            items: [
+                { type: 'action', action: { type: 'message', label: '⚔️ 更換武器', text: '裝備 武器' } },
+                { type: 'action', action: { type: 'message', label: '🛡️ 更換防具', text: '裝備 防具' } },
+                { type: 'action', action: { type: 'message', label: '🔨 強化', text: '強化' } }
+            ]
+        };
+        await lineUtils.replyFlex(replyToken, '購買卷軸成功', bubble, [], quickReply);
     } catch (e) {
         console.error('[Equipment] buyScrollsPostback Error:', e);
         await lineUtils.replyText(replyToken, '❌ 購買卷軸失敗。');
@@ -1026,7 +1042,15 @@ async function enchantEquipmentPostback(replyToken, type, slot, times, userId, r
                 isBroken ? 0 : currentLvl, 
                 scrollsLeft, costCount, newEnchantCount, lukBonus, newReqId, userId
             );
-            await lineUtils.replyFlex(replyToken, isBroken ? '強化失敗' : '強化成功', bubble);
+            
+        const quickReply = {
+            items: [
+                { type: 'action', action: { type: 'message', label: '⚔️ 更換武器', text: '裝備 武器' } },
+                { type: 'action', action: { type: 'message', label: '🛡️ 更換防具', text: '裝備 防具' } },
+                { type: 'action', action: { type: 'message', label: '🔨 強化', text: '強化' } }
+            ]
+        };
+        await lineUtils.replyFlex(replyToken, isBroken ? '強化失敗' : '強化成功', bubble, [], quickReply);
             
             db.collection('log_enchants').doc().set({
                 userId, groupId: groupId || 'direct', type, slot, equipName: equip.name, variant: equip.grade, oldLevel: initialLevel, newLevel: isBroken ? 0 : currentLvl, isSuccess: !isBroken, timestamp: new Date()
@@ -1057,7 +1081,7 @@ async function enchantEquipmentPostback(replyToken, type, slot, times, userId, r
         } else {
             bodyItems.push(flexUtils.createText({ text: `[${equip.name}] 最終等級：+${currentLvl}\n加成：${formatEquipStats(type, equip.grade, currentLvl)}`, weight: 'bold', size: 'sm', color: flexUtils.COLORS.PRIMARY, wrap: true, margin: 'sm' }));
             const stars = '★'.repeat(Math.min(currentLvl, 5)) + '☆'.repeat(Math.max(0, 5 - currentLvl));
-            bodyItems.push(flexUtils.createText({ text: `星級: ${stars}`, size: 'md', color: '#FFD700', weight: 'bold', margin: 'sm' }));
+            bodyItems.push(flexUtils.createText({ text: `星級: ${stars}`, size: 'md', color: flexUtils.COLORS.PRIMARY, weight: 'bold', margin: 'sm' }));
         }
         bodyItems.push(flexUtils.createText({ text: `📜 剩餘 ${config.scrollName.substring(0,2)}：${scrollsLeft} 張`, size: 'xs', color: '#555555', margin: 'sm' }));
         
@@ -1074,7 +1098,7 @@ async function enchantEquipmentPostback(replyToken, type, slot, times, userId, r
                         flexUtils.createBox('horizontal', [
                             flexUtils.createButton({ action: { type: 'postback', label: nextInfo.btnText, data: `action=enchant_equip&type=${type}&slot=${slot}&times=1&reqId=${newReqId}` }, style: 'primary', height: 'sm', color: nextInfo.btnColor, margin: 'xs', flex: 3 }),
                             flexUtils.createButton({ action: { type: 'postback', label: `⚡連x3`, data: `action=enchant_equip&type=${type}&slot=${slot}&times=3&reqId=${newReqId}` }, style: 'secondary', height: 'sm', margin: 'xs', flex: 2 }),
-                            flexUtils.createButton({ action: { type: 'postback', label: `🔥連x5`, data: `action=enchant_equip&type=${type}&slot=${slot}&times=5&reqId=${newReqId}` }, style: 'primary', color: '#FF9800', height: 'sm', margin: 'xs', flex: 2 })
+                            flexUtils.createButton({ action: { type: 'postback', label: `🔥連x5`, data: `action=enchant_equip&type=${type}&slot=${slot}&times=5&reqId=${newReqId}` }, style: 'primary', color: flexUtils.COLORS.SECONDARY, height: 'sm', margin: 'xs', flex: 2 })
                         ], { margin: 'sm' }),
                         flexUtils.createBox('horizontal', [
                             flexUtils.createButton({ action: { type: 'postback', label: `💥狂衝x8`, data: `action=enchant_equip&type=${type}&slot=${slot}&times=8&reqId=${newReqId}` }, style: 'primary', color: '#E91E63', height: 'sm', margin: 'xs', flex: 3 }),
@@ -1084,7 +1108,7 @@ async function enchantEquipmentPostback(replyToken, type, slot, times, userId, r
         }
         footerItems.push(flexUtils.createButton({ action: { type: 'message', label: '🛡️ 我的背包', text: '我的裝備' }, style: 'secondary', margin: 'sm' }));
         
-        const flexBubble = flexUtils.createBubble({ size: 'mega', header: flexUtils.createHeader(headerTitle, headerSub, headerColor), body: flexUtils.createBox('vertical', bodyItems, { paddingAll: 'xl' }), footer: flexUtils.createBox('vertical', footerItems, { paddingAll: 'md' }) });
+        const flexBubble = flexUtils.createBubble({ size: 'mega', header: flexUtils.createHeader(headerTitle, headerSub, headerColor), body: flexUtils.createBox('vertical', bodyItems, { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: 'xl'  }), footer: flexUtils.createBox('vertical', footerItems, { paddingAll: 'md' }) });
         
         await lineUtils.replyFlex(replyToken, isBroken ? '強化失敗' : '強化成功', flexBubble);
         
@@ -1110,7 +1134,7 @@ function buildSingleEnchantBubble(isSuccess, type, slot, equip, config, oldLvl, 
         bodyItems.push(flexUtils.createText({ text: `[${equip.name}] 成功強化為 +${newLvl}！`, weight: 'bold', size: 'md', margin: 'md', wrap: true }));
         bodyItems.push(flexUtils.createText({ text: `屬性加成提升為：\n${formatEquipStats(type, equip.grade, newLvl)}`, size: 'sm', color: flexUtils.COLORS.PRIMARY, weight: 'bold', wrap: true }));
         const stars = '★'.repeat(Math.min(newLvl, 5)) + '☆'.repeat(Math.max(0, 5 - newLvl));
-        bodyItems.push(flexUtils.createText({ text: `星級: ${stars}`, size: 'md', color: '#FFD700', weight: 'bold', margin: 'sm' }));
+        bodyItems.push(flexUtils.createText({ text: `星級: ${stars}`, size: 'md', color: flexUtils.COLORS.PRIMARY, weight: 'bold', margin: 'sm' }));
     } else {
         bodyItems.push(flexUtils.createText({ text: `激烈的銀色光芒閃爍後...`, size: 'sm', margin: 'md' }));
         bodyItems.push(flexUtils.createText({ text: `你的 +${oldLvl} [${equip.name}] 碎裂化為灰燼...`, weight: 'bold', size: 'sm', color: flexUtils.COLORS.DANGER, wrap: true, margin: 'sm' }));
@@ -1120,7 +1144,7 @@ function buildSingleEnchantBubble(isSuccess, type, slot, equip, config, oldLvl, 
     
     if (newBalance !== null) {
         bodyItems.push(flexUtils.createSeparator('md'));
-        bodyItems.push(flexUtils.createText({ text: `💰 結算總資產：${newBalance.toLocaleString()} 哭幣`, size: 'sm', weight: 'bold', color: '#1A1A1A', margin: 'md' }));
+        bodyItems.push(flexUtils.createText({ text: `💰 結算總資產：${newBalance.toLocaleString()} 哭幣`, size: 'sm', weight: 'bold', color: flexUtils.COLORS.BG_CARD, margin: 'md' }));
     }
     
     const footerItems = [];
@@ -1135,7 +1159,7 @@ function buildSingleEnchantBubble(isSuccess, type, slot, equip, config, oldLvl, 
                 flexUtils.createBox('horizontal', [
                     flexUtils.createButton({ action: { type: 'postback', label: nextInfo.btnText, data: `action=enchant_equip&type=${type}&slot=${slot}&times=1&reqId=${reqId}` }, style: 'primary', height: 'sm', color: nextInfo.btnColor, margin: 'xs', flex: 3 }),
                     flexUtils.createButton({ action: { type: 'postback', label: `⚡連x3`, data: `action=enchant_equip&type=${type}&slot=${slot}&times=3&reqId=${reqId}` }, style: 'secondary', height: 'sm', margin: 'xs', flex: 2 }),
-                    flexUtils.createButton({ action: { type: 'postback', label: `🔥連x5`, data: `action=enchant_equip&type=${type}&slot=${slot}&times=5&reqId=${reqId}` }, style: 'primary', color: '#FF9800', height: 'sm', margin: 'xs', flex: 2 })
+                    flexUtils.createButton({ action: { type: 'postback', label: `🔥連x5`, data: `action=enchant_equip&type=${type}&slot=${slot}&times=5&reqId=${reqId}` }, style: 'primary', color: flexUtils.COLORS.SECONDARY, height: 'sm', margin: 'xs', flex: 2 })
                 ], { margin: 'sm' }),
                 flexUtils.createBox('horizontal', [
                     flexUtils.createButton({ action: { type: 'postback', label: `💥狂衝x8`, data: `action=enchant_equip&type=${type}&slot=${slot}&times=8&reqId=${reqId}` }, style: 'primary', color: '#E91E63', height: 'sm', margin: 'xs', flex: 3 }),
@@ -1148,7 +1172,7 @@ function buildSingleEnchantBubble(isSuccess, type, slot, equip, config, oldLvl, 
     return flexUtils.createBubble({
         size: 'mega',
         header: flexUtils.createHeader(headerTitle, headerSub, headerColor),
-        body: flexUtils.createBox('vertical', bodyItems, { paddingAll: 'xl' }),
+        body: flexUtils.createBox('vertical', bodyItems, { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: 'xl'  }),
         footer: flexUtils.createBox('vertical', footerItems, { paddingAll: 'md' })
     });
 }
@@ -1231,7 +1255,15 @@ async function buyAndSafeEnchantPostback(replyToken, type, slot, grade, userId, 
         const lukBonus = cappedLuk * 0.005;
 
         const bubble = buildSingleEnchantBubble(true, type, slot, newEquip, config, 0, 4, scrollsCount, 4, newEnchantCount, lukBonus, newReqId, userId, newBalance);
-        await lineUtils.replyFlex(replyToken, '直升安定值成功', bubble);
+        
+        const quickReply = {
+            items: [
+                { type: 'action', action: { type: 'message', label: '⚔️ 更換武器', text: '裝備 武器' } },
+                { type: 'action', action: { type: 'message', label: '🛡️ 更換防具', text: '裝備 防具' } },
+                { type: 'action', action: { type: 'message', label: '🔨 強化', text: '強化' } }
+            ]
+        };
+        await lineUtils.replyFlex(replyToken, '直升安定值成功', bubble, [], quickReply);
     } catch (e) {
         console.error('[Equipment] buyAndSafeEnchantPostback Error:', e);
         await lineUtils.replyText(replyToken, '❌ 買回直升失敗。');

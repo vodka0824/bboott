@@ -187,13 +187,13 @@ function buildHoroscopeFlex(data, type = 'daily') {
     // Footer
     bodyContents.push(flexUtils.createSeparator('lg'));
     bodyContents.push(flexUtils.createBox('horizontal', [
-        flexUtils.createText({ text: 'Source: 科技紫微網 (Click108)', size: 'xxs', color: '#CCCCCC', align: 'end' })
+        flexUtils.createText({ text: 'Source: 科技紫微網 (Click108)', size: 'xxs', color: flexUtils.COLORS.TEXT_MUTED, align: 'end' })
     ], { margin: 'sm' }));
 
     const HOROSCOPE_COLOR = '#D81B60';
     const typeLabel = type === 'weekly' ? '本週運勢' : type === 'monthly' ? '本月運勢' : '今日運勢';
     const header = flexUtils.createHeader(`🔮 ${data.name} ${typeLabel}`, data.date, HOROSCOPE_COLOR);
-    return flexUtils.createBubble({ size: 'mega', header: header, body: flexUtils.createBox('vertical', bodyContents, { paddingAll: '15px' }) });
+    return flexUtils.createBubble({ size: 'mega', header: header, body: flexUtils.createBox('vertical', bodyContents, { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: '15px'  }) });
 }
 
 /**

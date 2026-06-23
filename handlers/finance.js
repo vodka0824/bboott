@@ -49,33 +49,26 @@ async function handleFinancing(replyToken, amount, type) {
  * 刷卡分期計算
  */
 async function handleCreditCard(replyToken, amount) {
-    const isSmall = amount * 0.0249 < 498;
-
     const calc = (rate, term) => {
-        const total = Math.round(amount * rate + (isSmall ? 0 : 498));
-        return `${term}期: ${Math.round(total / term)}`;
+        const total = Math.round(amount * rate);
+        if (term === 1) {
+            return `刷卡一次付清: ${total.toLocaleString()}`;
+        }
+        const perMonth = Math.round(total / term);
+        return `${term}期: 每期 ${perMonth.toLocaleString()} (總額: ${total.toLocaleString()})`;
     };
 
-    let results = [];
-    if (isSmall) {
-        results = [
-            `付清: ${Math.round(amount * 1.0449)}`,
-            calc(1.0549, 3),
-            calc(1.0599, 6),
-            calc(1.0849, 12),
-            calc(1.0849, 24)
-        ];
-    } else {
-        results = [
-            `付清: ${Math.round(amount * 1.02) + 498}`,
-            calc(1.03, 3),
-            calc(1.035, 6),
-            calc(1.06, 12),
-            calc(1.06, 24)
-        ];
-    }
+    const results = [
+        calc(1.025, 1),
+        calc(1.026, 3),
+        calc(1.035, 6),
+        calc(1.068, 12),
+        calc(1.09, 18),
+        calc(1.118, 24),
+        calc(1.148, 30)
+    ];
 
-    await lineUtils.replyText(replyToken, `💳 刷卡分期\n${results.join('\n')}`);
+    await lineUtils.replyText(replyToken, `💳 刷卡分期試算\n 現金折扣價: ${amount.toLocaleString()}\n-------------------\n${results.join('\n')}`);
 }
 
 // 包裝函數以匹配路由名稱

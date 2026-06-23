@@ -130,12 +130,12 @@ async function handlePsychiatric(replyToken, context) {
             const data = doc.data();
 
             if (data.jailedUntil && Date.now() < data.jailedUntil) {
-                return { success: false, message: '你還在坐牢，無法去醫院！' };
+                return { success: false, message: '你還在坐牢，無法去精神鑑定！' };
             }
 
             if (data.psychiatricCooldownUntil && Date.now() < data.psychiatricCooldownUntil) {
                 const remainingMin = Math.ceil((data.psychiatricCooldownUntil - Date.now()) / 60000);
-                return { success: false, message: `醫院說你太頻繁掛號了，請等待 ${Math.floor(remainingMin/60)} 小時 ${remainingMin%60} 分鐘後再去！` };
+                return { success: false, message: `鑑定中心說你太頻繁掛號了，請等待 ${Math.floor(remainingMin/60)} 小時 ${remainingMin%60} 分鐘後再去！` };
             }
 
             const kuCoin = data.kuCoin || 0;
@@ -217,12 +217,25 @@ async function checkStatusBlock(context, feature = null) {
 
         // 2. 檢查當兵狀態
         if (data.militaryUntil) {
-            const allowedMilitaryCommands = /^(?:每日簽到|簽到|領哭幣|領錢|退伍|除草|拔草|掃地|出公差|站夜哨|裝病逃操|裝病|打靶測驗|打靶|高裝檢|漢光演習|領終身俸|狀態|屬性|我的屬性|我的狀態|冷卻|查冷卻|我的冷卻|冷卻時間)$/i;
+            const enlistCount = data.militaryEnlistCount || 1;
+            const rankIndex = enlistCount - 1;
+            
+            let allowedMilitaryCommands = /^(?:每日簽到|簽到|領哭幣|領錢|退伍|除草|拔草|掃地|出公差|站夜哨|裝病逃操|裝病|打靶測驗|打靶|高裝檢|漢光演習|領終身俸|狀態|屬性|我的屬性|我的狀態|冷卻|查冷卻|我的冷卻|冷卻時間)$/i;
+            
+            if (rankIndex >= 18) { // 四星上將 或 五星上將
+                allowedMilitaryCommands = /^(?:每日簽到|簽到|領哭幣|領錢|退伍|領終身俸|狀態|屬性|我的屬性|我的狀態|冷卻|查冷卻|我的冷卻|冷卻時間|發動戰爭|研發軍火)$/i;
+            } else if (rankIndex >= 15) { // 上將、二星、三星
+                allowedMilitaryCommands = /^(?:每日簽到|簽到|領哭幣|領錢|退伍|高裝檢|漢光演習|領終身俸|狀態|屬性|我的屬性|我的狀態|冷卻|查冷卻|我的冷卻|冷卻時間)$/i;
+            }
+
             const msgText = (context.message || '').trim().replace(/^[!/！]/, '');
             const isAllowed = allowedMilitaryCommands.test(msgText) || feature === 'casino';
             
             if (!isAllowed) {
                 if (Date.now() < data.militaryUntil) {
+                    if (rankIndex >= 15) {
+                        return { blocked: true, message: null };
+                    }
                     return { blocked: true, message: '🪖 班長看著你，你敢在營區玩手機？請乖乖等退伍！(輸入 !退伍 查看時間)' };
                 } else {
                     return { blocked: true, message: '🪖 你的役期已經滿了，請先輸入「!退伍」領取退伍金才能恢復自由之身！' };

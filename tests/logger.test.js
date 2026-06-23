@@ -84,35 +84,32 @@ describe('Logger - sanitize', () => {
 
 describe('Logger - methods', () => {
     // 由於 logger 會輸出到 console，我們需要 mock console
-    let consoleSpy;
+    let stdoutSpy;
+    let stderrSpy;
 
     beforeEach(() => {
-        consoleSpy = {
-            log: jest.spyOn(console, 'log').mockImplementation(),
-            error: jest.spyOn(console, 'error').mockImplementation(),
-            warn: jest.spyOn(console, 'warn').mockImplementation()
-        };
+        stdoutSpy = jest.spyOn(process.stdout, 'write').mockImplementation();
+        stderrSpy = jest.spyOn(process.stderr, 'write').mockImplementation();
     });
 
     afterEach(() => {
-        consoleSpy.log.mockRestore();
-        consoleSpy.error.mockRestore();
-        consoleSpy.warn.mockRestore();
+        stdoutSpy.mockRestore();
+        stderrSpy.mockRestore();
     });
 
-    test('should call console.log for info level', () => {
+    test('should call process.stdout.write for info level', () => {
         logger.info('test message', { key: 'value' });
-        expect(consoleSpy.log).toHaveBeenCalled();
+        expect(stdoutSpy).toHaveBeenCalled();
     });
 
-    test('should call console.error for error level', () => {
+    test('should call process.stderr.write for error level', () => {
         const error = new Error('test error');
         logger.error('error occurred', error);
-        expect(consoleSpy.error).toHaveBeenCalled();
+        expect(stderrSpy).toHaveBeenCalled();
     });
 
-    test('should call console.warn for warn level', () => {
+    test('should call process.stderr.write for warn level', () => {
         logger.warn('warning message');
-        expect(consoleSpy.warn).toHaveBeenCalled();
+        expect(stderrSpy).toHaveBeenCalled();
     });
 });

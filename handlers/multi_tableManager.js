@@ -19,6 +19,8 @@ function lockTable(groupId, gameType) {
 
 function unlockTable(groupId) {
     activeMultiTables.delete(groupId);
+    const persistenceService = require('../services/multiplayerPersistenceService');
+    persistenceService.clearTable(groupId).catch(e => console.error(e));
 }
 
 module.exports = {

@@ -28,6 +28,11 @@ const SETTINGS_STRUCT = {
         label: '📝 待辦事項',
         color: '#AA33FF',
         items: {} // Standalone toggle
+    },
+    tsmc: {
+        label: '🧑‍💻 台積電輪班星人',
+        color: '#F44336',
+        items: {} // Standalone toggle
     }
 };
 
@@ -130,7 +135,7 @@ async function buildSettingsFlex(groupId) {
                     data: `action=toggle_feature&feature=${catKey}&enable=${!isMasterEnabled}&groupId=${groupId}`
                 }
             }
-        ], { margin: 'lg', paddingAll: '5px', backgroundColor: '#F5F5F5', cornerRadius: '4px' });
+        ], { margin: 'lg', paddingAll: '5px', backgroundColor: flexUtils.COLORS.TEXT_SUB, cornerRadius: '4px' });
 
         bodyContents.push(masterToggle);
 
@@ -147,9 +152,9 @@ async function buildSettingsFlex(groupId) {
 
                 const itemBox = flexUtils.createBox('horizontal', [
                     flexUtils.createText({ text: itemLabel, size: 'sm', color: '#555555', flex: 1, gravity: 'center' }),
-                    flexUtils.createText({ text: isItemEnabled ? 'ON' : 'OFF', size: 'xxs', weight: 'bold', color: isItemEnabled ? '#1DB446' : '#AAAAAA', align: 'end', gravity: 'center' })
+                    flexUtils.createText({ text: isItemEnabled ? 'ON' : 'OFF', size: 'xxs', weight: 'bold', color: isItemEnabled ? '#1DB446' : flexUtils.COLORS.TEXT_SUB, align: 'end', gravity: 'center' })
                 ], {
-                    backgroundColor: '#FFFFFF',
+                    backgroundColor: flexUtils.COLORS.BG_MAIN,
                     cornerRadius: '4px',
                     paddingAll: '4px',
                     margin: 'xs',
@@ -175,14 +180,14 @@ async function buildSettingsFlex(groupId) {
 
     // Build Final Bubble
     const header = flexUtils.createBox('vertical', [
-        flexUtils.createText({ text: '⚙️ 群組功能設定', weight: 'bold', size: 'lg', color: '#FFFFFF' }),
-        flexUtils.createText({ text: '點擊標題切換全區，點擊按鈕切換細項', size: 'xxs', color: '#DDDDDD' })
+        flexUtils.createText({ text: '⚙️ 群組功能設定', weight: 'bold', size: 'lg', color: flexUtils.COLORS.TEXT_MAIN }),
+        flexUtils.createText({ text: '點擊標題切換全區，點擊按鈕切換細項', size: 'xxs', color: flexUtils.COLORS.TEXT_SUB })
     ], { backgroundColor: '#333333' });
 
     return flexUtils.createBubble({
         size: 'mega',
         header: header,
-        body: flexUtils.createBox('vertical', bodyContents, { paddingAll: '12px', backgroundColor: '#FFFFFF' })
+        body: flexUtils.createBox('vertical', bodyContents, { paddingAll: '12px', backgroundColor: flexUtils.COLORS.BG_MAIN })
     });
 }
 

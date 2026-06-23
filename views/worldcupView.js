@@ -196,7 +196,7 @@ function buildManageMatchBubble(matchData, betCount, totalPool) {
 
     bubble.footer.contents.push({
         type: 'button', style: 'secondary', color: '#FFCDD2', height: 'sm', margin: 'sm',
-        action: { type: 'postback', label: '🗑️ 刪除賽事(退款)', data: `action=admin_wc_action&cmd=delete&matchId=${matchId}` }
+        action: { type: 'postback', label: '🗑️ 刪除賽事(退款)', data: `action=admin_wc_action&cmd=confirm_delete&matchId=${matchId}` }
     });
 
     bubble.footer.contents.push({
@@ -212,7 +212,7 @@ function buildManageMatchBubble(matchData, betCount, totalPool) {
     return bubble;
 }
 
-function buildShowMatchBubble(matchData, betCount, totalPool = 0) {
+function buildShowMatchBubble(matchData, betCount, totalPool = 0, userBetAmount = 0) {
     const { matchId, homeTeam, awayTeam, odds, lockAt } = matchData;
     const homeFlag = getTeamWithFlag(homeTeam);
     const awayFlag = getTeamWithFlag(awayTeam);
@@ -251,9 +251,9 @@ function buildShowMatchBubble(matchData, betCount, totalPool = 0) {
             contents: [
                 {
                     type: 'box', layout: 'horizontal', alignItems: 'center', contents: [
-                        { type: 'text', text: homeFlag, weight: 'bold', size: 'md', color: '#111111', align: 'center', wrap: true, flex: 4 },
+                        { type: 'text', text: `(主) ${homeFlag}`, weight: 'bold', size: 'md', color: '#111111', align: 'center', wrap: true, flex: 4 },
                         { type: 'text', text: 'VS', size: 'xs', weight: 'bold', color: '#BDBDBD', align: 'center', flex: 1, margin: 'sm' },
-                        { type: 'text', text: awayFlag, weight: 'bold', size: 'md', color: '#111111', align: 'center', wrap: true, flex: 4 }
+                        { type: 'text', text: `(客) ${awayFlag}`, weight: 'bold', size: 'md', color: '#111111', align: 'center', wrap: true, flex: 4 }
                     ]
                 },
                 {
@@ -405,24 +405,33 @@ function buildShowMatchBubble(matchData, betCount, totalPool = 0) {
         );
     }
 
-    const statusBoxContents = [
-        { type: 'text', text: `📊 ${betCount} 人投注 | 💰 彩池 ${totalPool.toLocaleString()}`, size: 'xs', color: '#757575', align: 'center', weight: 'bold' }
-    ];
+    const statusBox1 = {
+        type: 'box', layout: 'horizontal', margin: 'md', justifyContent: 'center', contents: [
+            { type: 'text', text: `📊 ${betCount} 人投注 | 💰 彩池 ${totalPool.toLocaleString()}`, size: 'xs', color: '#757575', align: 'center', weight: 'bold' }
+        ]
+    };
+
+    const extraInfos = [];
+    if (userBetAmount > 0) {
+        extraInfos.push(`👤 已下注: ${userBetAmount.toLocaleString()}`);
+    }
 
     if (lockAt) {
         const timeStr = new Date(lockAt).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' });
         const timeDiffMs = lockAt - Date.now();
         const isUrgent = timeDiffMs > 0 && timeDiffMs < 60 * 60 * 1000; // 小於 1 小時
-
-        statusBoxContents.push(
-            { type: 'text', text: ` | `, size: 'xs', color: '#BDBDBD', align: 'center', flex: 0 },
-            { type: 'text', text: isUrgent ? `⏳ ${timeStr} 即將截止!` : `🕒 ${timeStr} 鎖盤`, size: 'xs', color: '#D32F2F', align: 'center', weight: 'bold' }
-        );
+        extraInfos.push(isUrgent ? `⏳ ${timeStr} 即將截止!` : `🕒 ${timeStr} 鎖盤`);
     }
 
-    bubble.body.contents.push({
-        type: 'box', layout: 'horizontal', margin: 'md', justifyContent: 'center', contents: statusBoxContents
-    });
+    bubble.body.contents.push(statusBox1);
+
+    if (extraInfos.length > 0) {
+        bubble.body.contents.push({
+            type: 'box', layout: 'horizontal', margin: 'sm', justifyContent: 'center', contents: [
+                { type: 'text', text: extraInfos.join('  |  '), size: 'xs', color: '#1976D2', align: 'center', weight: 'bold' }
+            ]
+        });
+    }
 
     return bubble;
 }
@@ -494,9 +503,9 @@ function buildMyBetBubble(bet, dateStr, getTeamWithFlag, generateTicketId) {
                         { type: 'text', text: dateStr, size: 'xxs', color: '#9E9E9E', align: 'end' },
                         {
                             type: 'box', layout: 'horizontal', margin: 'md', alignItems: 'center', contents: [
-                                { type: 'text', text: getTeamWithFlag(bet.homeTeam), weight: 'bold', size: 'sm', align: 'center', wrap: true, flex: 4 },
+                                { type: 'text', text: `(主) ${getTeamWithFlag(bet.homeTeam)}`, weight: 'bold', size: 'sm', align: 'center', wrap: true, flex: 4 },
                                 { type: 'text', text: finalScoreText, size: finalScoreSize, color: finalScoreColor, weight: finalScoreWeight, align: 'center', flex: 2 },
-                                { type: 'text', text: getTeamWithFlag(bet.awayTeam), weight: 'bold', size: 'sm', align: 'center', wrap: true, flex: 4 }
+                                { type: 'text', text: `(客) ${getTeamWithFlag(bet.awayTeam)}`, weight: 'bold', size: 'sm', align: 'center', wrap: true, flex: 4 }
                             ]
                         },
                         { type: 'separator', margin: 'md', color: '#E0E0E0' },
@@ -748,9 +757,9 @@ function buildSettleReportBubble(matchId, homeScore, awayScore, stats, getTeamWi
                 {
                     type: 'box', layout: 'horizontal', alignItems: 'center', justifyContent: 'center', margin: 'lg',
                     contents: [
-                        { type: 'text', text: homeFlag, weight: 'bold', size: 'md', color: '#111111', align: 'center', wrap: true, flex: 3 },
+                        { type: 'text', text: `(主) ${homeFlag}`, weight: 'bold', size: 'md', color: '#111111', align: 'center', wrap: true, flex: 3 },
                         { type: 'text', text: `${homeScore} : ${awayScore}`, size: 'xl', weight: 'bold', color: '#D32F2F', align: 'center', flex: 2 },
-                        { type: 'text', text: awayFlag, weight: 'bold', size: 'md', color: '#111111', align: 'center', wrap: true, flex: 3 }
+                        { type: 'text', text: `(客) ${awayFlag}`, weight: 'bold', size: 'md', color: '#111111', align: 'center', wrap: true, flex: 3 }
                     ]
                 },
                 { type: 'text', text: resultStr, size: 'sm', weight: 'bold', color: '#1565C0', align: 'center', margin: 'md' },
@@ -876,7 +885,7 @@ function buildMatchDetailsBubble(matchData, stats, totalPool, totalBettors, getT
             type: 'box', layout: 'vertical', paddingAll: 'lg', backgroundColor: '#FAFAFA',
             contents: [
                 { type: 'text', text: `ID: ${matchId}`, size: 'xs', color: '#9E9E9E', margin: 'sm' },
-                { type: 'text', text: `${homeFlag} vs ${awayFlag}`, weight: 'bold', size: 'lg', color: '#111111', wrap: true, margin: 'md' },
+                { type: 'text', text: `(主) ${homeFlag} vs (客) ${awayFlag}`, weight: 'bold', size: 'lg', color: '#111111', wrap: true, margin: 'md' },
                 flexUtils.createSeparator('lg', '#EEEEEE'),
                 {
                     type: 'box', layout: 'horizontal', margin: 'md', contents: [

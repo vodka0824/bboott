@@ -53,7 +53,7 @@ const rpgHandler = require('./handlers/rpg');
 const jailHandler = require('./handlers/jail');
 const equipmentHandler = require('./handlers/equipment');
 const policeHandler = require('./handlers/police');
-const robberyHandler = require('./handlers/robberyHandler');
+
 const mafiaHandler = require('./handlers/mafia');
 const worldcupHandler = require('./handlers/worldcup');
 const atonementHandler = require('./handlers/atonement');
@@ -96,7 +96,7 @@ registerRoutes(router, {
   jailHandler,
   equipmentHandler,
   policeHandler,
-  robberyHandler,
+
   mafiaHandler,
   worldcupHandler,
   atonementHandler,
@@ -151,6 +151,18 @@ async function handleCommonCommands(message, replyToken, sourceType, userId, gro
   const handled = await router.execute(message, context);
   if (handled) return true;
 
+  // 3.5 TSMC 機台警報事件處理 (作為一般聊天的附帶事件或修復指令)
+  console.log(`[INDEX DEBUG] TSMC Event check: isGroup=${isGroup}, isAuthorizedGroup=${isAuthorizedGroup}`);
+  if (isGroup && isAuthorizedGroup) {
+      const isTsmcEnabled = await authUtils.isFeatureEnabled(groupId, 'tsmc');
+      console.log(`[INDEX DEBUG] isTsmcEnabled=${isTsmcEnabled} for groupId=${groupId}`);
+      if (isTsmcEnabled) {
+          const tsmcService = require('./services/tsmcService');
+          const tsmcHandled = await tsmcService.handleTsmcMessageEvent(context);
+          if (tsmcHandled) return true;
+      }
+  }
+
   // 4. Fallback 或其他未納入路由的邏輯 (目前應該都在路由中了)
   // 如果有其他無法透過 router 處理的邏輯 (例如非指令的自然語言處理)，可以在這裡補充
 
@@ -163,23 +175,41 @@ async function lineBot(req, res) {
     const events = req.body.events;
     // 處理每個事件
     const results = await Promise.all(events.map(async (event) => {
-      // 確保只處理文字訊息或 Postback
+      console.log(`[DEBUG] Received event type: ${event.type}`);
+      
+      const { replyToken, source } = event;
+      const groupId = source ? (source.groupId || source.roomId) : null;
+      const userId = source ? source.userId : null;
+      
+      if (replyToken && groupId) {
+          const lineUtils = require('./utils/line');
+          lineUtils.registerReplyToken(replyToken, groupId);
+      }
+
       if (event.type === 'message' && event.message.type === 'text') {
-        const { replyToken, source, message } = event;
+        const { message } = event;
         const { text } = message;
-        const userId = source.userId;
-        const groupId = source.groupId || source.roomId;
         const sourceType = source.type;
 
-        const handled = await handleCommonCommands(text, replyToken, sourceType, userId, groupId, message);
-        if (!handled) {
-          // Unhandled text message
+        const userState = require('./utils/userState');
+        const state = await userState.getUserState(userId);
+
+        if (state && state.action === 'waiting_wc_bet_amount') {
+            const worldcupHandler = require('./handlers/worldcup');
+            await worldcupHandler.processBetAmount(replyToken, groupId, userId, text, state);
+        } else if (state && state.action === 'waiting_wc_bet_confirm') {
+            const worldcupHandler = require('./handlers/worldcup');
+            await worldcupHandler.processBetConfirm(replyToken, groupId, userId, text, state);
+        } else {
+            const handled = await handleCommonCommands(text, replyToken, sourceType, userId, groupId, message);
+            if (!handled && groupId && replyToken) {
+              const lineUtils = require('./utils/line');
+              await lineUtils.flushPendingMessages(groupId, replyToken).catch(e => console.error('[LINE] unhandled flush error:', e));
+            }
         }
       } else if (event.type === 'message' && event.message.type === 'image') {
         // 處理圖片訊息（歡迎圖上傳）
-        const { replyToken, source, message } = event;
-        const userId = source.userId;
-        const groupId = source.groupId || source.roomId;
+        const { message } = event;
         const messageId = message.id;
 
         // 檢查用戶狀態
@@ -214,11 +244,13 @@ async function lineBot(req, res) {
           }
         }
       } else if (event.type === 'postback') {
-        const { replyToken, source, postback } = event;
+        const { postback } = event;
         const data = postback.data;
-        const userId = source.userId;
-        const groupId = source.groupId || source.roomId;
         const sourceType = source.type;
+        const isGroup = (sourceType === 'group' || sourceType === 'room');
+        
+        const isSuper = authUtils.isSuperAdmin(userId);
+        const isAuthorizedGroup = isGroup ? await authUtils.isGroupAuthorized(groupId) : false;
 
         // 建構 context
         const context = {
@@ -228,9 +260,11 @@ async function lineBot(req, res) {
           sourceType,
           postbackData: data,
           // Helper flags
-          isGroup: sourceType === 'group' || sourceType === 'room',
-          // 注意: 這裡需要重新抓取權限資訊嗎？ router.executePostback 內好像沒有檢查權限
-          // 但 handler 內部會檢查
+          isGroup,
+          isSuper,
+          isAuthorizedGroup,
+          replyText: (text) => lineUtils.replyText(replyToken, text),
+          replyFlex: (alt, contents) => lineUtils.replyFlex(replyToken, alt, contents)
         };
 
         // 執行 Postback 路由

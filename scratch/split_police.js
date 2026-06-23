@@ -1,82 +1,84 @@
 const fs = require('fs');
-const path = require('path');
 
-const handlersDir = path.join(__dirname, '../handlers');
-const servicesDir = path.join(__dirname, '../services');
+const fileContent = fs.readFileSync('handlers/police.js', 'utf8');
 
-const functionMapping = {
-    'policeCareerService.js': [
-        'handleJoinPolice', 'handleResignPolice'
-    ],
-    'policeActionService.js': [
-        'handleArrest', 'handleQuickArrest'
-    ],
-    'policeCorruptionService.js': [
-        'handleOfferBribe', 'handleAssassinatePolice'
-    ]
-};
+const functionsToExtract = [
+    'checkInternalAffairs',
+    'handleJoinPolice',
+    'handleResignPolice',
+    'handleArrest',
+    'handleQuickArrest',
+    'handleIndict',
+    'handleFrisk',
+    'handleCoverUp',
+    'handleRaid'
+];
 
-function extractFunctionCode(sourceCode, functionName) {
-    const regex = new RegExp(`^(?:async\\s+)?function\\s+${functionName}\\s*\\([\\s\\S]*?\\)\\s*\\{`, 'm');
-    const match = regex.exec(sourceCode);
-    if (!match) return null;
-    let startIndex = match.index;
-    let braceCount = 0;
-    let endIndex = startIndex;
-    let foundFirstBrace = false;
-    for (let i = startIndex; i < sourceCode.length; i++) {
-        if (sourceCode[i] === '{') {
-            braceCount++;
-            foundFirstBrace = true;
-        } else if (sourceCode[i] === '}') {
-            braceCount--;
-        }
-        if (foundFirstBrace && braceCount === 0) {
-            endIndex = i + 1;
-            break;
-        }
+function extractCode(fnName, nextFnName) {
+    const startStr = 'async function ' + fnName + '(';
+    const startIndex = fileContent.indexOf(startStr);
+    if(startIndex === -1) {
+        console.log('NOT FOUND:', fnName);
+        return '';
     }
-    return sourceCode.substring(startIndex, endIndex);
+    
+    let endIndex = fileContent.length;
+    if (nextFnName) {
+        const nextStr = 'async function ' + nextFnName + '(';
+        endIndex = fileContent.indexOf(nextStr);
+        if(endIndex === -1) endIndex = fileContent.length;
+    } else {
+        // for the last function, end at module.exports
+        endIndex = fileContent.indexOf('module.exports = {');
+    }
+    
+    let commentStart = fileContent.lastIndexOf('/**', startIndex);
+    if(commentStart === -1 || !fileContent.substring(commentStart, startIndex).trim().startsWith('/**')) {
+        commentStart = startIndex;
+    }
+    
+    return fileContent.substring(commentStart, endIndex);
 }
 
-const originalCode = fs.readFileSync(path.join(handlersDir, 'police.js'), 'utf8');
+const functionBlocks = {};
+for(let i=0; i<functionsToExtract.length; i++) {
+    functionBlocks[functionsToExtract[i]] = extractCode(functionsToExtract[i], functionsToExtract[i+1]);
+}
 
-const commonHeader = `const { db } = require('../utils/db');
+const header = `const { Firestore } = require('@google-cloud/firestore');
+const { getDb } = require('../utils/db');
+const db = getDb();
+const COLLECTION_NAME = 'economy_users';
 const lineUtils = require('../utils/line');
 const flexUtils = require('../utils/flex');
-const memoryCache = require('../utils/memoryCache');
-const { getWantedList, getProfessionTitle, getMafiaRank } = require('../handlers/profession');
-const { getFinalPlayerStats } = require('../handlers/rpg');
-const economyHandler = require('../handlers/economy');
+const authUtils = require('../utils/auth');
+const economyHandler = require('./economy');
+const professionHandler = require('./profession');
+const rpgHandler = require('./rpg');\n\n`;
 
-const COLLECTION_NAME = 'economy_users';
-
-`;
-
-for (const [serviceName, funcs] of Object.entries(functionMapping)) {
-    let fileContent = commonHeader;
-    let exportedFuncs = [];
-
-    for (const funcName of funcs) {
-        const funcCode = extractFunctionCode(originalCode, funcName);
-        if (funcCode) {
-            fileContent += funcCode + '\n\n';
-            exportedFuncs.push(funcName);
-        } else {
-            console.error(`Missing ${funcName}`);
+function writeService(serviceName, fnList, extraHeader = '') {
+    let content = header + extraHeader;
+    let exportsList = [];
+    for(const fn of fnList) {
+        if(functionBlocks[fn]) {
+            content += functionBlocks[fn] + '\n';
+            exportsList.push(fn);
         }
     }
-
-    fileContent += `module.exports = {\n    ${exportedFuncs.join(',\n    ')}\n};\n`;
-    fs.writeFileSync(path.join(servicesDir, serviceName), fileContent);
-    console.log(`Created ${serviceName}`);
+    content += `\nmodule.exports = {\n    ${exportsList.join(',\n    ')}\n};\n`;
+    fs.writeFileSync('services/' + serviceName, content, 'utf8');
+    console.log(`Wrote services/${serviceName} (${exportsList.length} functions)`);
 }
 
-// Generate Facade
-let facade = `// Facade for Police Services\n`;
-facade += `const careerService = require('../services/policeCareerService.js');\n`;
-facade += `const actionService = require('../services/policeActionService.js');\n`;
-facade += `const corruptionService = require('../services/policeCorruptionService.js');\n\n`;
-facade += `module.exports = {\n    ...careerService,\n    ...actionService,\n    ...corruptionService\n};\n`;
-fs.writeFileSync(path.join(handlersDir, 'police.js'), facade);
-console.log('Facade created for police.js');
+// Write the new microservices
+// Note: checkInternalAffairs is used by handleCoverUp and handleRaid and handleIndict and handleFrisk and handleArrest... wait!
+// Is checkInternalAffairs an exported function or just an internal helper in police.js?
+// Let's check if it's exported. 
+// It's not in the export list. So I need to put it where it's used, or put it in a shared place or just inside policeActionService and export it to others.
+// It's used everywhere. Let's just put it in policeActionService and export it for others.
+
+writeService('policeCareerService.js', ['handleJoinPolice', 'handleResignPolice']);
+writeService('policeActionService.js', ['checkInternalAffairs', 'handleArrest', 'handleQuickArrest', 'handleIndict', 'handleFrisk', 'handleRaid']);
+writeService('policeCorruptionService.js', ['handleCoverUp'], "const { checkInternalAffairs } = require('./policeActionService');\n");
+
+console.log('Police Split Complete!');

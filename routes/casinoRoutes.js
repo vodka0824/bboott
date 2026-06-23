@@ -153,52 +153,52 @@ module.exports = function (router, handlers) {
 
 
     // === 21點與妞妞 ===
-    router.register(/^(?:開桌|開局|開台)(?:21點|二十一點|21)$/i, async (ctx) => {
+    router.register(/^(?:開桌|開局|開台|開)(?:21點|二十一點|21)$/i, async (ctx) => {
         const activeGame = checkAnyActiveTable(ctx.groupId);
         if (activeGame) {
             await lineUtils.replyText(ctx.replyToken, `❌ 群組內已經有正在進行的【${activeGame}】牌桌了，同時間只能開啟一個多人賭桌！請先將其解散或完成。`);
             return;
         }
         await multiBlackjackHandler.openTable(ctx.replyToken, ctx);
-    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['開桌', '開局', '開台', '21點'] });
+    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['開桌', '開局', '開台', '21點', '開'] });
 
-    router.register(/^(?:開桌|開局|開台)(?:妞妞|牛牛)$/i, async (ctx) => {
+    router.register(/^(?:開桌|開局|開台|開)(?:妞妞|牛牛)$/i, async (ctx) => {
         const activeGame = checkAnyActiveTable(ctx.groupId);
         if (activeGame) {
             await lineUtils.replyText(ctx.replyToken, `❌ 群組內已經有正在進行的【${activeGame}】牌桌了，同時間只能開啟一個多人賭桌！請先將其解散或完成。`);
             return;
         }
         await multiNiuNiuHandler.openTable(ctx.replyToken, ctx);
-    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['開桌', '開局', '開台', '妞妞', '牛牛'] });
+    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['開桌', '開局', '開台', '妞妞', '牛牛', '開'] });
 
-    router.register(/^(?:開桌|開局|開台)推筒子$/i, async (ctx) => {
+    router.register(/^(?:開桌|開局|開台|開)推筒子$/i, async (ctx) => {
         const activeGame = checkAnyActiveTable(ctx.groupId);
         if (activeGame) {
             await lineUtils.replyText(ctx.replyToken, `❌ 群組內已經有正在進行的【${activeGame}】牌桌了，同時間只能開啟一個多人賭桌！請先將其解散或完成。`);
             return;
         }
         await multiTuiTongZiHandler.openTable(ctx.replyToken, ctx);
-    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['開桌', '開局', '開台', '推筒子'] });
+    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['開桌', '開局', '開台', '推筒子', '開'] });
 
-    router.register(/^(?:開桌|開局|開台)十點半$/i, async (ctx) => {
+    router.register(/^(?:開桌|開局|開台|開)十點半$/i, async (ctx) => {
         const activeGame = checkAnyActiveTable(ctx.groupId);
         if (activeGame) {
             await lineUtils.replyText(ctx.replyToken, `❌ 群組內已經有正在進行的【${activeGame}】牌桌了，同時間只能開啟一個多人賭桌！請先將其解散或完成。`);
             return;
         }
         await multiTenHalfHandler.openTable(ctx.replyToken, ctx);
-    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['開桌', '開局', '開台', '十點半'] });
+    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['開桌', '開局', '開台', '十點半', '開'] });
 
-    router.register(/^(?:開桌|開局|開台)(?:十八啦|18啦)$/i, async (ctx) => {
+    router.register(/^(?:開桌|開局|開台|開)(?:十八啦|18啦)$/i, async (ctx) => {
         const activeGame = checkAnyActiveTable(ctx.groupId);
         if (activeGame) {
             await lineUtils.replyText(ctx.replyToken, `❌ 群組內已經有正在進行的【${activeGame}】牌桌了，同時間只能開啟一個多人賭桌！請先將其解散或完成。`);
             return;
         }
         await multiShibalaHandler.openTable(ctx.replyToken, ctx);
-    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['開桌', '十八啦', '18啦'] });
+    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['開桌', '十八啦', '18啦', '開'] });
 
-    router.register(/^(?:開桌|開局|開台)射龍門(?:\s*([0-9０-９.,kKwW萬千百億兆]+|歐印|all\s*in))?$/i, async (ctx, match) => {
+    router.register(/^(?:開桌|開局|開台|開)射龍門(?:\s*([0-9０-９.,kKwW萬千百億兆]+|歐印|all\s*in))?$/i, async (ctx, match) => {
         const activeGame = checkAnyActiveTable(ctx.groupId);
         if (activeGame) {
             await lineUtils.replyText(ctx.replyToken, `❌ 群組內已經有正在進行的【${activeGame}】牌桌了，同時間只能開啟一個多人賭桌！請先將其解散或完成。`);
@@ -211,33 +211,37 @@ module.exports = function (router, handlers) {
         }
         const amt = await resolveBetAmount(match[1], ctx.userId);
         await multiRedDogHandler.openTable(ctx.replyToken, ctx.groupId, ctx.userId, amt);
-    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['開桌', '開局', '開台', '射龍門'] });
+    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['開桌', '開局', '開台', '射龍門', '開'] });
 
-    router.register(/^(?:開桌|開局|開台)炸金花$/i, async (ctx) => {
+    router.register(/^(?:開桌|開局|開台|開)炸金花$/i, async (ctx) => {
         const activeGame = checkAnyActiveTable(ctx.groupId);
         if (activeGame) {
             await lineUtils.replyText(ctx.replyToken, `❌ 群組內已經有正在進行的【${activeGame}】牌桌了，同時間只能開啟一個多人賭桌！請先將其解散或完成。`);
             return;
         }
         await multiGoldenFlowerHandler.openTable(ctx.replyToken, ctx);
-    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['開桌', '開局', '開台', '炸金花'] });
+    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['開桌', '開局', '開台', '炸金花', '開'] });
 
-    router.register(/^(?:開桌|開局|開台)百家樂$/i, async (ctx) => {
+    router.register(/^(?:開桌|開局|開台|開)百家樂$/i, async (ctx) => {
         const activeGame = checkAnyActiveTable(ctx.groupId);
         if (activeGame) {
             await lineUtils.replyText(ctx.replyToken, `❌ 群組內已經有正在進行的【${activeGame}】牌桌了，同時間只能開啟一個多人賭桌！請先將其解散或完成。`);
             return;
         }
         await multiBaccaratHandler.openTable(ctx.replyToken, ctx);
-    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['開桌', '開局', '開台', '百家樂'] });
+    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['開桌', '開局', '開台', '百家樂', '開'] });
 
-    router.register(/^押(莊|閒|和)\s*([0-9０-９.,kKwW萬千百億兆]+|歐印|all\s*in)$/i, async (ctx, match) => {
+    router.register(/^(?:押|買)?(莊|莊家|閒|閒家|和|和局)\s*([0-9０-９.,kKwW萬千百億兆]+|歐印|all\s*in)$/i, async (ctx, match) => {
         const access = await checkMilitaryTableAccess(ctx);
         if (!access.allowed) {
             await lineUtils.replyText(ctx.replyToken, access.message);
             return;
         }
-        const betType = match[1];
+        let betTypeRaw = match[1];
+        let betType = '和';
+        if (betTypeRaw.startsWith('莊')) betType = '莊';
+        else if (betTypeRaw.startsWith('閒')) betType = '閒';
+        
         const amt = await resolveBetAmount(match[2], ctx.userId);
         if (multiBaccaratHandler.getActiveTable(ctx.groupId)) {
             await multiBaccaratHandler.placeBet(ctx.replyToken, ctx, betType, amt);
@@ -245,24 +249,28 @@ module.exports = function (router, handlers) {
             const isPlusCommand = ctx.message && ctx.message.trim().startsWith('+');
             if (!isPlusCommand) await handleNoTableSpam(ctx, '❌ 目前沒有等待中的百家樂牌桌。');
         }
-    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['押莊', '押閒', '押和'] });
+    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['押莊', '押閒', '押和', '莊', '閒'] });
 
-    router.register(/^(?:(下注|\+|-)\s*([0-9０-９.,kKwW萬千百億兆]+|歐印|all\s*in)|([0-9０-９.,kKwW萬千百億兆]+|歐印|all\s*in))\s*$/i, async (ctx, match) => {
+    router.register(/^(?:(下注|押注|押|買|跟|加|\+|-)\s*([0-9０-９.,kKwW萬千百億兆]+|歐印|all\s*in|一半|1\/2|half)|([0-9０-９.,kKwW萬千百億兆]+|歐印|all\s*in|一半|1\/2|half))\s*$/i, async (ctx, match) => {
         const access = await checkMilitaryTableAccess(ctx);
         if (!access.allowed) {
             await lineUtils.replyText(ctx.replyToken, access.message);
             return;
         }
         const rawAmt = match[2] || match[3];
-        const operator = match[1] ? match[1].toLowerCase() : '+';
+        const operator = match[1] ? match[1].toLowerCase() : '';
         const amt = await resolveBetAmount(rawAmt, ctx.userId);
+        
+        let betStrForGames = rawAmt;
+        if (operator === '+' || operator === '加') betStrForGames = '+' + rawAmt;
+        if (operator === '-') betStrForGames = '-' + rawAmt;
         
         const reddogTable = multiRedDogHandler.getActiveTable(ctx.groupId);
         if (reddogTable && reddogTable.status === 'playing') {
             let action = '射';
             if (operator === '-') {
                 action = '猜小';
-            } else if (operator === '+') {
+            } else if (operator === '+' || operator === '加' || operator === '買' || operator === '押' || operator === '下注' || operator === '跟' || operator === '押注') {
                 if (reddogTable.currentCards[0].value === reddogTable.currentCards[1].value) {
                     action = '猜大';
                 }
@@ -271,28 +279,29 @@ module.exports = function (router, handlers) {
             if (handled) return;
         }
 
-        if (multiNiuNiuHandler.getActiveTable(ctx.groupId)) await multiNiuNiuHandler.placeBet(ctx.replyToken, ctx, amt);
-        else if (multiGoldenFlowerHandler.getActiveTable(ctx.groupId)) await multiGoldenFlowerHandler.placeBet(ctx.replyToken, ctx, amt);
-        else if (multiBlackjackHandler.getActiveTable(ctx.groupId)) await multiBlackjackHandler.placeBet(ctx.replyToken, ctx, amt);
-        else if (multiTuiTongZiHandler.getActiveTable(ctx.groupId)) await multiTuiTongZiHandler.placeBet(ctx.replyToken, ctx, amt);
-        else if (multiTenHalfHandler.getActiveTable(ctx.groupId)) await multiTenHalfHandler.placeBet(ctx.replyToken, ctx, amt);
-        else if (multiShibalaHandler.getActiveTable(ctx.groupId)) await multiShibalaHandler.placeBet(ctx.replyToken, ctx, amt);
+        if (multiNiuNiuHandler.getActiveTable(ctx.groupId)) await multiNiuNiuHandler.placeBet(ctx.replyToken, ctx, betStrForGames);
+        else if (multiGoldenFlowerHandler.getActiveTable(ctx.groupId)) await multiGoldenFlowerHandler.placeBet(ctx.replyToken, ctx, betStrForGames);
+        else if (multiBlackjackHandler.getActiveTable(ctx.groupId)) await multiBlackjackHandler.placeBet(ctx.replyToken, ctx, betStrForGames);
+        else if (multiTuiTongZiHandler.getActiveTable(ctx.groupId)) await multiTuiTongZiHandler.placeBet(ctx.replyToken, ctx, betStrForGames);
+        else if (multiTenHalfHandler.getActiveTable(ctx.groupId)) await multiTenHalfHandler.placeBet(ctx.replyToken, ctx, betStrForGames);
+        else if (multiShibalaHandler.getActiveTable(ctx.groupId)) await multiShibalaHandler.placeBet(ctx.replyToken, ctx, betStrForGames);
         else {
             // 如果只有簡寫且以 + 開頭，不進行錯誤回覆以避免洗頻
-            const isPlusCommand = ctx.message && ctx.message.trim().startsWith('+');
+            const isPlusCommand = ctx.message && (ctx.message.trim().startsWith('+') || match[3] !== undefined);
             if (!isPlusCommand && match[1]) await handleNoTableSpam(ctx, '❌ 目前沒有進行中的多人牌桌。');
-            else return false; // 讓 +1 可以繼續往下匹配到「加入射龍門」或其他指令
+            else return false; // 讓純數字可以繼續往下匹配
         }
     }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true });
 
     // 統一處理發牌與補牌（包含指令 +）
-    router.register(/^(發牌?|補牌?|要牌?|加牌?|再一張|擲骰?|\+)\s*$/i, async (ctx) => {
+    router.register(/^(發牌?|補牌?|要牌?|加牌?|再一張|擲骰?|\+|hit|h|補一張|繼續|抽牌?|抽)\s*$/i, async (ctx) => {
         const access = await checkMilitaryTableAccess(ctx);
         if (!access.allowed) {
             await lineUtils.replyText(ctx.replyToken, access.message);
             return;
         }
-        const cmd = ctx.message ? ctx.message.trim() : '';
+        let cmd = ctx.message ? ctx.message.trim().toLowerCase() : '';
+        if (['hit', 'h', '補一張', '繼續', '抽', '抽牌', '要牌', '要', '加牌', '再一張'].includes(cmd)) cmd = '+';
         
         if (ctx.isGroup) {
             // 優先檢查多人射龍門
@@ -416,9 +425,9 @@ module.exports = function (router, handlers) {
         if (cmd === '發牌' || cmd === '發' || cmd === '開牌' || cmd === '擲骰' || cmd === '擲') {
             await handleNoTableSpam(ctx, '❌ 目前沒有進行中或等待發牌的多人牌桌。');
         }
-    }, { feature: 'multiplayer', allowDM: true, isMultiplayer: true, keywords: ['發牌', '發', '補牌', '補', '擲骰', '擲', '+', '-', '開牌'] });
+    }, { feature: 'multiplayer', allowDM: true, isMultiplayer: true, keywords: ['發牌', '發', '補牌', '補', '擲骰', '擲', '+', '-', '開牌', '要牌', '要', '加牌', '再一張', 'hit', 'h', '補一張', '繼續', '抽牌', '抽'] });
 
-    router.register(/^(?:加入射龍門|加入|加|\+1)$/i, async (ctx) => {
+    router.register(/^(?:加入射龍門|加入|加|\+1|join|j|報名|算我一個)$/i, async (ctx) => {
         const access = await checkMilitaryTableAccess(ctx);
         if (!access.allowed) {
             await lineUtils.replyText(ctx.replyToken, access.message);
@@ -428,9 +437,9 @@ module.exports = function (router, handlers) {
         else {
             if (['加入射龍門', '加入'].includes(ctx.message.trim())) await handleNoTableSpam(ctx, '❌ 目前沒有等待中的射龍門牌桌。');
         }
-    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['加入', '加', '+1'] });
+    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['加入', '加', '+1', 'join'] });
 
-    router.register(/^(?:開始射龍門|開始|開)$/, async (ctx) => {
+    router.register(/^(?:開始射龍門|開始|開|start|go|s)$/i, async (ctx) => {
         const access = await checkMilitaryTableAccess(ctx);
         if (!access.allowed) {
             await lineUtils.replyText(ctx.replyToken, access.message);
@@ -440,7 +449,7 @@ module.exports = function (router, handlers) {
         else {
             if (['開始射龍門', '開始'].includes(ctx.message.trim())) await handleNoTableSpam(ctx, '❌ 目前沒有等待中的射龍門牌桌。');
         }
-    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['開始', '開'] });
+    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['開始', '開', 'start'] });
 
     router.register(/^(?:不射|pass|過|跳過)$/i, async (ctx) => {
         const access = await checkMilitaryTableAccess(ctx);
@@ -472,7 +481,7 @@ module.exports = function (router, handlers) {
         if (!handled) return false;
     }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['射', '猜大', '猜小', '大', '小'] });
 
-    router.register(/^(?:解散牌桌|解散|收桌|關桌)$/, async (ctx) => {
+    router.register(/^(?:解散牌桌|解散|收桌|關桌|散|關|結束|取消|不玩了)$/i, async (ctx) => {
         if (multiNiuNiuHandler.getActiveTable(ctx.groupId)) await multiNiuNiuHandler.closeTable(ctx.replyToken, ctx);
         else if (multiBlackjackHandler.getActiveTable(ctx.groupId)) await multiBlackjackHandler.closeTable(ctx.replyToken, ctx);
         else if (multiGoldenFlowerHandler.getActiveTable(ctx.groupId)) await multiGoldenFlowerHandler.closeTable(ctx.replyToken, ctx);
@@ -481,9 +490,9 @@ module.exports = function (router, handlers) {
         else if (multiTenHalfHandler.getActiveTable(ctx.groupId)) await multiTenHalfHandler.closeTable(ctx.replyToken, ctx);
         else if (multiShibalaHandler.getActiveTable(ctx.groupId)) await multiShibalaHandler.closeTable(ctx.replyToken, ctx);
         else await handleNoTableSpam(ctx, '❌ 目前沒有進行中的牌桌。');
-    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['解散', '收桌', '關桌'] });
+    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['解散', '收桌', '關桌', '散', '關'] });
 
-    router.register(/^(?:莊家開牌|開牌)$/, async (ctx) => {
+    router.register(/^(?:莊家開牌|開牌|攤牌|結算)$/i, async (ctx) => {
         if (multiBlackjackHandler.getActiveTable(ctx.groupId)) {
             await multiBlackjackHandler.dealerPlay(ctx.replyToken, ctx);
         } else if (multiTenHalfHandler.getActiveTable(ctx.groupId)) {
@@ -491,7 +500,7 @@ module.exports = function (router, handlers) {
         } else {
             await handleNoTableSpam(ctx, '❌ 目前沒有可開牌的牌桌。');
         }
-    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['開牌'] });
+    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['開牌', '攤牌'] });
 
     router.register(/^(?:21點|二十一點)(?:\s*([0-9０-９.,kKwW萬千百億兆]+|歐印|all\s*in))?\s*$/i, async (ctx, match) => {
         const amt = await resolveBetAmount(match[1] || '10', ctx.userId);
@@ -500,16 +509,28 @@ module.exports = function (router, handlers) {
 
 
 
-    router.register(/^(停牌?|過|pass?|不加牌?|不要了?|不要牌?|不拿牌?|不要加牌?|不補牌?|不抽牌?|-)$/i, async (ctx) => {
+    router.register(/^(停牌?|過|pass?|不加牌?|不要了?|不要牌?|不拿牌?|不要加牌?|不補牌?|不抽牌?|-|stand|不|不要|夠了|p|放棄|投降|surrender|ff)$/i, async (ctx) => {
         const access = await checkMilitaryTableAccess(ctx);
         if (!access.allowed) {
             await lineUtils.replyText(ctx.replyToken, access.message);
             return;
         }
         if (ctx.isGroup) {
+            const reddogTable = multiRedDogHandler.getActiveTable(ctx.groupId);
+            if (reddogTable && reddogTable.status === 'playing') {
+                const cmd = ctx.message.trim().toLowerCase();
+                let action = '不射';
+                if (cmd === '-') action = '猜小';
+                await multiRedDogHandler.handlePlayerAction(ctx.replyToken, ctx.groupId, ctx.userId, action, '10');
+                return;
+            }
             const table = multiBlackjackHandler.getActiveTable(ctx.groupId);
             if (table && table.status === 'playing') {
-                await multiBlackjackHandler.playerStand(ctx.replyToken, ctx);
+                if (['投降', 'surrender', 'ff'].includes(ctx.message.trim().toLowerCase())) {
+                    await multiBlackjackHandler.playerSurrender(ctx.replyToken, ctx);
+                } else {
+                    await multiBlackjackHandler.playerStand(ctx.replyToken, ctx);
+                }
                 return;
             }
             const tenHalfTable = multiTenHalfHandler.getActiveTable(ctx.groupId);
@@ -519,9 +540,9 @@ module.exports = function (router, handlers) {
             }
         }
         await blackjackHandler.stand(ctx.replyToken, ctx);
-    }, { feature: 'multiplayer', allowDM: true, isMultiplayer: true, keywords: ['停牌', '停'] });
+    }, { feature: 'multiplayer', allowDM: true, isMultiplayer: true, keywords: ['停牌', '停', 'stand', '過', 'pass', '不加牌', '不要了', '不要牌', '不拿牌', '不要加牌', '不補牌', '不抽牌', '-', '不', '不要', '夠了', 'p', '放棄', '投降', 'surrender', 'ff'] });
 
-    router.register(/^(?:雙倍下注|雙倍|double)$/i, async (ctx) => {
+    router.register(/^(?:雙倍下注|雙倍|double|加倍|x2)$/i, async (ctx) => {
         const access = await checkMilitaryTableAccess(ctx);
         if (!access.allowed) {
             await lineUtils.replyText(ctx.replyToken, access.message);
@@ -530,9 +551,9 @@ module.exports = function (router, handlers) {
         const table = multiBlackjackHandler.getActiveTable(ctx.groupId);
         if (table && table.status === 'playing') await multiBlackjackHandler.playerDoubleDown(ctx.replyToken, ctx);
         else await handleNoTableSpam(ctx, '❌ 單機模式尚未開放此功能，請在「開桌21點」使用！');
-    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['雙倍', 'double'] });
+    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['雙倍', 'double', '加倍'] });
 
-    router.register(/^(?:投降|認輸|surrender)$/i, async (ctx) => {
+    router.register(/^(?:投降|認輸|surrender|放棄|ff)$/i, async (ctx) => {
         const access = await checkMilitaryTableAccess(ctx);
         if (!access.allowed) {
             await lineUtils.replyText(ctx.replyToken, access.message);
@@ -541,7 +562,7 @@ module.exports = function (router, handlers) {
         const table = multiBlackjackHandler.getActiveTable(ctx.groupId);
         if (table && table.status === 'playing') await multiBlackjackHandler.playerSurrender(ctx.replyToken, ctx);
         else await handleNoTableSpam(ctx, '❌ 單機模式尚未開放此功能，請在「開桌21點」使用！');
-    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['投降', '認輸', 'surrender'] });
+    }, { feature: 'multiplayer', isGroupOnly: true, needAuth: true, isMultiplayer: true, keywords: ['投降', '認輸', 'surrender', '放棄'] });
 
     // === 其他賭場遊戲 ===
     router.register(/^\s*(尊爵輪盤|VIP輪盤)\s*$/, async (ctx) => {

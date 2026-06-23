@@ -1,10 +1,188 @@
+const { Firestore } = require('@google-cloud/firestore');
 const { db } = require('../utils/db');
+const COLLECTION_NAME = 'economy_users';
 const lineUtils = require('../utils/line');
 const flexUtils = require('../utils/flex');
-const memoryCache = require('../utils/memoryCache');
-const { getSpamResponse } = require('../utils/spamHandler');
-const COLLECTION_NAME = 'economy_users';
+const authUtils = require('../utils/auth');
 
+function getSpamResponse(userData, action, msg) {
+    const spamLimit = 3;
+    let trackers = userData.spamTracker || {};
+    let count = (trackers[action] || 0) + 1;
+    trackers[action] = count;
+    
+    if (count > spamLimit) {
+        return { ignore: false, triggerPenalty: true, message: `🚨 【警告】你已連續洗頻 ${action} 指令超過 ${spamLimit} 次！將受到懲罰！`, newTracker: trackers };
+    }
+    if (count === spamLimit) {
+        return { ignore: false, triggerPenalty: false, message: msg + `\n(再洗頻一次將受到嚴厲懲罰！)`, newTracker: trackers };
+    }
+    return { ignore: false, triggerPenalty: false, message: msg, newTracker: trackers };
+}
+
+
+/**
+ * 幫典獄長吹喇叭
+ */
+async function handleBlowWarden(replyToken, context) {
+    const { userId, groupId } = context;
+
+    try {
+        const memberName = await lineUtils.getGroupMemberName(groupId, userId);
+        const result = await db.runTransaction(async (t) => {
+            const docRef = db.collection('economy_users').doc(userId);
+            const doc = await t.get(docRef);
+            if (!doc.exists) return { success: false, message: '找不到資料。' };
+            const data = doc.data();
+            
+            if (!data.jailedUntil || Date.now() >= data.jailedUntil) {
+                const spam = getSpamResponse(data, 'not_jailed', '你又沒坐牢，跑來吹什麼喇叭？');
+                t.update(docRef, { spamTracker: spam.newTracker });
+                return { success: false, message: spam.message, ignore: spam.ignore };
+            }
+
+            if (data.blowCooldownUntil && Date.now() < data.blowCooldownUntil) {
+                const remaining = Math.ceil((data.blowCooldownUntil - Date.now()) / 60000);
+                const spam = getSpamResponse(data, 'blow_cd', `典獄長現在進入聖人模式，請休息 ${remaining} 分鐘後再來！`);
+                t.update(docRef, { spamTracker: spam.newTracker });
+                return { success: false, message: spam.message, ignore: spam.ignore };
+            }
+
+                        const rand = Math.random() * 100;
+            const cooldownTime = Date.now() + 30 * 60 * 1000;
+            
+            let isFree = false;
+            let finalJailedUntil = data.jailedUntil;
+            let eventMsg = '';
+            let outcomeType = ''; // 'perfect', 'good', 'bad_none', 'bad_add'
+            let timeChangeMsg = '';
+            let reward = 0;
+
+            if (rand < 10) {
+                // 10% 惹怒典獄長
+                const addMins = Math.floor(Math.random() * 31) + 30; // 30~60
+                finalJailedUntil = Math.max(Date.now(), data.jailedUntil) + (addMins * 60 * 1000);
+                eventMsg = '你服務時不小心牙齒撞到典獄長，他不舒服一怒之下叫人把你拖出去毒打！';
+                timeChangeMsg = `加刑 ${addMins} 分鐘`;
+                outcomeType = 'bad_add';
+            } else if (rand < 50) {
+                // 40% 白嫖
+                eventMsg = '你賣力服務了半天，弄得口乾舌燥，結果典獄長爽完提上褲子就不認人了！';
+                timeChangeMsg = '毫無減免 (被白嫖)';
+                outcomeType = 'bad_none';
+            } else if (rand < 90) {
+                // 40% 減刑 + 小費
+                const deductMins = Math.floor(Math.random() * 31) + 30; // 30~60
+                reward = Math.floor(Math.random() * 40001) + 20000; // 20k~60k
+                finalJailedUntil = data.jailedUntil - (deductMins * 60 * 1000);
+                eventMsg = '典獄長龍心大悅！不但幫你減去大量刑期，還從錢包裡抽了一疊鈔票塞進你嘴裡！';
+                timeChangeMsg = `減免 ${deductMins} 分鐘`;
+                outcomeType = 'good';
+                if (finalJailedUntil <= Date.now()) isFree = true;
+            } else {
+                // 10% 完美服務 (立即釋放 + 封口費)
+                reward = Math.floor(Math.random() * 50001) + 50000; // 50k~100k
+                finalJailedUntil = Date.now() - 1000;
+                eventMsg = '你的服務簡直是神乎其技！典獄長爽到靈魂出竅，醒來後立刻簽發了特赦令，並給了你一筆豐厚的封口費！';
+                timeChangeMsg = '刑期全免 (特赦)';
+                outcomeType = 'perfect';
+                isFree = true;
+            }
+
+            if (reward > 0) {
+                t.update(docRef, { kuCoin: db.FieldValue.increment(reward) });
+            }
+
+            if (isFree) {
+                t.update(docRef, { jailedUntil: db.FieldValue.delete(), blowCooldownUntil: cooldownTime });
+            } else {
+                t.update(docRef, { jailedUntil: finalJailedUntil, blowCooldownUntil: cooldownTime });
+            }
+
+            return { success: true, isFree, eventMsg, outcomeType, timeChangeMsg, reward, name: memberName || data.displayName || data.name || '未知', finalJailedUntil, newBalance: (data.kuCoin || 0) + reward };
+        });
+
+        if (!result.success) {
+            if (result.ignore) return;
+            await lineUtils.replyText(replyToken, `❌ ${result.message}`);
+            return;
+        }
+
+                const now = Date.now();
+        const cdText = `⏳ 冷卻時間：30 分鐘\n（可於 ${new Date(now + 30 * 60 * 1000).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false })} 後再次服務）`;
+        
+        let headerColor, bgColor, headerIcon, headerTitle, headerSubtitle, resultColor;
+        
+        if (result.outcomeType === 'perfect') {
+            headerIcon = '🌟';
+            headerTitle = '神之服務';
+            headerSubtitle = '特赦令降臨';
+            headerColor = '#FBC02D'; // Gold
+            bgColor = '#FFF9C4';
+            resultColor = '#F57F17';
+        } else if (result.outcomeType === 'good') {
+            headerIcon = '👄';
+            headerTitle = '特殊服務';
+            headerSubtitle = '龍心大悅';
+            headerColor = '#8E24AA'; // Purple
+            bgColor = '#F3E5F5';
+            resultColor = '#8E24AA';
+        } else if (result.outcomeType === 'bad_add') {
+            headerIcon = '💥';
+            headerTitle = '服務失敗';
+            headerSubtitle = '惹怒長官';
+            headerColor = '#C62828'; // Red
+            bgColor = '#FFEBEE';
+            resultColor = '#C62828';
+        } else {
+            headerIcon = '💦';
+            headerTitle = '服務完畢';
+            headerSubtitle = '提褲不認人';
+            headerColor = '#E65100'; // Orange
+            bgColor = '#FFF3E0';
+            resultColor = '#E65100';
+        }
+
+        const remainingMins = Math.ceil((result.finalJailedUntil - now) / 60000);
+        
+        const bodyContents = [
+            flexUtils.createText({ text: `${result.name} 敲開了典獄長的辦公室...\n\n${result.eventMsg}`, size: 'sm', color: '#666666', wrap: true }),
+            flexUtils.createSeparator('md'),
+            flexUtils.createText({ text: `⚖️ 判決結果：${result.timeChangeMsg}`, size: 'sm', weight: 'bold', color: resultColor, margin: 'md' })
+        ];
+
+        if (result.reward > 0) {
+            bodyContents.push(flexUtils.createText({ text: `💰 獲得小費：+${result.reward.toLocaleString()} 哭幣`, size: 'sm', weight: 'bold', color: '#2E7D32', margin: 'sm' }));
+            bodyContents.push(flexUtils.createText({ text: `💰 結算總資產：${result.newBalance.toLocaleString()} 哭幣`, size: 'sm', weight: 'bold', color: '#1A1A1A', margin: 'sm' }));
+        }
+
+        bodyContents.push(flexUtils.createSeparator('md'));
+
+        if (result.isFree) {
+            bodyContents.push(flexUtils.createText({ text: `🎉 由於刑期歸零，${result.name} 順利出獄！`, size: 'md', weight: 'bold', color: '#2E7D32', margin: 'md', wrap: true }));
+        } else {
+            bodyContents.push(flexUtils.createText({ text: `⏱️ 目前剩餘刑期：${remainingMins} 分鐘。`, size: 'sm', color: '#333333', margin: 'md', wrap: true }));
+        }
+        
+        bodyContents.push(flexUtils.createText({ text: cdText, size: 'xs', color: resultColor, margin: 'md', wrap: true }));
+
+        const bubble = flexUtils.createBubble({
+            size: 'mega',
+            header: flexUtils.createHeader(`${headerIcon} ${headerTitle}`, headerSubtitle, headerColor, bgColor),
+            body: flexUtils.createBox('vertical', bodyContents, { paddingAll: 'xl', backgroundColor: '#FFFFFF' })
+        });
+
+        await lineUtils.replyFlex(replyToken, '吹喇叭結果', bubble);
+
+    } catch (e) {
+        console.error('[Jail] handleBlowWarden Error:', e);
+        await lineUtils.replyText(replyToken, '❌ 服務失敗。');
+    }
+}
+
+/**
+ * 撿肥皂
+ */
 async function handleDropSoap(replyToken, context) {
     const { userId, groupId } = context;
 
@@ -119,12 +297,15 @@ async function handleDropSoap(replyToken, context) {
     }
 }
 
+/**
+ * 勞動改造
+ */
 async function handleLabor(replyToken, context) {
     const { userId, groupId } = context;
 
     try {
         const memberName = await lineUtils.getGroupMemberName(groupId, userId);
-        const { getFinalPlayerStats } = require('./rpg');
+        const { getFinalPlayerStats } = require('../handlers/rpg');
         const stats = await getFinalPlayerStats(userId);
         const atk = stats.final.atk || 0;
         const luk = stats.final.luk || 0;
@@ -257,79 +438,11 @@ async function handleLabor(replyToken, context) {
     }
 }
 
-async function handleBlowWarden(replyToken, context) {
-    const { userId, groupId } = context;
 
-    try {
-        const memberName = await lineUtils.getGroupMemberName(groupId, userId);
-        const result = await db.runTransaction(async (t) => {
-            const docRef = db.collection('economy_users').doc(userId);
-            const doc = await t.get(docRef);
-            if (!doc.exists) return { success: false, message: '找不到資料。' };
-            const data = doc.data();
-            
-            if (!data.jailedUntil || Date.now() >= data.jailedUntil) {
-                return { success: false, message: '你又沒坐牢，跑來吹什麼喇叭？' };
-            }
 
-            if (data.blowCooldownUntil && Date.now() < data.blowCooldownUntil) {
-                const remaining = Math.ceil((data.blowCooldownUntil - Date.now()) / 60000);
-                return { success: false, message: `典獄長現在進入聖人模式，請休息 ${remaining} 分鐘後再來！` };
-            }
-
-            const rand = Math.random() * 100;
-            const cooldownTime = Date.now() + 30 * 60 * 1000;
-            
-            let isFree = false;
-            let finalJailedUntil = data.jailedUntil;
-            let eventMsg = '';
-            let isBad = false;
-
-            if (rand < 10) {
-                // 10% 典獄長覺得不舒服，加刑 30 分鐘
-                finalJailedUntil = Math.max(Date.now(), data.jailedUntil) + (30 * 60 * 1000);
-                eventMsg = '你牙齒撞到典獄長，他不舒服一怒之下給你加刑 30 分鐘！';
-                isBad = true;
-            } else if (rand < 50) {
-                // 40% 白嫖
-                eventMsg = '你賣力服務了半天，典獄長爽完提上褲子就不認人了，刑期一點也沒少！(被白嫖)';
-                isBad = true;
-            } else {
-                // 50% 扣除一半剩餘刑期
-                const remainingMins = Math.ceil((data.jailedUntil - Date.now()) / 60000);
-                const deductMins = Math.floor(remainingMins / 2);
-                finalJailedUntil = data.jailedUntil - (deductMins * 60 * 1000);
-                eventMsg = `典獄長龍心大悅！直接幫你減去了一半的剩餘刑期 (${deductMins} 分鐘)！`;
-                if (finalJailedUntil <= Date.now()) isFree = true;
-            }
-
-            if (isFree) {
-                t.update(docRef, { jailedUntil: db.FieldValue.delete(), blowCooldownUntil: cooldownTime });
-            } else {
-                t.update(docRef, { jailedUntil: finalJailedUntil, blowCooldownUntil: cooldownTime });
-            }
-
-            return { success: true, isFree, eventMsg, isBad, name: memberName || data.name, finalJailedUntil };
-        });
-
-        if (!result.success) {
-            await lineUtils.replyText(replyToken, `❌ ${result.message}`);
-            return;
-        }
-
-        if (result.isFree) {
-            await lineUtils.replyText(replyToken, `👄 【特殊服務】\n${result.name} 敲開了典獄長的辦公室...\n${result.eventMsg}\n\n🎉 由於刑期已滿，典獄長批准你出獄啦！`);
-        } else {
-            const remainingMins = Math.ceil((result.finalJailedUntil - Date.now()) / 60000);
-            const icon = result.isBad ? '😭' : '👄';
-            await lineUtils.replyText(replyToken, `${icon} 【特殊服務】\n${result.name} 敲開了典獄長的辦公室...\n${result.eventMsg}\n\n目前剩餘刑期：${remainingMins} 分鐘。 (冷卻30分)`);
-        }
-
-    } catch (e) {
-        console.error('[Jail] handleBlowWarden Error:', e);
-    }
-}
-
+/**
+ * 探監
+ */
 async function handleVisit(replyToken, context, messageObject) {
     const { userId: fromUserId, groupId } = context;
     const mentionObj = messageObject && messageObject.mention;
@@ -435,8 +548,8 @@ async function handleVisit(replyToken, context, messageObject) {
 }
 
 module.exports = {
+    handleBlowWarden,
     handleDropSoap,
     handleLabor,
-    handleBlowWarden,
     handleVisit
 };

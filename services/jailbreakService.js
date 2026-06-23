@@ -1,9 +1,26 @@
+const { Firestore } = require('@google-cloud/firestore');
 const { db } = require('../utils/db');
+const COLLECTION_NAME = 'economy_users';
 const lineUtils = require('../utils/line');
 const flexUtils = require('../utils/flex');
-const memoryCache = require('../utils/memoryCache');
-const { getSpamResponse } = require('../utils/spamHandler');
-const COLLECTION_NAME = 'economy_users';
+const authUtils = require('../utils/auth');
+const notificationService = require('../services/notificationService');
+
+function getSpamResponse(userData, action, msg) {
+    const spamLimit = 3;
+    let trackers = userData.spamTracker || {};
+    let count = (trackers[action] || 0) + 1;
+    trackers[action] = count;
+    
+    if (count > spamLimit) {
+        return { ignore: false, triggerPenalty: true, message: `🚨 【警告】你已連續洗頻 ${action} 指令超過 ${spamLimit} 次！將受到懲罰！`, newTracker: trackers };
+    }
+    if (count === spamLimit) {
+        return { ignore: false, triggerPenalty: false, message: msg + `
+(再洗頻一次將受到嚴厲懲罰！)`, newTracker: trackers };
+    }
+    return { ignore: false, triggerPenalty: false, message: msg, newTracker: trackers };
+}
 
 async function handleJailbreak(replyToken, context) {
     const { userId, groupId } = context;
@@ -12,7 +29,7 @@ async function handleJailbreak(replyToken, context) {
         const memberName = await lineUtils.getGroupMemberName(groupId, userId);
         
         // 獲取玩家 LUK
-        const { getFinalPlayerStats } = require('./rpg');
+        const { getFinalPlayerStats } = require('../handlers/rpg');
         const stats = await getFinalPlayerStats(userId);
         const luk = stats.final.luk || 0;
         
@@ -99,7 +116,8 @@ async function handleJailbreak(replyToken, context) {
         }
 
         if (result.jailbreak) {
-            const shivMsg = result.usedShiv ? `\n(使用了偷藏的【銼刀】，不費吹灰之力鋸開了鐵窗！)` : '';
+            const shivMsg = result.usedShiv ? `
+(使用了偷藏的【銼刀】，不費吹灰之力鋸開了鐵窗！)` : '';
             const bubble = flexUtils.createBubble({
                 size: 'mega',
                 header: flexUtils.createHeader(`🏃‍♂️💨 越獄成功`, '', '#FFFFFF', '#4CAF50'),
@@ -119,8 +137,10 @@ async function handleJailbreak(replyToken, context) {
                     flexUtils.createText({ text: `警報聲大作！${result.name} 卡在通風管被警衛抓個正著！`, size: 'sm', color: '#666666', wrap: true }),
                     flexUtils.createText({ text: `👮 獄警：「還敢逃？把你打到腿斷掉！」`, size: 'sm', weight: 'bold', color: '#D32F2F', margin: 'md', wrap: true }),
                     flexUtils.createSeparator('md'),
-                    flexUtils.createText({ text: `您的刑期增加 60 分鐘！\n目前剩餘刑期：${remainingMins} 分鐘。`, size: 'sm', color: '#333333', margin: 'md', wrap: true }),
-                    flexUtils.createText({ text: `⏳ 冷卻時間：10 分鐘\n（可於 ${new Date(Date.now() + 10 * 60 * 1000).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false })} 後再次越獄）`, size: 'xs', color: '#B71C1C', margin: 'md', wrap: true })
+                    flexUtils.createText({ text: `您的刑期增加 60 分鐘！
+目前剩餘刑期：${remainingMins} 分鐘。`, size: 'sm', color: '#333333', margin: 'md', wrap: true }),
+                    flexUtils.createText({ text: `⏳ 冷卻時間：10 分鐘
+（可於 ${new Date(Date.now() + 10 * 60 * 1000).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false })} 後再次越獄）`, size: 'xs', color: '#B71C1C', margin: 'md', wrap: true })
                 ], { paddingAll: 'xl', backgroundColor: '#FFEBEE' })
             });
             await lineUtils.replyFlex(replyToken, '越獄失敗', bubble);
@@ -129,6 +149,194 @@ async function handleJailbreak(replyToken, context) {
     } catch (e) {
         console.error('[Jail] handleJailbreak Error:', e);
         await lineUtils.replyText(replyToken, '❌ 越獄行動發生意外，請稍後再試。');
+    }
+}
+
+async function confirmJailbreak(replyToken, context) {
+    const { userId, groupId } = context;
+
+    try {
+        const memberName = await lineUtils.getGroupMemberName(groupId, userId);
+        
+        // 獲取玩家 LUK & EVA
+        const { getFinalPlayerStats } = require('../handlers/rpg');
+        const stats = await getFinalPlayerStats(userId);
+        
+        const result = await db.runTransaction(async (t) => {
+            const docRef = db.collection(COLLECTION_NAME).doc(userId);
+            const doc = await t.get(docRef);
+            
+            if (!doc.exists) {
+                return { success: false, message: '找不到您的資料。' };
+            }
+            
+            const data = doc.data();
+            if (!data.jailedUntil || Date.now() >= data.jailedUntil) {
+                return { success: false, message: '你又沒坐牢，越什麼獄？想進來嗎？' };
+            }
+
+            if (data.jailbreakCooldownUntil && Date.now() < data.jailbreakCooldownUntil) {
+                const remaining = Math.ceil((data.jailbreakCooldownUntil - Date.now()) / 60000);
+                return { success: false, message: `你才剛被獄警毒打一頓，腿還在發抖！請休息 ${remaining} 分鐘後再嘗試越獄。` };
+            }
+
+            const rand = Math.random() * 100;
+            
+            // 越獄成功基礎機率 5% + (EVA * 1.0625)%
+            const eva = stats.final.eva || 0;
+            let finalChance = 5 + (eva * 1.0625);
+
+            // 黑道監獄地頭蛇加成
+            const { getWantedList, getMafiaRank } = require('../handlers/profession');
+            const wantedList = await getWantedList();
+            const mafiaRank = await getMafiaRank(userId, data, wantedList);
+            
+            if (mafiaRank === 'boss') {
+                finalChance += 20;
+            } else if (mafiaRank === 'capo') {
+                finalChance += 10;
+            } else if (mafiaRank === 'enforcer') {
+                finalChance += 5;
+            }
+
+            let isSuccess = rand < finalChance; 
+            let usedShiv = false;
+            
+            if (data.hasShiv) {
+                isSuccess = true;
+                usedShiv = true;
+            }
+
+            if (isSuccess) {
+                // 計算通緝值影響 (方案D)
+                const remainingMins = Math.ceil((data.jailedUntil - Date.now()) / 60000);
+                const currentWanted = data.wantedLevel || 0;
+                const wantedAdd = remainingMins / 300;
+                let newWantedLevel = currentWanted + wantedAdd;
+                if (newWantedLevel > 1.0) newWantedLevel = 1.0;
+
+                const updateData = { jailedUntil: db.FieldValue.delete(), wantedLevel: newWantedLevel };
+                if (usedShiv) updateData.hasShiv = db.FieldValue.delete();
+                t.update(docRef, updateData);
+                return { success: true, jailbreak: true, usedShiv, newWantedLevel, name: memberName || data.displayName || data.name };
+            } else {
+                // 失敗
+                const newJailedUntil = Math.max(data.jailedUntil, Date.now()) + (60 * 60 * 1000);
+                const cooldownTime = Date.now() + 10 * 60 * 1000;
+                t.update(docRef, { 
+                    jailedUntil: newJailedUntil,
+                    jailbreakCooldownUntil: cooldownTime
+                });
+                return { success: true, jailbreak: false, name: memberName || data.displayName || data.name, newJailedUntil };
+            }
+        });
+
+        if (!result.success) {
+            await lineUtils.replyText(replyToken, `❌ ${result.message}`);
+            return;
+        }
+
+        if (result.jailbreak) {
+            const shivMsg = result.usedShiv ? `\
+(使用了偷藏的【銼刀】，不費吹灰之力鋸開了鐵窗！)` : '';
+            const wantedPercent = (result.newWantedLevel * 100).toFixed(1);
+            
+            let wantedWarning = result.newWantedLevel >= 1.0 
+                ? `🚨 警告：你已成為全國頭號通緝犯 (通緝值 ${wantedPercent}%)！警方將全面追緝！`
+                : (result.newWantedLevel >= 0.5 
+                    ? `⚠️ 警告：你的通緝值上升至 ${wantedPercent}%，黑道護體已開啟，但警方正在追緝你！`
+                    : `📋 通緝值上升至 ${wantedPercent}%，保持低調！`);
+
+            const bubble = flexUtils.createBubble({
+                size: 'mega',
+                header: flexUtils.createHeader(`🏃‍♂️💨 越獄成功`, '', flexUtils.COLORS.BG_MAIN, '#4CAF50'),
+                body: flexUtils.createBox('vertical', [
+                    flexUtils.createText({ text: `${result.name} 趁著警衛打瞌睡，成功翻過高牆逃出去了！重獲自由！${shivMsg}`, size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, wrap: true }),
+                    flexUtils.createSeparator('md'),
+                    flexUtils.createText({ text: wantedWarning, size: 'xs', weight: 'bold', color: '#D32F2F', margin: 'md', wrap: true })
+                ], { paddingAll: 'xl', backgroundColor: '#FAFAFA' })
+            });
+            
+            const quickReply = {
+                items: [
+                    { type: 'action', action: { type: 'message', label: '⛓️ 勞改', text: '勞改' } },
+                    { type: 'action', action: { type: 'message', label: '🤝 保釋', text: '保釋金' } },
+                    { type: 'action', action: { type: 'message', label: '🚪 越獄', text: '越獄' } }
+                ]
+            };
+            await lineUtils.replyFlex(replyToken, '越獄成功', bubble, [], quickReply);
+        } else {
+            const remainingMins = Math.ceil((result.newJailedUntil - Date.now()) / 60000);
+            const bubble = flexUtils.createBubble({
+                size: 'mega',
+                header: flexUtils.createHeader(`🚨 越獄失敗`, '', flexUtils.COLORS.BG_MAIN, '#B71C1C'),
+                body: flexUtils.createBox('vertical', [
+                    flexUtils.createText({ text: `警報聲大作！${result.name} 卡在通風管被警衛抓個正著！`, size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, wrap: true }),
+                    flexUtils.createText({ text: `👮 獄警：「還敢逃？把你打到腿斷掉！」`, size: 'sm', weight: 'bold', color: '#D32F2F', margin: 'md', wrap: true }),
+                    flexUtils.createSeparator('md'),
+                    flexUtils.createText({ text: `您的刑期增加 60 分鐘！\
+目前剩餘刑期：${remainingMins} 分鐘。`, size: 'sm', color: '#333333', margin: 'md', wrap: true }),
+                    flexUtils.createText({ text: `⏳ 冷卻時間：10 分鐘\
+（可於 ${new Date(Date.now() + 10 * 60 * 1000).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false })} 後再次越獄）`, size: 'xs', color: '#B71C1C', margin: 'md', wrap: true })
+                ], { paddingAll: 'xl', backgroundColor: '#FFEBEE' })
+            });
+            
+            const quickReply = {
+                items: [
+                    { type: 'action', action: { type: 'message', label: '⛓️ 勞改', text: '勞改' } },
+                    { type: 'action', action: { type: 'message', label: '🤝 保釋', text: '保釋金' } },
+                    { type: 'action', action: { type: 'message', label: '🚪 越獄', text: '越獄' } }
+                ]
+            };
+            await lineUtils.replyFlex(replyToken, '越獄失敗', bubble, [], quickReply);
+        }
+
+    } catch (e) {
+        console.error('[Jail] confirmJailbreak Error:', e);
+        await lineUtils.replyText(replyToken, '❌ 越獄行動發生意外，請稍後再試。');
+    }
+}
+
+let riotState = {
+    active: false,
+    startTime: 0,
+    participants: new Set(),
+    groupId: null
+};
+
+async function loadRiotState() {
+    try {
+        const doc = await db.collection('system_state').doc('riot').get();
+        if (doc.exists) {
+            const data = doc.data();
+            if (data.active && Date.now() - data.startTime <= 3 * 60 * 1000) {
+                riotState.active = data.active;
+                riotState.startTime = data.startTime;
+                riotState.participants = new Set(data.participants || []);
+                riotState.groupId = data.groupId;
+                return;
+            }
+        }
+    } catch (e) {
+        console.error('[Jail] loadRiotState Error:', e);
+    }
+    // Default or expired
+    riotState.active = false;
+    riotState.startTime = 0;
+    riotState.participants = new Set();
+    riotState.groupId = null;
+}
+
+async function saveRiotState() {
+    try {
+        await db.collection('system_state').doc('riot').set({
+            active: riotState.active,
+            startTime: riotState.startTime,
+            participants: Array.from(riotState.participants),
+            groupId: riotState.groupId
+        });
+    } catch (e) {
+        console.error('[Jail] saveRiotState Error:', e);
     }
 }
 
@@ -181,7 +389,8 @@ async function handleRiot(replyToken, context) {
             const others = Array.from(prisonersMap.keys()).filter(id => id !== userId);
             if (others.length > 0) {
                 const otherNames = others.map(id => prisonersMap.get(id)).join('、');
-                otherPrisonersMsg = `👀 目前監獄裡的其他獄友有：\n${otherNames}`;
+                otherPrisonersMsg = `👀 目前監獄裡的其他獄友有：
+${otherNames}`;
             } else {
                 otherPrisonersMsg = `👀 (目前監獄裡只有你一個人，我看是很難成功...)`;
             }
@@ -191,7 +400,8 @@ async function handleRiot(replyToken, context) {
                 flexUtils.createText({ text: `${memberName} 拿著牙刷大喊，發起了監獄暴動！`, size: 'sm', weight: 'bold', wrap: true }),
                 flexUtils.createSeparator('md'),
                 flexUtils.createText({ text: `距離暴動行動還有 3 分鐘！`, weight: 'bold', color: '#D32F2F', margin: 'md' }),
-                flexUtils.createText({ text: `請監獄裡的其他兄弟在限時內輸入「暴動」響應！\n(需要 2 人以上，隊伍總力量越高成功率越大！)`, size: 'xs', color: '#666666', wrap: true, margin: 'sm' }),
+                flexUtils.createText({ text: `請監獄裡的其他兄弟在限時內輸入「暴動」響應！
+(需要 2 人以上，隊伍總力量越高成功率越大！)`, size: 'xs', color: '#666666', wrap: true, margin: 'sm' }),
                 flexUtils.createSeparator('md'),
                 flexUtils.createText({ text: otherPrisonersMsg, size: 'xs', color: '#999999', wrap: true, margin: 'md' })
             ], { paddingAll: 'xl', backgroundColor: '#FAFAFA' });
@@ -224,7 +434,8 @@ async function handleRiot(replyToken, context) {
             flexUtils.createText({ text: `${memberName} 拿起臉盆，加入了暴動陣線！`, size: 'sm', weight: 'bold', wrap: true }),
             flexUtils.createText({ text: `目前響應人數：${riotState.participants.size} 人`, color: '#F57C00', weight: 'bold', margin: 'md' }),
             flexUtils.createSeparator('md'),
-            flexUtils.createText({ text: `👀 尚未響應的獄友：\n${remainNames}`, size: 'xs', color: '#999999', wrap: true, margin: 'md' })
+            flexUtils.createText({ text: `👀 尚未響應的獄友：
+${remainNames}`, size: 'xs', color: '#999999', wrap: true, margin: 'md' })
         ], { paddingAll: 'xl', backgroundColor: '#FFF3E0' });
         
         const joinBubble = flexUtils.createBubble({ size: 'mega', header, body });
@@ -240,6 +451,99 @@ async function handleRiot(replyToken, context) {
 
     } catch (e) {
         console.error('[Jail] handleRiot Error:', e);
+    }
+}
+
+async function resolveRiot(groupId, replyToken = null, prependMsg = null) {
+    const { getFinalPlayerStats } = require('../handlers/rpg');
+    await loadRiotState();
+    if (!riotState.active || (groupId && riotState.groupId !== groupId)) return;
+    
+    const participants = Array.from(riotState.participants);
+    riotState.active = false;
+    riotState.participants = new Set();
+    riotState.groupId = null;
+    await saveRiotState();
+    
+    if (participants.length === 0) return;
+
+    try {
+        // Fetch str is inside try now
+        let bubble;
+        let totalAtk = 0;
+        for (const uid of participants) {
+            const stats = await getFinalPlayerStats(uid);
+            totalAtk += (stats.final.atk || 0);
+        }
+        const riotChance = Math.min(80, 10 + Math.floor(totalAtk * 0.5));
+        const rand = Math.random() * 100;
+
+        if (participants.length >= 2 && rand < riotChance) {
+            // 成功暴動
+            const batch = db.batch();
+            for (const uid of participants) {
+                const ref = db.collection(COLLECTION_NAME).doc(uid);
+                batch.update(ref, { jailedUntil: db.FieldValue.delete(), wantedLevel: 1.0 });
+            }
+            await batch.commit();
+            bubble = flexUtils.createBubble({
+                size: 'mega',
+                header: flexUtils.createHeader(`🔥🔥🔥 監獄暴動成功`, '', '#FFFFFF', '#E91E63'),
+                body: flexUtils.createBox('vertical', [
+                    flexUtils.createText({ text: `${participants.length} 名囚犯團結一致，成功推倒了監獄大門！`, size: 'sm', color: '#666666', wrap: true }),
+                    flexUtils.createText({ text: `鎮暴部隊根本擋不住這群狂暴的犯人！`, size: 'sm', weight: 'bold', color: '#E91E63', margin: 'sm', wrap: true }),
+                    flexUtils.createSeparator('md'),
+                    flexUtils.createText({ text: `參與暴動的所有人集體越獄成功，重獲自由啦！`, size: 'sm', weight: 'bold', color: '#4CAF50', margin: 'md', wrap: true })
+                ], { paddingAll: 'xl', backgroundColor: '#FCE4EC' })
+            });
+        } else {
+            // 失敗暴動
+            const batch = db.batch();
+            const cooldownTime = Date.now() + 10 * 60 * 1000;
+            const snaps = await Promise.all(participants.map(uid => db.collection(COLLECTION_NAME).doc(uid).get()));
+            
+            snaps.forEach((docSnap, i) => {
+                const uid = participants[i];
+                const ref = db.collection(COLLECTION_NAME).doc(uid);
+                const currentJailedUntil = docSnap.exists && docSnap.data().jailedUntil ? docSnap.data().jailedUntil : Date.now();
+                const newJailedUntil = Math.max(currentJailedUntil, Date.now()) + (120 * 60 * 1000);
+
+                batch.update(ref, { 
+                    riotCooldownUntil: cooldownTime,
+                    jailedUntil: newJailedUntil
+                });
+            });
+            await batch.commit();
+            bubble = flexUtils.createBubble({
+                size: 'mega',
+                header: flexUtils.createHeader(`🚨 監獄暴動失敗`, '', '#FFFFFF', '#B71C1C'),
+                body: flexUtils.createBox('vertical', [
+                    flexUtils.createText({ text: `暴動行動不幸失敗！，鎮暴部隊輕鬆鎮壓了這場鬧劇！`, size: 'sm', color: '#666666', wrap: true }),
+                    flexUtils.createText({ text: `👮 典獄長：「把這幾個帶頭的全部吊起來打！」`, size: 'sm', weight: 'bold', color: '#D32F2F', margin: 'md', wrap: true }),
+                    flexUtils.createSeparator('md'),
+                    flexUtils.createText({ text: `參與暴動的所有人被加重刑期，目前剩餘刑期統一增加了 120 分鐘！`, size: 'sm', color: '#333333', margin: 'md', wrap: true })
+                ], { paddingAll: 'xl', backgroundColor: '#FFEBEE' })
+            });
+        }
+
+        // 推播結果
+        let messages = [];
+        if (prependMsg) {
+            if (typeof prependMsg === 'string') {
+                messages.push({ type: 'text', text: prependMsg });
+            } else {
+                messages.push(flexUtils.createFlexMessage('暴動狀態', prependMsg));
+            }
+        }
+        messages.push(flexUtils.createFlexMessage('暴動結果', bubble));
+
+        if (replyToken) {
+            await lineUtils.replyToLine(replyToken, messages);
+        } else if (groupId) {
+            await notificationService.queueNotification(groupId, messages);
+        }
+    } catch (e) {
+        console.error('[Jail] resolveRiot Error:', e);
     }
 }
 
@@ -310,6 +614,10 @@ async function handlePressure(replyToken, context) {
 
 module.exports = {
     handleJailbreak,
+    confirmJailbreak,
+    loadRiotState,
+    saveRiotState,
     handleRiot,
+    resolveRiot,
     handlePressure
 };

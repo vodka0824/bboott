@@ -18,28 +18,33 @@ jest.mock('../utils/logger', () => ({
 // Mock dependencies
 jest.mock('../utils/line');
 
-// Define mock functions for scope access
-const mockGet = jest.fn();
-const mockSet = jest.fn();
-const mockDocFn = jest.fn(() => ({
-    get: mockGet,
-    set: mockSet
-}));
-const mockCollectionFn = jest.fn(() => ({
-    doc: mockDocFn
-}));
-
 // Intercept DB
-jest.mock('../utils/db', () => ({
-    db: {
-        collection: mockCollectionFn
-    },
-    Firestore: {
-        FieldValue: {
-            serverTimestamp: jest.fn()
-        }
-    }
-}));
+jest.mock('../utils/db', () => {
+    const mockGet = jest.fn();
+    const mockSet = jest.fn();
+    const mockDocFn = jest.fn(() => ({
+        get: mockGet,
+        set: mockSet
+    }));
+    const mockCollectionFn = jest.fn(() => ({
+        doc: mockDocFn
+    }));
+
+    return {
+        db: {
+            collection: mockCollectionFn
+        },
+        Firestore: {
+            FieldValue: {
+                serverTimestamp: jest.fn()
+            }
+        },
+        _mockGet: mockGet,
+        _mockSet: mockSet
+    };
+});
+
+const { _mockGet: mockGet, _mockSet: mockSet } = require('../utils/db');
 
 // Import handler AFTER mocking
 const welcomeHandler = require('../handlers/welcome');
@@ -119,9 +124,9 @@ describe('Welcome Handler', () => {
 
         expect(lineUtils.replyFlex).toHaveBeenCalled();
         const bubble = lineUtils.replyFlex.mock.calls[0][2];
-        const bodyText = bubble.body.contents[2].text;
+        const bodyText = bubble.body.contents[0].contents[1].contents[1].text;
         expect(bodyText).toBe('Hello Test User!');
-        expect(bubble.hero.url).toBe('https://custom.img/1.jpg');
+        expect(bubble.hero.url).toContain('https://custom.img/1.jpg');
     });
 
     test('should handle missing source gracefully', async () => {

@@ -1,3 +1,4 @@
+const flexUtils = require('../utils/flex');
 /**
  * JavDB Handler - 番號查詢封面
  * 
@@ -55,7 +56,7 @@ async function handleJavdbQuery(replyToken, code) {
                         {
                             type: 'text',
                             text: '日期',
-                            color: '#AAAAAA',
+                            color: flexUtils.COLORS.TEXT_SUB,
                             size: 'xs',
                             flex: 2
                         },
@@ -63,7 +64,7 @@ async function handleJavdbQuery(replyToken, code) {
                             type: 'text',
                             text: date,
                             wrap: true,
-                            color: '#666666',
+                            color: flexUtils.COLORS.TEXT_MUTED,
                             size: 'xs',
                             flex: 5
                         }
@@ -80,7 +81,7 @@ async function handleJavdbQuery(replyToken, code) {
                         {
                             type: 'text',
                             text: '時長',
-                            color: '#AAAAAA',
+                            color: flexUtils.COLORS.TEXT_SUB,
                             size: 'xs',
                             flex: 2
                         },
@@ -88,7 +89,7 @@ async function handleJavdbQuery(replyToken, code) {
                             type: 'text',
                             text: duration,
                             wrap: true,
-                            color: '#666666',
+                            color: flexUtils.COLORS.TEXT_MUTED,
                             size: 'xs',
                             flex: 5
                         }
@@ -105,7 +106,7 @@ async function handleJavdbQuery(replyToken, code) {
                         {
                             type: 'text',
                             text: '導演',
-                            color: '#AAAAAA',
+                            color: flexUtils.COLORS.TEXT_SUB,
                             size: 'xs',
                             flex: 2
                         },
@@ -113,7 +114,7 @@ async function handleJavdbQuery(replyToken, code) {
                             type: 'text',
                             text: director,
                             wrap: true,
-                            color: '#666666',
+                            color: flexUtils.COLORS.TEXT_MUTED,
                             size: 'xs',
                             flex: 5
                         }
@@ -130,7 +131,7 @@ async function handleJavdbQuery(replyToken, code) {
                         {
                             type: 'text',
                             text: '片商',
-                            color: '#AAAAAA',
+                            color: flexUtils.COLORS.TEXT_SUB,
                             size: 'xs',
                             flex: 2
                         },
@@ -138,7 +139,7 @@ async function handleJavdbQuery(replyToken, code) {
                             type: 'text',
                             text: studio,
                             wrap: true,
-                            color: '#666666',
+                            color: flexUtils.COLORS.TEXT_MUTED,
                             size: 'xs',
                             flex: 5
                         }
@@ -155,7 +156,7 @@ async function handleJavdbQuery(replyToken, code) {
                         {
                             type: 'text',
                             text: '系列',
-                            color: '#AAAAAA',
+                            color: flexUtils.COLORS.TEXT_SUB,
                             size: 'xs',
                             flex: 2
                         },
@@ -163,7 +164,7 @@ async function handleJavdbQuery(replyToken, code) {
                             type: 'text',
                             text: series,
                             wrap: true,
-                            color: '#666666',
+                            color: flexUtils.COLORS.TEXT_MUTED,
                             size: 'xs',
                             flex: 5
                         }
@@ -180,7 +181,7 @@ async function handleJavdbQuery(replyToken, code) {
                         {
                             type: 'text',
                             text: '評分',
-                            color: '#AAAAAA',
+                            color: flexUtils.COLORS.TEXT_SUB,
                             size: 'xs',
                             flex: 2
                         },
@@ -206,7 +207,7 @@ async function handleJavdbQuery(replyToken, code) {
                         {
                             type: 'text',
                             text: '演員',
-                            color: '#AAAAAA',
+                            color: flexUtils.COLORS.TEXT_SUB,
                             size: 'xs',
                             flex: 2
                         },
@@ -214,7 +215,7 @@ async function handleJavdbQuery(replyToken, code) {
                             type: 'text',
                             text: actors.join(', '),
                             wrap: true,
-                            color: '#666666',
+                            color: flexUtils.COLORS.TEXT_MUTED,
                             size: 'xs',
                             flex: 5
                         }
@@ -251,7 +252,7 @@ async function handleJavdbQuery(replyToken, code) {
                             type: 'text',
                             text: title || '無標題資訊',
                             wrap: true,
-                            color: '#666666',
+                            color: flexUtils.COLORS.TEXT_MUTED,
                             size: 'xs', // 減小字體
                             margin: 'sm' // 減少上邊距
                         },
@@ -268,7 +269,7 @@ async function handleJavdbQuery(replyToken, code) {
                                 {
                                     type: 'text',
                                     text: '暫無詳細資訊',
-                                    color: '#AAAAAA',
+                                    color: flexUtils.COLORS.TEXT_SUB,
                                     size: 'xs'
                                 }
                             ]

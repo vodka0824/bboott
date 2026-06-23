@@ -206,7 +206,7 @@ function buildWeatherFlex(data, aqiSummary) {
 
     return flexUtils.createBubble({
         header,
-        body: flexUtils.createBox('vertical', bodyContents)
+        body: flexUtils.createBox('vertical', bodyContents, { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: 'xl' })
     });
 }
 
@@ -281,7 +281,7 @@ async function handleAirQuality(replyToken, message) {
             contents: [
                 { type: "text", text: r.sitename, size: "sm", color: "#333333", flex: 3 },
                 { type: "text", text: `AQI ${val}`, size: "sm", weight: "bold", color: color, flex: 3, align: "end" },
-                { type: "text", text: `PM2.5: ${r["pm2.5"]}`, size: "xs", color: "#888888", flex: 3, align: "end" }
+                { type: "text", text: `PM2.5: ${r["pm2.5"]}`, size: "xs", color: flexUtils.COLORS.TEXT_MUTED, flex: 3, align: "end" }
             ]
         }
     });
@@ -291,8 +291,8 @@ async function handleAirQuality(replyToken, message) {
         size: "giga",
         header: {
             type: "box", layout: "vertical",
-            contents: [{ type: "text", text: `💨 ${targetCity}空氣品質`, weight: "bold", color: "#FFFFFF", size: "xl" }],
-            backgroundColor: "#666666"
+            contents: [{ type: "text", text: `💨 ${targetCity}空氣品質`, weight: "bold", color: flexUtils.COLORS.TEXT_MAIN, size: "xl" }],
+            backgroundColor: flexUtils.COLORS.TEXT_MUTED
         },
         body: {
             type: "box", layout: "vertical",
@@ -300,9 +300,9 @@ async function handleAirQuality(replyToken, message) {
                 {
                     type: "box", layout: "horizontal",
                     contents: [
-                        { type: "text", text: "測站", size: "xs", color: "#AAAAAA", flex: 3 },
-                        { type: "text", text: "指標", size: "xs", color: "#AAAAAA", flex: 3, align: "end" },
-                        { type: "text", text: "細懸浮微粒", size: "xs", color: "#AAAAAA", flex: 3, align: "end" }
+                        { type: "text", text: "測站", size: "xs", color: flexUtils.COLORS.TEXT_SUB, flex: 3 },
+                        { type: "text", text: "指標", size: "xs", color: flexUtils.COLORS.TEXT_SUB, flex: 3, align: "end" },
+                        { type: "text", text: "細懸浮微粒", size: "xs", color: flexUtils.COLORS.TEXT_SUB, flex: 3, align: "end" }
                     ],
                     margin: "md"
                 },
@@ -312,7 +312,7 @@ async function handleAirQuality(replyToken, message) {
         },
         footer: {
             type: "box", layout: "vertical",
-            contents: [{ type: "text", text: `資料來源：環境部 (更新時間: ${aqiRecords[0].publishtime})`, size: "xxs", color: "#CCCCCC", align: "center" }]
+            contents: [{ type: "text", text: `資料來源：環境部 (更新時間: ${aqiRecords[0].publishtime})`, size: "xxs", color: flexUtils.COLORS.TEXT_MUTED, align: "center" }]
         }
     };
 

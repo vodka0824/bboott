@@ -39,10 +39,15 @@ module.exports = function (router, handlers) {
         await economyHandler.claimEmergencyAid(ctx.replyToken, ctx.groupId, ctx.userId);
     }, { isGroupOnly: true, needAuth: true, feature: 'bank', keywords: ['急難救助', '救助金', '救助'] });
 
+    // 2.8 還債 (主動支付醫療負債)
+    router.register(/^\s*(還債|付醫藥費|清償負債|還款)\s*$/i, async (ctx) => {
+        await economyHandler.payMedicalDebt(ctx.replyToken, ctx.groupId, ctx.userId);
+    }, { isGroupOnly: true, needAuth: true, feature: 'bank', keywords: ['還債', '付醫藥費', '清償負債', '還款'] });
+
     // 2.6 搶劫
-    router.register(/^\s*搶劫\s*(?:@)?(.+?)\s*$/, async (ctx, match) => {
+    router.register(/^\s*(確認)?搶劫(?:\s+|@)(.+?)\s*$/, async (ctx, match) => {
         await economyHandler.robCoin(ctx.replyToken, ctx.groupId, ctx.userId, ctx.messageObject);
-    }, { isGroupOnly: true, needAuth: true, feature: 'bank', keywords: ['搶劫'] });
+    }, { isGroupOnly: true, needAuth: true, feature: 'bank', keywords: ['搶劫', '確認搶劫'] });
 
     // 3. 轉帳給別人
     router.register(/^\s*(?:轉帳\s*(?:@)?|\+\s*@)(.+?)\s*(\d+)\s*$/, async (ctx, match) => {
@@ -71,7 +76,7 @@ module.exports = function (router, handlers) {
         const { isSuperAdmin } = require('../utils/auth');
         const lineUtils = require('../utils/line');
         if (!isSuperAdmin(ctx.userId)) {
-            if (!ctx.isButton) await lineUtils.replyText(ctx.replyToken, '❌ 只有超級管理員可以使用此指令');
+            await lineUtils.replyText(ctx.replyToken, '❌ 只有超級管理員可以使用此指令');
             return;
         }
         
@@ -92,15 +97,15 @@ module.exports = function (router, handlers) {
 
     // 5. 排行榜 (財富、賭博、債務已拆分獨立)
     router.register(/^\s*(財富排行榜|首富|哭幣排行榜)\s*$/, async (ctx) => {
-        await economyHandler.showAllLeaderboards(ctx.replyToken);
-    }, { allowDM: true, needAuth: true, feature: 'leaderboard', keywords: ['財富排行榜', '哭幣排行榜', '首富'] });
+        await economyHandler.showAllLeaderboards(ctx.replyToken, ctx.groupId);
+    }, { isGroupOnly: false, needAuth: true, feature: 'leaderboard', keywords: ['財富排行榜', '首富', '哭幣排行榜'] });
 
     router.register(/^\s*(賭狗排行榜|賭神)\s*$/, async (ctx) => {
-        await economyHandler.showAllLeaderboards(ctx.replyToken);
+        await economyHandler.showAllLeaderboards(ctx.replyToken, ctx.groupId);
     }, { allowDM: true, needAuth: true, feature: 'leaderboard', keywords: ['賭狗排行榜', '賭神'] });
 
     router.register(/^\s*(債務排行榜|欠債榜|負債榜|負債排行榜)\s*$/, async (ctx) => {
-        await economyHandler.showAllLeaderboards(ctx.replyToken);
+        await economyHandler.showAllLeaderboards(ctx.replyToken, ctx.groupId);
     }, { allowDM: true, needAuth: true, feature: 'leaderboard', keywords: ['債務排行榜', '欠債榜', '負債榜', '負債排行榜'] });
 
     // === 查詢系統 ===
@@ -170,7 +175,7 @@ module.exports = function (router, handlers) {
         (data) => {
             try {
                 const action = new URLSearchParams(data).get('action');
-                return ['confirmDonation'].includes(action);
+                return ['confirmDonation', 'confirmRob'].includes(action);
             } catch (e) { return false; }
         },
         async (ctx) => {
@@ -179,6 +184,21 @@ module.exports = function (router, handlers) {
             if (action === 'confirmDonation') {
                 const isAllIn = params.get('allIn') === '1';
                 await economyHandler.handleDonationConfirm(ctx.replyToken, ctx.groupId, ctx.userId, isAllIn);
+            } else if (action === 'confirmRob') {
+                const targetId = params.get('targetId');
+                console.log(`[DEBUG] executePostback 'confirmRob' triggered, targetId=${targetId}`);
+                const mockMessageObject = {
+                    text: '確認搶劫',
+                    mention: {
+                        mentionees: [{ userId: targetId }]
+                    }
+                };
+                try {
+                    await economyHandler.robCoin(ctx.replyToken, ctx.groupId, ctx.userId, mockMessageObject);
+                    console.log(`[DEBUG] executePostback 'confirmRob' completed successfully`);
+                } catch (e) {
+                    console.error(`[DEBUG] executePostback 'confirmRob' failed:`, e);
+                }
             }
         }
     );

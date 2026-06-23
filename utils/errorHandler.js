@@ -8,6 +8,7 @@
 const { ADMIN_USER_ID } = require('../config/constants');
 const lineUtils = require('./line');
 const logger = require('./logger');
+const notificationService = require('../services/notificationService');
 
 /**
  * 處理錯誤
@@ -61,32 +62,33 @@ async function handleError(error, context) {
     }
 
     // 3. 發送錯誤通報（優先使用 replyToken 回覆，若失敗或沒有則使用 pushMessage）
+    // 如果錯誤本身就是來自 LINE API 的 400 (Invalid reply token) 或 429 (Rate Limit)，
+    // 代表推播也會失敗或造成二次困擾，因此直接跳過推播
+    const isLineApiError = error.message && (error.message.includes('400') || error.message.includes('429') || error.message.includes('Invalid reply token'));
+
+    if (isLineApiError) {
+        logger.warn('[ErrorHandler] 錯誤為 LINE API 限制或 Token 失效，放棄向使用者傳送錯誤通知');
+        return;
+    }
+
     if (replyToken) {
         try {
             await lineUtils.replyToLine(replyToken, [detailMessage]);
         } catch (replyError) {
-            logger.error('[ErrorHandler] Reply failed, attempting push to group/user', { error: replyError.message });
-            // 回覆失敗（例如 replyToken 已過期），改用主動推播
+            logger.error('[ErrorHandler] Reply failed, attempting queue to group/user', { error: replyError.message });
+            // 回覆失敗（例如 replyToken 已過期），改用佇列推播
             if (groupId) {
-                lineUtils.pushMessage(groupId, [detailMessage]).catch(pushErr => {
-                    logger.error('[ErrorHandler] Push to group failed', { error: pushErr.message });
-                });
+                notificationService.queueNotification(groupId, [detailMessage]);
             } else if (userId) {
-                lineUtils.pushMessage(userId, [detailMessage]).catch(pushErr => {
-                    logger.error('[ErrorHandler] Push to user failed', { error: pushErr.message });
-                });
+                notificationService.queueNotification(userId, [detailMessage]);
             }
         }
     } else {
-        // 沒有 replyToken，直接使用推播
+        // 沒有 replyToken，直接使用佇列推播
         if (groupId) {
-            lineUtils.pushMessage(groupId, [detailMessage]).catch(pushErr => {
-                logger.error('[ErrorHandler] Push to group failed', { error: pushErr.message });
-            });
+            notificationService.queueNotification(groupId, [detailMessage]);
         } else if (userId) {
-            lineUtils.pushMessage(userId, [detailMessage]).catch(pushErr => {
-                logger.error('[ErrorHandler] Push to user failed', { error: pushErr.message });
-            });
+            notificationService.queueNotification(userId, [detailMessage]);
         }
     }
 }

@@ -90,9 +90,9 @@ async function startAuction(replyToken, groupId, userId, item, basePriceStr, dur
 
         const bubble = flexUtils.createBubble({
             size: 'kilo',
-            header: flexUtils.createHeader('⚖️ 頂級拍賣會開始', '', '#1A1A1A', '#D4AF37'),
+            header: flexUtils.createHeader('⚖️ 頂級拍賣會開始', '', flexUtils.COLORS.BG_CARD, '#D4AF37'),
             body: flexUtils.createBox('vertical', [
-                flexUtils.createText({ text: `${item}`, size: 'xxl', weight: 'bold', color: '#1A1A1A', wrap: true, align: 'center' }),
+                flexUtils.createText({ text: `${item}`, size: 'xxl', weight: 'bold', color: flexUtils.COLORS.BG_CARD, wrap: true, align: 'center' }),
                 flexUtils.createSeparator('lg'),
                 flexUtils.createBox('vertical', [
                     flexUtils.createBox('horizontal', [
@@ -101,17 +101,17 @@ async function startAuction(replyToken, groupId, userId, item, basePriceStr, dur
                     ]),
                     flexUtils.createBox('horizontal', [
                         flexUtils.createText({ text: '⏱️ 限時', size: 'sm', color: '#333333', weight: 'bold', flex: 0 }),
-                        flexUtils.createText({ text: `${duration} 分鐘`, size: 'sm', color: '#1A1A1A', weight: 'bold', flex: 1, align: 'end' })
+                        flexUtils.createText({ text: `${duration} 分鐘`, size: 'sm', color: flexUtils.COLORS.BG_CARD, weight: 'bold', flex: 1, align: 'end' })
                     ], { margin: 'sm' })
-                ], { margin: 'md', backgroundColor: '#F5F5F5', paddingAll: '15px', cornerRadius: '10px' }),
+                ], { margin: 'md', backgroundColor: flexUtils.COLORS.TEXT_SUB, paddingAll: '15px', cornerRadius: '10px' }),
                 flexUtils.createSeparator('lg'),
-                flexUtils.createText({ text: `請輸入「${keyword} [金額]」來出價！`, size: 'sm', weight: 'bold', color: '#1A1A1A', align: 'center', margin: 'md', wrap: true })
-            ], { paddingAll: '15px' }),
+                flexUtils.createText({ text: `請輸入「${keyword} [金額]」來出價！`, size: 'sm', weight: 'bold', color: flexUtils.COLORS.BG_CARD, align: 'center', margin: 'md', wrap: true })
+            ], { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: '15px'  }),
             footer: flexUtils.createBox('vertical', [
                 flexUtils.createButton({
                     action: { type: 'message', label: `快速加碼 ($10)`, text: `${keyword} +10` },
                     style: 'primary',
-                    color: '#1A1A1A'
+                    color: flexUtils.COLORS.BG_CARD
                 })
             ])
         });
@@ -223,9 +223,9 @@ async function placeBid(groupId, userId, text) {
 
             const bubble = flexUtils.createBubble({
                 size: 'kilo',
-                header: flexUtils.createHeader('✅ 出價成功', '', '#4CAF50', '#FFFFFF'),
+                header: flexUtils.createHeader('✅ 出價成功', '', '#4CAF50', flexUtils.COLORS.TEXT_MAIN),
                 body: flexUtils.createBox('vertical', [
-                    flexUtils.createText({ text: `${data.item}`, size: 'xl', weight: 'bold', color: '#1A1A1A', wrap: true, align: 'center' }),
+                    flexUtils.createText({ text: `${data.item}`, size: 'xl', weight: 'bold', color: flexUtils.COLORS.BG_CARD, wrap: true, align: 'center' }),
                     flexUtils.createSeparator('md'),
                     flexUtils.createBox('vertical', [
                         flexUtils.createBox('horizontal', [
@@ -234,14 +234,14 @@ async function placeBid(groupId, userId, text) {
                         ], { margin: 'sm' }),
                         flexUtils.createBox('horizontal', [
                             flexUtils.createText({ text: '🙋‍♂️ 最高買家', size: 'sm', color: '#333333', weight: 'bold', flex: 0 }),
-                            flexUtils.createText({ text: bidderName, size: 'xs', color: '#1A1A1A', weight: 'bold', flex: 1, align: 'end', wrap: true })
+                            flexUtils.createText({ text: bidderName, size: 'xs', color: flexUtils.COLORS.BG_CARD, weight: 'bold', flex: 1, align: 'end', wrap: true })
                         ], { margin: 'sm' }),
                         flexUtils.createBox('horizontal', [
                             flexUtils.createText({ text: '狀態', size: 'sm', color: '#333333', weight: 'bold', flex: 0 }),
                             flexUtils.createText({ text: statusText, size: 'xs', color: statusColor, weight: 'bold', flex: 1, align: 'end' })
                         ], { margin: 'sm' })
-                    ], { margin: 'md', backgroundColor: '#F5F5F5', paddingAll: '15px', cornerRadius: '10px' })
-                ], { paddingAll: '15px' }),
+                    ], { margin: 'md', backgroundColor: flexUtils.COLORS.TEXT_SUB, paddingAll: '15px', cornerRadius: '10px' })
+                ], { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: '15px'  }),
                 footer: flexUtils.createBox('vertical', [
                     flexUtils.createButton({
                         action: { type: 'message', label: `快速加碼 ($10)`, text: `${data.keyword} +10` },
@@ -364,16 +364,16 @@ async function endAuction(replyToken, groupId, userId, itemName) {
 
             const bubble = flexUtils.createBubble({
                 size: 'kilo',
-                header: flexUtils.createHeader('🎉 拍賣結標', '', '#1A1A1A', '#D4AF37'),
+                header: flexUtils.createHeader('🎉 拍賣結標', '', flexUtils.COLORS.BG_CARD, '#D4AF37'),
                 body: flexUtils.createBox('vertical', [
-                    flexUtils.createText({ text: `${data.item}`, size: 'xl', weight: 'bold', color: '#1A1A1A', wrap: true, align: 'center' }),
+                    flexUtils.createText({ text: `${data.item}`, size: 'xl', weight: 'bold', color: flexUtils.COLORS.BG_CARD, wrap: true, align: 'center' }),
                     flexUtils.createSeparator('lg'),
                     flexUtils.createText({ text: '⭐ 最終結標價 ⭐', size: 'sm', color: '#333333', weight: 'bold', align: 'center', margin: 'md' }),
                     flexUtils.createText({ text: `${data.highestBid.toLocaleString()}`, size: 'xxl', weight: 'bold', color: '#8B6508', align: 'center', margin: 'sm' }),
                     flexUtils.createSeparator('lg'),
                     flexUtils.createText({ text: '👑 得標者', size: 'sm', color: '#333333', weight: 'bold', align: 'center', margin: 'md' }),
-                    flexUtils.createText({ text: `${winnerName}`, size: 'lg', weight: 'bold', color: '#1A1A1A', align: 'center', margin: 'sm' })
-                ], { paddingAll: '15px' })
+                    flexUtils.createText({ text: `${winnerName}`, size: 'lg', weight: 'bold', color: flexUtils.COLORS.BG_CARD, align: 'center', margin: 'sm' })
+                ], { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: '15px'  })
             });
 
             return [
@@ -432,9 +432,9 @@ async function checkAuctionStatus(replyToken, groupId) {
 
             contents.push(flexUtils.createBubble({
                 size: 'kilo',
-                header: flexUtils.createHeader('⚖️ 拍賣狀態', '', '#1A1A1A', '#D4AF37'),
+                header: flexUtils.createHeader('⚖️ 拍賣狀態', '', flexUtils.COLORS.BG_CARD, '#D4AF37'),
                 body: flexUtils.createBox('vertical', [
-                    flexUtils.createText({ text: `${data.item}`, size: 'xl', weight: 'bold', color: '#1A1A1A', wrap: true, align: 'center' }),
+                    flexUtils.createText({ text: `${data.item}`, size: 'xl', weight: 'bold', color: flexUtils.COLORS.BG_CARD, wrap: true, align: 'center' }),
                     flexUtils.createSeparator('md'),
                     flexUtils.createBox('vertical', [
                         flexUtils.createBox('horizontal', [
@@ -447,14 +447,14 @@ async function checkAuctionStatus(replyToken, groupId) {
                         ], { margin: 'sm' }),
                         flexUtils.createBox('horizontal', [
                             flexUtils.createText({ text: '🙋‍♂️ 最高買家', size: 'sm', color: '#333333', weight: 'bold', flex: 0 }),
-                            flexUtils.createText({ text: bidderName, size: 'xs', color: '#1A1A1A', weight: 'bold', flex: 1, align: 'end', wrap: true })
+                            flexUtils.createText({ text: bidderName, size: 'xs', color: flexUtils.COLORS.BG_CARD, weight: 'bold', flex: 1, align: 'end', wrap: true })
                         ], { margin: 'sm' }),
                         flexUtils.createBox('horizontal', [
                             flexUtils.createText({ text: '狀態', size: 'sm', color: '#333333', weight: 'bold', flex: 0 }),
                             flexUtils.createText({ text: statusText, size: 'xs', color: statusColor, weight: 'bold', flex: 1, align: 'end' })
                         ], { margin: 'sm' })
-                    ], { margin: 'md', backgroundColor: '#F5F5F5', paddingAll: '15px', cornerRadius: '10px' })
-                ], { paddingAll: '15px' }),
+                    ], { margin: 'md', backgroundColor: flexUtils.COLORS.TEXT_SUB, paddingAll: '15px', cornerRadius: '10px' })
+                ], { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: '15px'  }),
                 footer: flexUtils.createBox('vertical', [
                     flexUtils.createButton({
                         action: { type: 'message', label: `快速加碼 ($10)`, text: `${data.keyword} +10` },

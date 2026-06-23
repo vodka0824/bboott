@@ -4,10 +4,11 @@ const lineUtils = require('../utils/line');
 const leaderboardHandler = require('../handlers/leaderboard');
 const economyHandler = require('../handlers/economy');
 const rpgHandler = require('../handlers/rpg');
-const { checkAndDischargeMilitary } = require('../handlers/jail_redemption');
+const { checkAndDischargeMilitary } = require('../services/jailRedemptionService');
 const router = require('../utils/router');
 
 const cache = require('../utils/memoryCache');
+const notificationService = require('../services/notificationService');
 
 // 定期清理已由 memoryCache / Redis 的 TTL 自動處理，不需手動 interval
 
@@ -151,8 +152,8 @@ async function addExpMW(ctx) {
               } catch (e) { /* 取不到名稱時靜默失敗 */ }
               
               const msg = `👑 恭喜 ${playerName}！冒險等級提升為 Lv.${newLevel}！\n（攻擊/防禦 大幅增強）`;
-              lineUtils.pushMessage(ctx.groupId, [{ type: 'text', text: msg }]).catch(e => {
-                  console.error('[RPG] Push LevelUp Message Error:', e.message);
+              notificationService.queueNotification(ctx.groupId, [{ type: 'text', text: msg }]).catch(e => {
+                  console.error('[RPG] Queue LevelUp Message Error:', e.message);
               });
           }
       }).catch(e => console.error('[RPG] addExp Error:', e));

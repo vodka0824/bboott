@@ -5,35 +5,35 @@ module.exports = function(router, handlers) {
     router.register(/^(?:\/)?手動開盤(?:\s+(.+))?$/, async (ctx, match) => {
         const args = match[1] ? match[1].split(/\s+/) : [];
         await worldcupHandler.openManualMatch(ctx.replyToken, ctx.userId, args);
-    }, { needAdmin: true, allowDM: true });
+    }, { adminOnly: true, allowDM: true });
 
     router.register(/^(?:\/)?設定讓分(?:\s+(.+))?$/, async (ctx, match) => {
         const args = match[1] ? match[1].split(/\s+/) : [];
         await worldcupHandler.setHandicapMatch(ctx.replyToken, ctx.userId, args);
-    }, { needAdmin: true, allowDM: true });
+    }, { adminOnly: true, allowDM: true });
 
     router.register(/^(?:\/)?設定鎖盤(?:\s+(.+))?$/, async (ctx, match) => {
         const args = match[1] ? match[1].split(/\s+/) : [];
         await worldcupHandler.setMatchLockTime(ctx.replyToken, ctx.userId, args);
-    }, { needAdmin: true, allowDM: true });
+    }, { adminOnly: true, allowDM: true });
 
     router.register(/^(?:\/)?結算運彩(?:\s+(.+))?$/, async (ctx, match) => {
         const args = match[1] ? match[1].split(/\s+/) : [];
         await worldcupHandler.settleMatch(ctx.replyToken, ctx.userId, args);
-    }, { needAdmin: true, allowDM: true });
+    }, { adminOnly: true, allowDM: true });
 
     router.register(/^(?:\/)?鎖盤運彩(?:\s+(.+))?$/, async (ctx, match) => {
         const args = match[1] ? match[1].split(/\s+/) : [];
         await worldcupHandler.lockMatch(ctx.replyToken, ctx.userId, args);
-    }, { needAdmin: true, allowDM: true });
+    }, { adminOnly: true, allowDM: true });
 
     router.register(/^(?:\/)?運彩管理$/, async (ctx) => {
         await worldcupHandler.manageMatches(ctx.replyToken, ctx.userId);
-    }, { needAdmin: true, allowDM: true });
+    }, { adminOnly: true, allowDM: true });
 
     // 玩家指令
     router.register(/^(?:\/)?運彩$/, async (ctx) => {
-        await worldcupHandler.showMatches(ctx.replyToken);
+        await worldcupHandler.showMatches(ctx.replyToken, ctx.userId);
     }, { allowDM: true, feature: 'worldcup', keywords: ['運彩'] });
 
     router.register(/^(?:\/)?我的運彩$/, async (ctx) => {
@@ -53,6 +53,10 @@ module.exports = function(router, handlers) {
     });
 
     router.registerPostback('admin_wc_action', async (ctx) => {
+        const { isSuperAdmin } = require('../utils/auth');
+        if (!isSuperAdmin(ctx.userId)) {
+            return; // 根據需求，非管理員點擊不做任何反應
+        }
         const params = new URLSearchParams(ctx.postbackData);
         const dataObj = Object.fromEntries(params);
         // Auth check happens inside handler or we can check here
@@ -89,7 +93,7 @@ module.exports = function(router, handlers) {
     router.registerPostback('show_wc_page', async (ctx) => {
         const params = new URLSearchParams(ctx.postbackData);
         const page = parseInt(params.get('page'), 10) || 1;
-        await worldcupHandler.showMatches(ctx.replyToken, page);
+        await worldcupHandler.showMatches(ctx.replyToken, ctx.userId, page);
     });
 
     router.registerPostback('my_bets_page', async (ctx) => {

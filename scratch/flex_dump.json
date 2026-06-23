@@ -1,0 +1,573 @@
+{
+  "type": "carousel",
+  "contents": [
+    {
+      "type": "bubble",
+      "size": "mega",
+      "body": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {
+            "type": "box",
+            "layout": "horizontal",
+            "contents": [
+              {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "image",
+                    "url": "https://test.com",
+                    "size": "full",
+                    "aspectMode": "cover",
+                    "aspectRatio": "1:1",
+                    "gravity": "center"
+                  }
+                ],
+                "width": "72px",
+                "height": "72px",
+                "cornerRadius": "100px",
+                "borderWidth": "2px",
+                "borderColor": "#757575"
+              },
+              {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "text",
+                    "size": "xl",
+                    "color": "#111111",
+                    "weight": "bold",
+                    "text": "Test"
+                  },
+                  {
+                    "type": "text",
+                    "size": "xs",
+                    "color": "#777777",
+                    "weight": "bold",
+                    "margin": "xs",
+                    "wrap": true,
+                    "text": {
+                      "title": "平民 ‧ 尚未覺醒的存在 🌟",
+                      "color": "#888888"
+                    }
+                  },
+                  {
+                    "type": "box",
+                    "layout": "horizontal",
+                    "contents": [
+                      {
+                        "type": "text",
+                        "size": "xxs",
+                        "color": "#FFFFFF",
+                        "weight": "bold",
+                        "align": "center",
+                        "text": "一般市民"
+                      }
+                    ],
+                    "backgroundColor": "#757575",
+                    "cornerRadius": "md",
+                    "paddingStart": "8px",
+                    "paddingEnd": "8px",
+                    "paddingTop": "2px",
+                    "paddingBottom": "2px",
+                    "margin": "sm",
+                    "flex": 0
+                  }
+                ],
+                "flex": 1,
+                "margin": "lg",
+                "justifyContent": "center"
+              }
+            ],
+            "alignItems": "center"
+          },
+          {
+            "type": "separator",
+            "margin": "lg"
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+              {
+                "type": "text",
+                "size": "sm",
+                "color": "#888888",
+                "weight": "bold",
+                "text": "⚡ 綜合戰鬥力"
+              },
+              {
+                "type": "text",
+                "size": "xl",
+                "color": "#FF9800",
+                "weight": "bold",
+                "margin": "sm",
+                "text": "65"
+              }
+            ],
+            "margin": "lg",
+            "alignItems": "center"
+          },
+          {
+            "type": "box",
+            "layout": "horizontal",
+            "contents": [
+              {
+                "type": "text",
+                "size": "sm",
+                "color": "#666666",
+                "weight": "regular",
+                "text": "💰 財富餘額"
+              },
+              {
+                "type": "text",
+                "size": "sm",
+                "color": "#4CAF50",
+                "weight": "bold",
+                "align": "end",
+                "text": "0 哭幣"
+              }
+            ],
+            "margin": "md"
+          },
+          {
+            "type": "box",
+            "layout": "horizontal",
+            "contents": [
+              {
+                "type": "text",
+                "size": "sm",
+                "color": "#666666",
+                "weight": "bold",
+                "text": "🔰 Lv.10"
+              },
+              {
+                "type": "text",
+                "size": "xs",
+                "color": "#999999",
+                "weight": "regular",
+                "align": "end",
+                "text": "EXP 100 / 3844"
+              }
+            ],
+            "margin": "md",
+            "alignItems": "center"
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+              {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [],
+                "width": "2%",
+                "backgroundColor": "#4CAF50",
+                "height": "6px"
+              }
+            ],
+            "height": "6px",
+            "backgroundColor": "#E0E0E0",
+            "cornerRadius": "3px",
+            "margin": "sm"
+          }
+        ],
+        "paddingAll": "xl",
+        "backgroundColor": "#FAFAFA"
+      }
+    },
+    {
+      "type": "bubble",
+      "size": "mega",
+      "body": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {
+            "type": "text",
+            "size": "lg",
+            "color": "#111111",
+            "weight": "bold",
+            "text": "⚖️ 社會與職涯紀錄"
+          },
+          {
+            "type": "separator",
+            "margin": "md"
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+              {
+                "type": "box",
+                "layout": "horizontal",
+                "contents": [
+                  {
+                    "type": "text",
+                    "size": "sm",
+                    "color": "#666666",
+                    "weight": "regular",
+                    "text": "🚨 社會通緝值"
+                  },
+                  {
+                    "type": "text",
+                    "size": "sm",
+                    "color": "#4CAF50",
+                    "weight": "bold",
+                    "align": "end",
+                    "text": "0%"
+                  }
+                ],
+                "margin": "md"
+              },
+              {
+                "type": "box",
+                "layout": "horizontal",
+                "contents": [
+                  {
+                    "type": "text",
+                    "size": "sm",
+                    "color": "#666666",
+                    "weight": "regular",
+                    "text": "📜 犯罪前科"
+                  },
+                  {
+                    "type": "text",
+                    "size": "sm",
+                    "color": "#333333",
+                    "weight": "bold",
+                    "align": "end",
+                    "text": "0 次"
+                  }
+                ],
+                "margin": "md"
+              },
+              {
+                "type": "box",
+                "layout": "horizontal",
+                "contents": [
+                  {
+                    "type": "text",
+                    "size": "sm",
+                    "color": "#666666",
+                    "weight": "regular",
+                    "text": "🦹 今日搶劫次數"
+                  },
+                  {
+                    "type": "text",
+                    "size": "sm",
+                    "color": "#333333",
+                    "weight": "bold",
+                    "align": "end",
+                    "text": "0 次"
+                  }
+                ],
+                "margin": "md"
+              }
+            ],
+            "margin": "md"
+          }
+        ],
+        "paddingAll": "xl",
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    {
+      "type": "bubble",
+      "size": "mega",
+      "body": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {
+            "type": "text",
+            "size": "lg",
+            "color": "#111111",
+            "weight": "bold",
+            "text": "⚔️ 戰鬥屬性與裝備"
+          },
+          {
+            "type": "separator",
+            "margin": "md"
+          },
+          {
+            "type": "box",
+            "layout": "horizontal",
+            "contents": [
+              {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "text",
+                    "size": "xs",
+                    "color": "#c0392b",
+                    "weight": "bold",
+                    "text": "⚔️ 攻擊"
+                  },
+                  {
+                    "type": "text",
+                    "size": "md",
+                    "color": "#333333",
+                    "weight": "bold",
+                    "margin": "xs",
+                    "text": "14"
+                  },
+                  {
+                    "type": "text",
+                    "size": "xxs",
+                    "color": "#888888",
+                    "weight": "regular",
+                    "text": "+0"
+                  }
+                ],
+                "flex": 1,
+                "alignItems": "center"
+              },
+              {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "text",
+                    "size": "xs",
+                    "color": "#2980b9",
+                    "weight": "bold",
+                    "text": "🛡️ 防禦"
+                  },
+                  {
+                    "type": "text",
+                    "size": "md",
+                    "color": "#333333",
+                    "weight": "bold",
+                    "margin": "xs",
+                    "text": "14"
+                  },
+                  {
+                    "type": "text",
+                    "size": "xxs",
+                    "color": "#888888",
+                    "weight": "regular",
+                    "text": "+0"
+                  }
+                ],
+                "flex": 1,
+                "alignItems": "center"
+              }
+            ],
+            "margin": "md"
+          },
+          {
+            "type": "box",
+            "layout": "horizontal",
+            "contents": [
+              {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "text",
+                    "size": "xs",
+                    "color": "#27ae60",
+                    "weight": "bold",
+                    "text": "🧭 迴避"
+                  },
+                  {
+                    "type": "text",
+                    "size": "md",
+                    "color": "#333333",
+                    "weight": "bold",
+                    "margin": "xs",
+                    "text": "1%"
+                  },
+                  {
+                    "type": "text",
+                    "size": "xxs",
+                    "color": "#888888",
+                    "weight": "regular",
+                    "text": "+0%"
+                  }
+                ],
+                "flex": 1,
+                "alignItems": "center"
+              },
+              {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "text",
+                    "size": "xs",
+                    "color": "#8e44ad",
+                    "weight": "bold",
+                    "text": "💥 爆擊"
+                  },
+                  {
+                    "type": "text",
+                    "size": "md",
+                    "color": "#333333",
+                    "weight": "bold",
+                    "margin": "xs",
+                    "text": "1%"
+                  },
+                  {
+                    "type": "text",
+                    "size": "xxs",
+                    "color": "#888888",
+                    "weight": "regular",
+                    "text": "+0%"
+                  }
+                ],
+                "flex": 1,
+                "alignItems": "center"
+              }
+            ],
+            "margin": "md"
+          },
+          {
+            "type": "box",
+            "layout": "horizontal",
+            "contents": [
+              {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "text",
+                    "size": "xs",
+                    "color": "#f39c12",
+                    "weight": "bold",
+                    "text": "🍀 幸運"
+                  },
+                  {
+                    "type": "text",
+                    "size": "md",
+                    "color": "#333333",
+                    "weight": "bold",
+                    "margin": "xs",
+                    "text": "1%"
+                  },
+                  {
+                    "type": "text",
+                    "size": "xxs",
+                    "color": "#888888",
+                    "weight": "regular",
+                    "text": "+0%"
+                  }
+                ],
+                "flex": 1,
+                "alignItems": "center"
+              },
+              {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                  {
+                    "type": "text",
+                    "size": "xs",
+                    "color": "#9C27B0",
+                    "weight": "bold",
+                    "text": "💍 穿透"
+                  },
+                  {
+                    "type": "text",
+                    "size": "md",
+                    "color": "#333333",
+                    "weight": "bold",
+                    "margin": "xs",
+                    "text": "1%"
+                  },
+                  {
+                    "type": "text",
+                    "size": "xxs",
+                    "color": "#888888",
+                    "weight": "regular",
+                    "text": "+0%"
+                  }
+                ],
+                "flex": 1,
+                "alignItems": "center"
+              }
+            ],
+            "margin": "md"
+          },
+          {
+            "type": "separator",
+            "margin": "lg"
+          },
+          {
+            "type": "text",
+            "size": "xs",
+            "color": "#555555",
+            "weight": "bold",
+            "margin": "md",
+            "text": "🛡️ 已穿戴裝備"
+          },
+          {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+              {
+                "type": "text",
+                "size": "xs",
+                "color": "#aaaaaa",
+                "weight": "regular",
+                "margin": "sm",
+                "text": "⚔️ 武器: 無"
+              },
+              {
+                "type": "text",
+                "size": "xs",
+                "color": "#aaaaaa",
+                "weight": "regular",
+                "margin": "sm",
+                "text": "🛡️ 盾牌: 無"
+              },
+              {
+                "type": "text",
+                "size": "xs",
+                "color": "#aaaaaa",
+                "weight": "regular",
+                "margin": "sm",
+                "text": "💥 手套: 無"
+              },
+              {
+                "type": "text",
+                "size": "xs",
+                "color": "#aaaaaa",
+                "weight": "regular",
+                "margin": "sm",
+                "text": "🧭 翅膀: 無"
+              },
+              {
+                "type": "text",
+                "size": "xs",
+                "color": "#aaaaaa",
+                "weight": "regular",
+                "margin": "sm",
+                "text": "💍 戒指: 無"
+              },
+              {
+                "type": "text",
+                "size": "xs",
+                "color": "#aaaaaa",
+                "weight": "regular",
+                "margin": "sm",
+                "text": "🍀 項鍊: 無"
+              }
+            ],
+            "margin": "md",
+            "paddingAll": "md",
+            "backgroundColor": "#F5F5F5",
+            "cornerRadius": "sm"
+          }
+        ],
+        "paddingAll": "xl",
+        "backgroundColor": "#FFFFFF"
+      }
+    }
+  ]
+}

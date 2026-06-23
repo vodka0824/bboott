@@ -1,10 +1,33 @@
+const { Firestore } = require('@google-cloud/firestore');
 const { db } = require('../utils/db');
+const COLLECTION_NAME = 'economy_users';
 const lineUtils = require('../utils/line');
 const flexUtils = require('../utils/flex');
-const memoryCache = require('../utils/memoryCache');
-const { getSpamResponse } = require('../utils/spamHandler');
-const COLLECTION_NAME = 'economy_users';
+const authUtils = require('../utils/auth');
 
+function getSpamResponse(userData, action, msg) {
+    const spamLimit = 3;
+    let trackers = userData.spamTracker || {};
+    let count = (trackers[action] || 0) + 1;
+    trackers[action] = count;
+    
+    if (count > spamLimit) {
+        return { ignore: false, triggerPenalty: true, message: `🚨 【警告】你已連續洗頻 ${action} 指令超過 ${spamLimit} 次！將受到懲罰！`, newTracker: trackers };
+    }
+    if (count === spamLimit) {
+        return { ignore: false, triggerPenalty: false, message: msg + `\n(再洗頻一次將受到嚴厲懲罰！)`, newTracker: trackers };
+    }
+    return { ignore: false, triggerPenalty: false, message: msg, newTracker: trackers };
+}
+
+
+function calculateBailAmount(crimeRecord, kuCoin) {
+    return 50000 + (crimeRecord * 500000) + Math.floor(kuCoin * 0.15);
+}
+
+/**
+ * 產生交保確認面板
+ */
 async function handleBail(replyToken, context) {
     const { userId } = context;
 
@@ -47,6 +70,9 @@ async function handleBail(replyToken, context) {
     }
 }
 
+/**
+ * 執行自己交保扣款
+ */
 async function confirmBail(replyToken, context, providedBailAmount = null) {
     const { userId, groupId } = context;
 
@@ -107,6 +133,9 @@ async function confirmBail(replyToken, context, providedBailAmount = null) {
     }
 }
 
+/**
+ * 產生幫人保釋確認面板
+ */
 async function handleBailOther(replyToken, context, messageObject) {
     const { userId: fromUserId } = context;
     const mentionObj = messageObject && messageObject.mention;
@@ -163,6 +192,9 @@ async function handleBailOther(replyToken, context, messageObject) {
     }
 }
 
+/**
+ * 執行幫人保釋扣款
+ */
 async function confirmBailOther(replyToken, context, targetUserId, providedBailAmount = null) {
     const { userId: fromUserId, groupId } = context;
     targetUserId = targetUserId.trim();
@@ -240,6 +272,9 @@ async function confirmBailOther(replyToken, context, targetUserId, providedBailA
     }
 }
 
+/**
+ * 賄賂提示
+ */
 async function handleBribePrompt(replyToken, context) {
     const { userId } = context;
 
@@ -304,6 +339,9 @@ async function handleBribePrompt(replyToken, context) {
     await lineUtils.replyToLine(replyToken, messages);
 }
 
+/**
+ * 產生賄賂確認面板
+ */
 async function handleBribe(replyToken, context, amount) {
     const { userId } = context;
 
@@ -371,6 +409,9 @@ async function handleBribe(replyToken, context, amount) {
     }
 }
 
+/**
+ * 執行裝備與擲骰子
+ */
 async function confirmBribe(replyToken, context, amount) {
     const { userId, groupId } = context;
 
@@ -471,6 +512,7 @@ async function confirmBribe(replyToken, context, amount) {
 }
 
 module.exports = {
+    calculateBailAmount,
     handleBail,
     confirmBail,
     handleBailOther,

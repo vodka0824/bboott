@@ -2,6 +2,7 @@ const { db } = require('../utils/db');
 const lineUtils = require('../utils/line');
 const flexUtils = require('../utils/flex');
 const memoryCache = require('../utils/memoryCache');
+const notificationService = require('../services/notificationService');
 const { getSpamResponse } = require('../utils/spamHandler');
 const { MILITARY_RANKS } = require('../config/constants');
 const COLLECTION_NAME = 'economy_users';
@@ -27,6 +28,22 @@ async function handleEnlist(replyToken, context) {
 
             if (data.militaryUntil && Date.now() < data.militaryUntil) {
                 return { success: false, message: '你已經在當兵了，還想簽幾次？' };
+            }
+
+            if (data.isPolice) {
+                return { success: false, message: '你是現任警察，不得同時服兵役！' };
+            }
+
+            if (data.councilorUntil && Date.now() < data.councilorUntil) {
+                return { success: false, message: '你是現任市議員，國軍無法徵召你！' };
+            }
+
+            if (data.isMafia) {
+                return { success: false, message: '你是黑幫份子，國軍不收！請先「斷手指」退出黑社會！' };
+            }
+
+            if (data.profession === 'monk') {
+                return { success: false, message: '出家人慈悲為懷，不得參與殺戮軍旅！請先還俗！' };
             }
 
             const wantedLevel = data.wantedLevel || 0;
@@ -240,9 +257,9 @@ async function checkAndDischargeMilitary() {
 
         for (const msgData of dischargeMessages) {
             try {
-                await lineUtils.pushMessage(msgData.groupId, [{ type: 'text', text: msgData.text }]);
+                await notificationService.queueNotification(msgData.groupId, [{ type: 'text', text: msgData.text }]);
             } catch (e) {
-                console.error(`[Military] Failed to push discharge message to ${msgData.groupId}:`, e.message);
+                console.error(`[Military] Failed to queue discharge message to ${msgData.groupId}:`, e.message);
             }
         }
 

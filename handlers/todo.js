@@ -192,7 +192,7 @@ function createItemRow(groupId, item, currentPhase) {
         flexUtils.createText({
             text: catInfo.label,
             size: 'xxs',
-            color: '#FFFFFF',
+            color: flexUtils.COLORS.TEXT_MAIN,
             align: 'center',
             weight: 'bold'
         })
@@ -244,7 +244,7 @@ function createItemRow(groupId, item, currentPhase) {
 
     metaParts.push(flexUtils.createText({
         text: new Date(item.createdAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' }),
-        color: '#AAAAAA',
+        color: flexUtils.COLORS.TEXT_SUB,
         size: 'xs',
         gravity: 'center',
         flex: 0
@@ -356,7 +356,7 @@ function buildTodoFlex(groupId, todos) {
 
         return flexUtils.createBubble({
             header: flexUtils.createHeader(headerText, headerSub, color),
-            body: flexUtils.createBox('vertical', bodyContents, { paddingAll: '0px' })
+            body: flexUtils.createBox('vertical', bodyContents, { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: '0px'  })
         });
     };
 
@@ -391,9 +391,9 @@ function buildTaskCreationFlex(groupId, item) {
 
     // Current State
     const stateRow = flexUtils.createBox('horizontal', [
-        flexUtils.createText({ text: `${catInfo.icon} ${catInfo.label}`, size: 'sm', color: '#666666', flex: 0 }),
-        flexUtils.createText({ text: ` | `, size: 'sm', color: '#DDDDDD', flex: 0 }),
-        flexUtils.createText({ text: `${PRIORITY_EMOJI[item.priority] || '🟡'} ${getPriorityLabel(item.priority)}`, size: 'sm', color: '#666666', flex: 0 })
+        flexUtils.createText({ text: `${catInfo.icon} ${catInfo.label}`, size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, flex: 0 }),
+        flexUtils.createText({ text: ` | `, size: 'sm', color: flexUtils.COLORS.TEXT_SUB, flex: 0 }),
+        flexUtils.createText({ text: `${PRIORITY_EMOJI[item.priority] || '🟡'} ${getPriorityLabel(item.priority)}`, size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, flex: 0 })
     ], { spacing: 'sm', margin: 'md', alignItems: 'center' });
 
     // Buttons: Category
@@ -406,7 +406,7 @@ function buildTaskCreationFlex(groupId, item) {
                 data: `action=update_meta&gid=${groupId}&id=${item.createdAt}&c=${key}&mode=creation`
             },
             style: isSelected ? 'primary' : 'secondary',
-            color: isSelected ? info.color : '#AAAAAA',
+            color: isSelected ? info.color : flexUtils.COLORS.TEXT_SUB,
             height: 'sm'
         });
     });
@@ -425,7 +425,7 @@ function buildTaskCreationFlex(groupId, item) {
                 data: `action=update_meta&gid=${groupId}&id=${item.createdAt}&p=${p.key}&mode=creation`
             },
             style: isSelected ? 'primary' : 'secondary',
-            color: isSelected ? p.color : '#AAAAAA',
+            color: isSelected ? p.color : flexUtils.COLORS.TEXT_SUB,
             height: 'sm'
         });
     });
@@ -446,13 +446,13 @@ function buildTaskCreationFlex(groupId, item) {
             header,
             stateRow,
             flexUtils.createSeparator('md'),
-            flexUtils.createText({ text: '設定相關分類：', size: 'xs', color: '#AAAAAA', margin: 'md' }),
+            flexUtils.createText({ text: '設定相關分類：', size: 'xs', color: flexUtils.COLORS.TEXT_SUB, margin: 'md' }),
             flexUtils.createBox('horizontal', catButtons, { spacing: 'sm', margin: 'sm' }),
-            flexUtils.createText({ text: '設定重要性：', size: 'xs', color: '#AAAAAA', margin: 'md' }),
+            flexUtils.createText({ text: '設定重要性：', size: 'xs', color: flexUtils.COLORS.TEXT_SUB, margin: 'md' }),
             flexUtils.createBox('horizontal', priButtons, { spacing: 'sm', margin: 'sm' }),
             flexUtils.createSeparator('xl'),
             viewBoardBtn
-        ])
+        ], { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: 'xl' })
     });
 }
 
@@ -659,5 +659,6 @@ module.exports = {
     getTodoList,
     updateTodoStatus,
     handleTodoCommand,
-    handleTodoPostback
+    handleTodoPostback,
+    buildTodoFlex
 };

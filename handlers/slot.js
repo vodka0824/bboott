@@ -140,12 +140,12 @@ function buildSlotFlex(layout, winners, totalWinAmount, betAmount, finalBalance,
         flexUtils.createText({
             text: '🎰 LAS VEGAS CASINO 🎰',
             weight: 'bold',
-            color: '#FFD700', // Gold
+            color: flexUtils.COLORS.PRIMARY, // Gold
             size: 'md',
             align: 'center'
         })
     ], {
-        backgroundColor: '#000000',
+        backgroundColor: flexUtils.COLORS.BG_CARD,
         paddingAll: 'md'
     }));
 
@@ -190,11 +190,11 @@ function buildSlotFlex(layout, winners, totalWinAmount, betAmount, finalBalance,
         background: {
             type: 'linearGradient',
             angle: '45deg',
-            startColor: '#1A0B2E',
+            startColor: flexUtils.COLORS.BG_CARD,
             endColor: '#3B185F' // 奢華紫色漸變
         },
         paddingAll: 'md', // 減少 padding
-        borderColor: '#FFD700', // 金色邊框
+        borderColor: flexUtils.COLORS.PRIMARY, // 金色邊框
         borderWidth: '2px',
         cornerRadius: 'md'
     });
@@ -202,7 +202,7 @@ function buildSlotFlex(layout, winners, totalWinAmount, betAmount, finalBalance,
     // 加入一個分隔區域，減少 padding
     contents.push(flexUtils.createBox('vertical', [slotBox], {
         paddingAll: 'md',
-        backgroundColor: '#111111'
+        backgroundColor: flexUtils.COLORS.BG_CARD
     }));
 
     // 3. 底部結果文字盒
@@ -214,7 +214,7 @@ function buildSlotFlex(layout, winners, totalWinAmount, betAmount, finalBalance,
         const winningSyms = [...new Set(winners.map(w => SYMBOL_NAMES[w.symbol] || w.symbol))];
         footerText = `🎊 恭喜達成 ${winners.length} 條連線！\n(${winningSyms.join(', ')})\n💰 贏得 ${totalWinAmount.toLocaleString()} 哭幣！${taxMsg}`;
         footerBg = '#2A0800'; // 暗金色/紅金色背景
-        footerBorder = '#FFD700'; // 金色邊框
+        footerBorder = flexUtils.COLORS.PRIMARY; // 金色邊框
     } else {
         const loseMessages = [
             "你的運氣可以申請金氏世界紀錄了（最衰） 📖",
@@ -234,7 +234,7 @@ function buildSlotFlex(layout, winners, totalWinAmount, betAmount, finalBalance,
         ];
         const randomIndex = Math.floor(Math.random() * loseMessages.length);
         footerText = loseMessages[randomIndex];
-        footerBg = '#1A1A1A'; // 深灰背景
+        footerBg = flexUtils.COLORS.BG_CARD; // 深灰背景
         footerBorder = '#333333'; // 暗色邊框
     }
 
@@ -242,7 +242,7 @@ function buildSlotFlex(layout, winners, totalWinAmount, betAmount, finalBalance,
         flexUtils.createText({
             text: footerText,
             align: 'center',
-            color: winners.length > 0 ? '#FFD700' : '#CCCCCC',
+            color: winners.length > 0 ? flexUtils.COLORS.PRIMARY : flexUtils.COLORS.TEXT_MUTED,
             weight: 'bold',
             size: 'sm',
             wrap: true,
@@ -251,7 +251,7 @@ function buildSlotFlex(layout, winners, totalWinAmount, betAmount, finalBalance,
         flexUtils.createText({
             text: `目前餘額: ${finalBalance.toLocaleString()} 💰`,
             align: 'center',
-            color: '#AAAAAA',
+            color: flexUtils.COLORS.TEXT_SUB,
             weight: 'bold',
             size: 'xs',
             margin: 'sm'
@@ -259,7 +259,7 @@ function buildSlotFlex(layout, winners, totalWinAmount, betAmount, finalBalance,
         flexUtils.createText({
             text: '💡 捷徑：輸入「slot +金額」或「slot 歐印」再次挑戰',
             align: 'center',
-            color: '#888888',
+            color: flexUtils.COLORS.TEXT_MUTED,
             size: 'xxs',
             margin: 'md'
         })
@@ -287,7 +287,7 @@ function buildSlotFlex(layout, winners, totalWinAmount, betAmount, finalBalance,
 
     return flexUtils.createBubble({
         size: 'kilo',
-        body: flexUtils.createBox('vertical', contents, { paddingAll: '0px', backgroundColor: '#000000' })
+        body: flexUtils.createBox('vertical', contents, { paddingAll: '0px', backgroundColor: flexUtils.COLORS.BG_CARD })
     });
 }
 

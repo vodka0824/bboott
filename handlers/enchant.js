@@ -1,6 +1,7 @@
 const lineUtils = require('../utils/line');
 const flexUtils = require('../utils/flex');
 const { db } = require('../utils/db');
+const notificationService = require('../services/notificationService');
 
 // --- Game Config ---
 const COLLECTION_NAME = 'lineage_users';
@@ -290,7 +291,7 @@ async function handleEnchant(replyToken, text, userId, groupId) {
 
             // Broadcast if high level
             if (newLvl >= 9 && groupId) {
-                await lineUtils.pushMessage(groupId, { type: 'text', text: `📢 全服廣播: 恭喜玩家衝出了 +${newLvl} 的神兵！` });
+                await notificationService.queueNotification(groupId, { type: 'text', text: `📢 全服廣播: 恭喜玩家衝出了 +${newLvl} 的神兵！` });
             }
 
             const flex = await buildResultFlex('success', currentLvl, newLvl, userData.weapon.name, userId);

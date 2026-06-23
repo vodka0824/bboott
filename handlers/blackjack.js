@@ -326,7 +326,7 @@ async function sendEndGameFlex(replyToken, resultText, betAmount, winAmount, pla
     const playerScore = calculateScore(playerHand);
     const dealerScore = calculateScore(dealerHand);
 
-    let headerColor = '#FFD700'; // 平手
+    let headerColor = flexUtils.COLORS.PRIMARY; // 平手
     if (winAmount > 0) headerColor = flexUtils.COLORS.WIN; // 贏
     if (winAmount < 0) headerColor = flexUtils.COLORS.LOSE; // 輸
 
@@ -336,29 +336,29 @@ async function sendEndGameFlex(replyToken, resultText, betAmount, winAmount, pla
 
 function buildBlackjackFlex(title, betAmount, playerHand, dealerHand, playerScore, dealerScore, hideDealerFirst, isEnd, resultText, headerColor = '#1E90FF', userName = '玩家', finalBalance = null) {
     const contents = [
-        flexUtils.createText({ text: '👤 莊家', size: 'sm', color: '#888888', weight: 'bold' }),
+        flexUtils.createText({ text: '👤 莊家', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, weight: 'bold' }),
         flexUtils.createText({ text: renderHand(dealerHand, hideDealerFirst), size: 'xl', weight: 'bold', margin: 'md', color: '#333333' }),
-        flexUtils.createText({ text: `點數: ${dealerScore}`, size: 'xs', color: '#AAAAAA', margin: 'sm' }),
+        flexUtils.createText({ text: `點數: ${dealerScore}`, size: 'xs', color: flexUtils.COLORS.TEXT_SUB, margin: 'sm' }),
         
         flexUtils.createSeparator('lg'),
         
-        flexUtils.createText({ text: `🧑 ${userName}`, size: 'sm', color: '#888888', weight: 'bold', margin: 'lg', wrap: true }),
+        flexUtils.createText({ text: `🧑 ${userName}`, size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, weight: 'bold', margin: 'lg', wrap: true }),
         flexUtils.createText({ text: renderHand(playerHand, false), size: 'xl', weight: 'bold', margin: 'md', color: '#1E90FF' }),
         flexUtils.createText({ text: `點數: ${playerScore}`, size: 'sm', color: '#333333', weight: 'bold', margin: 'sm' }),
         
         flexUtils.createSeparator('lg'),
         
         flexUtils.createText({ text: `💰 下注金額: ${betAmount.toLocaleString()}`, size: 'sm', color: '#FF8C00', margin: 'md', weight: 'bold' }),
-        flexUtils.createText({ text: resultText, size: 'md', color: isEnd ? (headerColor === flexUtils.COLORS.LOSE ? flexUtils.COLORS.LOSE : flexUtils.COLORS.WIN) : '#666666', weight: 'bold', margin: 'md', wrap: true })
+        flexUtils.createText({ text: resultText, size: 'md', color: isEnd ? (headerColor === flexUtils.COLORS.LOSE ? flexUtils.COLORS.LOSE : flexUtils.COLORS.WIN) : flexUtils.COLORS.TEXT_MUTED, weight: 'bold', margin: 'md', wrap: true })
     ];
 
     if (isEnd && finalBalance !== null) {
         contents.push(flexUtils.createSeparator('md'));
-        contents.push(flexUtils.createText({ text: `💰 結算總資產: ${finalBalance.toLocaleString()} 哭幣`, size: 'sm', weight: 'bold', color: '#1A1A1A', margin: 'md' }));
+        contents.push(flexUtils.createText({ text: `💰 結算總資產: ${finalBalance.toLocaleString()} 哭幣`, size: 'sm', weight: 'bold', color: flexUtils.COLORS.BG_CARD, margin: 'md' }));
     }
 
     if (!isEnd) {
-        contents.push(flexUtils.createText({ text: '💡 捷徑：補牌輸入「+」、停牌輸入「-」或「過」', size: 'xs', color: '#AAAAAA', align: 'center', margin: 'sm' }));
+        contents.push(flexUtils.createText({ text: '💡 捷徑：補牌輸入「+」、停牌輸入「-」或「過」', size: 'xs', color: flexUtils.COLORS.TEXT_SUB, align: 'center', margin: 'sm' }));
     }
 
     const footerContents = [];
@@ -380,14 +380,14 @@ function buildBlackjackFlex(title, betAmount, playerHand, dealerHand, playerScor
         footerContents.push(
             flexUtils.createButton({
                 action: { type: 'message', label: `🎰 再玩一次 (${betAmount.toLocaleString()})`, text: `21點 ${betAmount}` },
-                style: 'secondary', height: 'sm', color: '#E0E0E0'
+                style: 'secondary', height: 'sm', color: flexUtils.COLORS.TEXT_MAIN
             })
         );
     }
 
     return flexUtils.createBubble({
         size: 'mega',
-        header: flexUtils.createHeader(title, '', headerColor, '#FFFFFF'),
+        header: flexUtils.createHeader(title, '', headerColor, flexUtils.COLORS.TEXT_MAIN),
         body: flexUtils.createBox('vertical', contents, { paddingAll: '15px', backgroundColor: '#F8F9FA' }),
         footer: flexUtils.createBox('vertical', footerContents, { paddingAll: '10px' })
     });

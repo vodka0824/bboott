@@ -13,17 +13,17 @@ const HORSES = [
 async function showRaceTrack(replyToken) {
     try {
         const contents = [
-            flexUtils.createText({ text: '🏁 皇家賽馬場 🏁', size: 'xl', weight: 'bold', color: '#FFD700', align: 'center', margin: 'md' }),
+            flexUtils.createText({ text: '🏁 皇家賽馬場 🏁', size: 'xl', weight: 'bold', color: flexUtils.COLORS.PRIMARY, align: 'center', margin: 'md' }),
             flexUtils.createSeparator('md'),
-            flexUtils.createText({ text: '點擊下方按鈕或輸入「賽馬 [號碼] [金額]」下注', size: 'xs', color: '#AAAAAA', align: 'center', margin: 'md' }),
+            flexUtils.createText({ text: '點擊下方按鈕或輸入「賽馬 [號碼] [金額]」下注', size: 'xs', color: flexUtils.COLORS.TEXT_SUB, align: 'center', margin: 'md' }),
             flexUtils.createSeparator('md')
         ];
 
         HORSES.forEach(horse => {
             // Horizontal box for each horse
             contents.push(flexUtils.createBox('horizontal', [
-                flexUtils.createText({ text: `${horse.id}. ${horse.icon} ${horse.name}`, size: 'md', weight: 'bold', color: '#FFFFFF', flex: 2, align: 'start' }),
-                flexUtils.createText({ text: `賠率: ${horse.multiplier}x`, size: 'sm', weight: 'bold', color: '#FF9800', flex: 1, align: 'end' })
+                flexUtils.createText({ text: `${horse.id}. ${horse.icon} ${horse.name}`, size: 'md', weight: 'bold', color: flexUtils.COLORS.TEXT_MAIN, flex: 2, align: 'start' }),
+                flexUtils.createText({ text: `賠率: ${horse.multiplier}x`, size: 'sm', weight: 'bold', color: flexUtils.COLORS.SECONDARY, flex: 1, align: 'end' })
             ], { margin: 'md', alignItems: 'center' }));
             
             // Buttons for quick betting
@@ -36,7 +36,7 @@ async function showRaceTrack(replyToken) {
 
         const bubble = flexUtils.createBubble({
             size: 'mega',
-            body: flexUtils.createBox('vertical', contents, { backgroundColor: '#1A1A1A', paddingAll: 'xl' })
+            body: flexUtils.createBox('vertical', contents, { backgroundColor: flexUtils.COLORS.BG_CARD, paddingAll: 'xl' })
         });
 
         await lineUtils.replyFlex(replyToken, '皇家賽馬場', bubble);
@@ -113,14 +113,14 @@ async function betHorse(replyToken, groupId, userId, betTarget, amountStr) {
         const resultTitle = isWin ? `🎉 贏了！${taxMsg}` : '💸 輸了！';
 
         const contents = [
-            flexUtils.createText({ text: '🏁 比賽結果 🏁', size: 'xl', weight: 'bold', color: '#FFD700', align: 'center', margin: 'md' }),
-            flexUtils.createText({ text: `冠軍：${winningHorse.icon} ${winningHorse.name}`, size: 'xxl', weight: 'bold', color: '#FFFFFF', align: 'center', margin: 'md' }),
+            flexUtils.createText({ text: '🏁 比賽結果 🏁', size: 'xl', weight: 'bold', color: flexUtils.COLORS.PRIMARY, align: 'center', margin: 'md' }),
+            flexUtils.createText({ text: `冠軍：${winningHorse.icon} ${winningHorse.name}`, size: 'xxl', weight: 'bold', color: flexUtils.COLORS.TEXT_MAIN, align: 'center', margin: 'md' }),
             flexUtils.createSeparator('md')
         ];
 
         finalOrder.forEach((horse, index) => {
             const rank = index === 0 ? '👑 1st' : `    ${index + 1}th`;
-            contents.push(flexUtils.createText({ text: `${rank}  ${horse.icon} ${horse.name}`, size: 'md', color: index === 0 ? '#FFD700' : '#AAAAAA', margin: 'sm' }));
+            contents.push(flexUtils.createText({ text: `${rank}  ${horse.icon} ${horse.name}`, size: 'md', color: index === 0 ? flexUtils.COLORS.PRIMARY : flexUtils.COLORS.TEXT_SUB, margin: 'sm' }));
         });
 
         contents.push(
@@ -129,14 +129,14 @@ async function betHorse(replyToken, groupId, userId, betTarget, amountStr) {
         );
 
         if (isWin) {
-            contents.push(flexUtils.createText({ text: `獲得: ${winAmount.toLocaleString()} 哭幣`, size: 'md', weight: 'bold', color: '#FFD700', align: 'center', margin: 'sm' }));
+            contents.push(flexUtils.createText({ text: `獲得: ${winAmount.toLocaleString()} 哭幣`, size: 'md', weight: 'bold', color: flexUtils.COLORS.PRIMARY, align: 'center', margin: 'sm' }));
         }
 
-        contents.push(flexUtils.createText({ text: `目前餘額: ${finalBalance.toLocaleString()}`, size: 'xs', color: '#888888', align: 'center', margin: 'md' }));
+        contents.push(flexUtils.createText({ text: `目前餘額: ${finalBalance.toLocaleString()}`, size: 'xs', color: flexUtils.COLORS.TEXT_MUTED, align: 'center', margin: 'md' }));
 
         const bubble = flexUtils.createBubble({
             size: 'mega',
-            body: flexUtils.createBox('vertical', contents, { backgroundColor: '#1A1A1A', paddingAll: 'xl' })
+            body: flexUtils.createBox('vertical', contents, { backgroundColor: flexUtils.COLORS.BG_CARD, paddingAll: 'xl' })
         });
 
         await lineUtils.replyFlex(replyToken, `賽馬結果: ${winningHorse.name} 獲勝`, bubble);

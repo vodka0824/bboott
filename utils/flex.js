@@ -7,13 +7,18 @@ function createBubble({ size, header, hero, body, footer, styles }) {
     return { type: 'bubble', size, header, hero, body, footer, styles };
 }
 
-function createHeader(title, subtitle = '', color = '#000000', textColor = '#FFFFFF') {
+function createHeader(title, subtitle = '', color = '#007AFF', textColor = '#FFFFFF') {
     const contents = [{ type: 'text', text: title, weight: 'bold', color: textColor, size: 'md' }];
-    if (subtitle) contents.push({ type: 'text', text: subtitle, color: '#DDDDDD', size: 'xxs' });
+    const subColor = textColor === '#FFFFFF' ? '#E5E5EA' : COLORS.TEXT_SUB;
+    if (subtitle) contents.push({ type: 'text', text: subtitle, color: subColor, size: 'xxs' });
     return { type: 'box', layout: 'vertical', contents, backgroundColor: color, paddingAll: '12px' };
 }
 
-function createText({ text, size = 'sm', color = '#666666', weight = 'regular', align, margin, flex, gravity, wrap, adjustMode, action, decoration, position, offsetTop, offsetBottom, offsetStart, offsetEnd, contents }) {
+function createText({ text, size = 'sm', color = '#1C1C1E', weight = 'regular', align, margin, flex, gravity, wrap, adjustMode, action, decoration, position, offsetTop, offsetBottom, offsetStart, offsetEnd, contents }) {
+    // 智慧防破版：若未設定 wrap 且未設定 adjustMode，一律套用 shrink-to-fit
+    if (!wrap && adjustMode === undefined) {
+        adjustMode = 'shrink-to-fit';
+    }
     const obj = { type: 'text', size, color, weight, align, margin, flex, gravity, wrap, adjustMode, action, decoration, position, offsetTop, offsetBottom, offsetStart, offsetEnd };
     if (contents) obj.contents = contents;
     else obj.text = text;
@@ -45,15 +50,19 @@ function createButton({ action, style = 'link', color, height = 'sm', flex, marg
 }
 
 const COLORS = {
-    PRIMARY: '#1E90FF',
-    SUCCESS: '#00B900',
-    DANGER: '#FF334B',
-    WARNING: '#FFCC00',
-    GRAY: '#AAAAAA',
-    DARK_GRAY: '#555555',
-    LIGHT_GRAY: '#F5F5F5',
-    WIN: '#4CAF50',
-    LOSE: '#F44336'
+    BG_MAIN: '#FAFAFA',      // 主背景：近純白 (避免 LINE Dark Mode 自動反轉)
+    BG_CARD: '#F2F2F7',      // 卡片/次要背景：蘋果風淡灰
+    PRIMARY: '#007AFF',      // 主按鈕/強調色 (iOS Blue)
+    SECONDARY: '#FF9500',    // 次要按鈕/特殊資訊 (Orange)
+    ACCENT: '#AF52DE',       // 稀有裝備/黑道/特殊效果 (Purple)
+    SUCCESS: '#34C759',      // 勝利/獲利/成功 (Green)
+    DANGER: '#FF3B30',       // 失敗/受傷/警告/通緝 (Red)
+    WARNING: '#FFCC00',      // 狀態提示/保釋金 (Yellow)
+    TEXT_MAIN: '#1C1C1E',    // 主標題/內文 (近純黑)
+    TEXT_SUB: '#636366',     // 次要資訊/日期 (深灰色 System Gray 2)
+    TEXT_MUTED: '#8E8E93',   // 弱化資訊 (中灰色 System Gray)
+    WIN: '#34C759',          // 向下相容
+    LOSE: '#FF3B30'          // 向下相容
 };
 
 function getBetQuickReply() {

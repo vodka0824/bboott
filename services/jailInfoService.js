@@ -1,9 +1,25 @@
+const { Firestore } = require('@google-cloud/firestore');
 const { db } = require('../utils/db');
+const COLLECTION_NAME = 'economy_users';
 const lineUtils = require('../utils/line');
 const flexUtils = require('../utils/flex');
-const memoryCache = require('../utils/memoryCache');
-const { getSpamResponse } = require('../utils/spamHandler');
-const COLLECTION_NAME = 'economy_users';
+const authUtils = require('../utils/auth');
+
+function getSpamResponse(userData, action, msg) {
+    const spamLimit = 3;
+    let trackers = userData.spamTracker || {};
+    let count = (trackers[action] || 0) + 1;
+    trackers[action] = count;
+    
+    if (count > spamLimit) {
+        return { ignore: false, triggerPenalty: true, message: `🚨 【警告】你已連續洗頻 ${action} 指令超過 ${spamLimit} 次！將受到懲罰！`, newTracker: trackers };
+    }
+    if (count === spamLimit) {
+        return { ignore: false, triggerPenalty: false, message: msg + `\n(再洗頻一次將受到嚴厲懲罰！)`, newTracker: trackers };
+    }
+    return { ignore: false, triggerPenalty: false, message: msg, newTracker: trackers };
+}
+
 
 function getCriminalTitle(record) {
     if (!record || record <= 0) return '';
@@ -13,6 +29,9 @@ function getCriminalTitle(record) {
     return '';
 }
 
+/**
+ * 檢查玩家是否在坐牢中
+ */
 async function checkJailStatus(userId) {
     try {
         const docRef = db.collection(COLLECTION_NAME).doc(userId);
@@ -33,6 +52,9 @@ async function checkJailStatus(userId) {
     }
 }
 
+/**
+ * 查詢監獄名單
+ */
 async function handleJailList(replyToken) {
     try {
         const now = Date.now();
@@ -100,6 +122,9 @@ async function handleJailList(replyToken) {
     }
 }
 
+/**
+ * 查詢前科排行榜
+ */
 async function handleJailRank(replyToken) {
     try {
         const snapshot = await db.collection(COLLECTION_NAME)

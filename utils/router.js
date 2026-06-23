@@ -90,14 +90,18 @@ class CommandRouter {
             // 5. 執行處理
             try {
                 const result = await route.handler(context, match);
+                console.log(`[ROUTER DEBUG] Route ${route.pattern} returned result: ${result}`);
                 if (result === false) continue;
+                console.log(`[ROUTER DEBUG] Match returned true (or undefined), stopping here.`);
                 return true;
             } catch (error) {
+                console.log(`[ROUTER DEBUG] Route ${route.pattern} threw error: ${error.message}`);
                 await handleError(error, context);
                 return true; // 視為已處理 (錯誤已捕捉)
             }
         }
 
+        console.log(`[ROUTER DEBUG] All matched routes returned false. router.execute returns false.`);
         return false;
     }
     /**
@@ -131,6 +135,8 @@ class CommandRouter {
      */
     async executePostback(data, context) {
         if (!this.postbackRoutes) return false;
+        
+        context.isButton = true;
 
         for (const route of this.postbackRoutes) {
             if (route.predicate(data)) {

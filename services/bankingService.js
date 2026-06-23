@@ -114,12 +114,13 @@ async function checkBalance(replyToken, groupId, userId) {
         const { data } = await db.runTransaction(async (t) => {
             return await getUserProfile(t, userId, memberName);
         });
-        // 冪先更新名字到 DB
-        if (memberName && memberName !== '成員' && data.displayName !== memberName) {
-            db.collection(COLLECTION_NAME).doc(userId).update({ displayName: memberName }).catch(() => {});
+        // 確保更新到 DB 的是不含職業後綴的純淨名稱
+        const cleanNameStr = memberName ? memberName.replace(/\[.*?\]/g, '').replace(/\(出賣靈魂的賭狗\)/g, '').trim() : '';
+        if (cleanNameStr && cleanNameStr !== '成員' && data.displayName !== cleanNameStr) {
+            db.collection(COLLECTION_NAME).doc(userId).update({ displayName: cleanNameStr }).catch(() => {});
         }
         const titleInfo = getTitleInfo(data.kuCoin);
-        const displayName = data.displayName || data.name || memberName || '玩家';
+        const displayName = memberName || data.displayName || data.name || '玩家';
         
         let rank = '?';
         try {
@@ -133,17 +134,17 @@ async function checkBalance(replyToken, groupId, userId) {
         const wantedPercent = ((data.wantedLevel || 0) * 100).toFixed(1);
 
         const bodyContents = [
-            flexUtils.createText({ text: displayName, size: 'md', weight: 'bold', color: '#FFFFFF', align: 'center', wrap: true }),
+            flexUtils.createText({ text: displayName, size: 'md', weight: 'bold', color: flexUtils.COLORS.TEXT_MAIN, align: 'center', wrap: true }),
             flexUtils.createText({ text: `「${titleInfo.name}」`, size: 'lg', weight: 'bold', color: '#CE93D8', align: 'center', margin: 'sm' }),
             flexUtils.createSeparator('md'),
             flexUtils.createBox('horizontal', [
-                flexUtils.createText({ text: '目前餘額', size: 'sm', color: '#AAAAAA', align: 'start', flex: 1 }),
-                flexUtils.createText({ text: `${data.kuCoin.toLocaleString()} ${COIN_NAME}`, size: 'xl', weight: 'bold', color: '#FFD700', align: 'end', flex: 2, adjustMode: 'shrink-to-fit' })
+                flexUtils.createText({ text: '目前餘額', size: 'sm', color: flexUtils.COLORS.TEXT_SUB, align: 'start', flex: 1 }),
+                flexUtils.createText({ text: `${data.kuCoin.toLocaleString()} ${COIN_NAME}`, size: 'xl', weight: 'bold', color: flexUtils.COLORS.PRIMARY, align: 'end', flex: 2, adjustMode: 'shrink-to-fit' })
             ], { margin: 'md', alignItems: 'center' }),
             flexUtils.createSeparator('md'),
             flexUtils.createBox('horizontal', [
-                flexUtils.createText({ text: `🏆 財富: 第 ${rank} 名`, size: 'xs', color: '#DDDDDD', flex: 1 }),
-                flexUtils.createText({ text: `🚨 通緝: ${wantedPercent}%`, size: 'xs', color: '#DDDDDD', align: 'end', flex: 1 })
+                flexUtils.createText({ text: `🏆 財富: 第 ${rank} 名`, size: 'xs', color: flexUtils.COLORS.TEXT_SUB, flex: 1 }),
+                flexUtils.createText({ text: `🚨 通緝: ${wantedPercent}%`, size: 'xs', color: flexUtils.COLORS.TEXT_SUB, align: 'end', flex: 1 })
             ], { margin: 'md', alignItems: 'center' })
         ];
 
@@ -152,8 +153,19 @@ async function checkBalance(replyToken, groupId, userId) {
             bodyContents.push(
                 flexUtils.createSeparator('md'),
                 flexUtils.createBox('horizontal', [
-                    flexUtils.createText({ text: '🆘 急難救助金', size: 'sm', color: '#888888', align: 'start', flex: 1 }),
+                    flexUtils.createText({ text: '🆘 急難救助金', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, align: 'start', flex: 1 }),
                     flexUtils.createText({ text: `${data.emergencyAid.toLocaleString()} ${COIN_NAME}`, size: 'md', weight: 'bold', color: '#E91E63', align: 'end', flex: 1, adjustMode: 'shrink-to-fit' })
+                ], { margin: 'md', alignItems: 'center' })
+            );
+        }
+
+        // 若有醫療負債，額外顯示
+        if ((data.medicalDebt || 0) > 0) {
+            bodyContents.push(
+                flexUtils.createSeparator('md'),
+                flexUtils.createBox('horizontal', [
+                    flexUtils.createText({ text: '🏥 醫療負債', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, align: 'start', flex: 1 }),
+                    flexUtils.createText({ text: `${data.medicalDebt.toLocaleString()} ${COIN_NAME}`, size: 'md', weight: 'bold', color: '#B71C1C', align: 'end', flex: 1, adjustMode: 'shrink-to-fit' })
                 ], { margin: 'md', alignItems: 'center' })
             );
         }
@@ -162,14 +174,14 @@ async function checkBalance(replyToken, groupId, userId) {
         if (titleInfo.nextName) {
             bodyContents.push(
                 flexUtils.createSeparator('md'),
-                flexUtils.createText({ text: `距下一等級「${titleInfo.nextName}」還差 ${titleInfo.diff.toLocaleString()} 哭幣`, size: 'xs', color: '#888888', align: 'center', margin: 'md', wrap: true })
+                flexUtils.createText({ text: `距下一等級「${titleInfo.nextName}」還差 ${titleInfo.diff.toLocaleString()} 哭幣`, size: 'xs', color: flexUtils.COLORS.TEXT_MUTED, align: 'center', margin: 'md', wrap: true })
             );
         }
 
         const bubble = flexUtils.createBubble({
             size: 'mega',
-            header: flexUtils.createHeader('💰 我的錢包', '', '#121212', '#FFD700'),
-            body: flexUtils.createBox('vertical', bodyContents, { paddingAll: 'xl', backgroundColor: '#1A1A1A' })
+            header: flexUtils.createHeader('💰 我的錢包', '', flexUtils.COLORS.BG_MAIN, flexUtils.COLORS.PRIMARY),
+            body: flexUtils.createBox('vertical', bodyContents, { paddingAll: 'xl', backgroundColor: flexUtils.COLORS.BG_CARD })
         });
 
         await lineUtils.replyFlex(replyToken, `💰 我的${COIN_NAME}`, bubble);
@@ -213,10 +225,18 @@ async function transferCoin(replyToken, groupId, fromUserId, amountStr, messageO
                 return { success: false, message: `餘額不足！你只剩下 ${currentBalance.toLocaleString()} 哭幣。\n${mocking}` };
             }
 
-            t.update(fromProfile.docRef, { kuCoin: db.FieldValue.increment(-amount) });
-            t.update(toProfile.docRef, { kuCoin: db.FieldValue.increment(amount) });
+            let deductAmount = 0;
+            let finalReceive = amount;
+            if ((toProfile.data.medicalDebt || 0) > 0) {
+                deductAmount = Math.min(amount, toProfile.data.medicalDebt);
+                finalReceive = amount - deductAmount;
+                t.update(toProfile.docRef, { medicalDebt: db.FieldValue.increment(-deductAmount) });
+            }
 
-            return { success: true, fromName: fromProfile.data.name, toName: toProfile.data.name, amount };
+            t.update(fromProfile.docRef, { kuCoin: db.FieldValue.increment(-amount) });
+            t.update(toProfile.docRef, { kuCoin: db.FieldValue.increment(finalReceive) });
+
+            return { success: true, fromName: fromMemberName, toName: toMemberName, amount, deductAmount };
         });
 
         if (!result.success) {
@@ -224,7 +244,11 @@ async function transferCoin(replyToken, groupId, fromUserId, amountStr, messageO
             return;
         }
 
-        await lineUtils.replyText(replyToken, `✅ 轉帳成功！\n${result.fromName} 轉交了 ${result.amount} ${COIN_NAME} 給 ${result.toName}`);
+        let msg = `✅ 轉帳成功！\n${result.fromName} 轉交了 ${result.amount} ${COIN_NAME} 給 ${result.toName}`;
+        if (result.deductAmount > 0) {
+            msg += `\n🏥 (系統已自動扣除 ${result.deductAmount.toLocaleString()} 哭幣償還醫療負債)`;
+        }
+        await lineUtils.replyText(replyToken, msg);
     } catch (e) {
         console.error('[Economy] transfer Error:', e);
         await lineUtils.replyText(replyToken, `❌ 轉帳失敗，系統發生錯誤`);
@@ -402,11 +426,21 @@ async function queryPlayerProfile(replyToken, groupId, targetUserId, callerUserI
         let wantedStr = '0.0%';
         let jailStr = '自由之身';
         let devilStr = '未出賣';
+        let medicalDebt = 0;
 
         let crimeRecord = 0;
         let robCount = 0;
+        let mafiaScore = 0;
         let militaryStr = '未服役';
         let professionStr = '無職業 (市民)';
+        let isMonk = false;
+        let monkKarmaStr = '0%';
+        let monkFollowers = 0;
+        let monkName = '';
+        let currentKarma = 0;
+        let isTsmc = false;
+        let tsmcKpiStr = '0';
+        let tsmcBlameCountStr = '0 次';
 
         if (doc.exists) {
             const data = doc.data();
@@ -416,25 +450,42 @@ async function queryPlayerProfile(replyToken, groupId, targetUserId, callerUserI
 
             if (isMafiaBoss) {
                 professionStr = '🕶️ 黑道老大';
+            } else if (data.isMafia) {
+                professionStr = '🕶️ 黑幫成員';
             } else if (data.isPolice) {
                 professionStr = '👮 警察';
+            } else if (data.profession === 'monk') {
+                const { getRankName } = require('../handlers/monk');
+                professionStr = `📿 ${getRankName(data.followers || 0)}`;
+                isMonk = true;
+                currentKarma = data.karma || 0;
+                monkKarmaStr = `${currentKarma}%`;
+                monkFollowers = data.followers || 0;
+                monkName = data.monkName || '';
             } else if (data.councilorUntil && Date.now() < data.councilorUntil) {
                 const remainDays = Math.ceil((data.councilorUntil - Date.now()) / (24 * 60 * 60 * 1000));
                 professionStr = `🏛️ 市議員 (剩餘 ${remainDays} 天)`;
             } else if (data.militaryUntil && Date.now() < data.militaryUntil) {
                 professionStr = '🪖 軍人 (服役中)';
+            } else if (data.profession === 'tsmc') {
+                professionStr = '🧑‍💻 輪班星人';
+                isTsmc = true;
+                tsmcKpiStr = (data.tsmcKpi || 0).toString();
+                tsmcBlameCountStr = `${data.tsmcBlameCount || 0} 次`;
             }
 
             kuCoin = data.kuCoin || 0;
+            medicalDebt = data.medicalDebt || 0;
             if (data.title) title = data.title;
             crimeRecord = data.crimeRecord || 0;
             robCount = data.robCount || 0;
             
             const wantedLevel = data.wantedLevel || 0;
             wantedStr = (wantedLevel * 100).toFixed(1) + '%';
+            mafiaScore = Math.floor((wantedLevel * 100) + (crimeRecord * 5));
             
             if (data.militaryEnlistCount && data.militaryEnlistCount > 0) {
-                const { getMilitaryRankInfo } = require('./jail_redemption');
+                const { getMilitaryRankInfo } = require('./jailRedemptionService');
                 const rankInfo = getMilitaryRankInfo(data.militaryEnlistCount - 1);
                 militaryStr = `${rankInfo.name} (入伍 ${data.militaryEnlistCount} 次)`;
             }
@@ -469,125 +520,155 @@ async function queryPlayerProfile(replyToken, groupId, targetUserId, callerUserI
             }
         }
 
-        const { getFinalPlayerStats, getPlayerTitle } = require('./rpg');
+        const { getFinalPlayerStats, getPlayerTitle } = require('../handlers/rpg');
         const stats = await getFinalPlayerStats(targetUserId);
         
         const wealthTitleInfo = getTitleInfo(kuCoin);
         const rpgTitle = getPlayerTitle(stats.level);
         const titleStr = `${wealthTitleInfo.name} ‧ ${rpgTitle.title}`;
 
-        const bodyContents = [
-            flexUtils.createText({ text: memberName, size: 'xl', color: '#1A1A1A', weight: 'bold', align: 'center', wrap: true }),
-            flexUtils.createText({ text: `「${titleStr}」`, size: 'xs', color: rpgTitle.color, weight: 'bold', align: 'center', margin: 'sm' }),
-            flexUtils.createSeparator('md'),
+        const isWanted = wantedStr !== '0.0%';
+        const isJailed = jailStr.includes('入獄');
+        const isDevil = devilStr.includes('已出賣');
+
+        const profileBox = flexUtils.createBox('vertical', [
+            flexUtils.createText({ text: memberName, size: 'xl', weight: 'bold', color: flexUtils.COLORS.TEXT_MAIN, align: 'center', wrap: true }),
+            flexUtils.createText({ text: `「${titleStr}」`, size: 'xs', color: rpgTitle.color, weight: 'bold', align: 'center', margin: 'sm' })
+        ], { paddingAll: 'lg', backgroundColor: flexUtils.COLORS.BG_MAIN });
+
+        const rpgCard = flexUtils.createBox('vertical', [
+            flexUtils.createText({ text: '🔰 角色資訊', size: 'xs', color: flexUtils.COLORS.TEXT_SUB, weight: 'bold', margin: 'sm' }),
             flexUtils.createBox('horizontal', [
-                flexUtils.createText({ text: '🔰 冒險等級', size: 'sm', color: '#555555', flex: 1 }),
-                flexUtils.createText({ text: `Lv. ${stats.level}`, size: 'sm', color: '#1976D2', align: 'end', flex: 2, weight: 'bold' })
+                flexUtils.createText({ text: '冒險等級', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, flex: 1 }),
+                flexUtils.createText({ text: `Lv. ${stats.level}`, size: 'sm', color: flexUtils.COLORS.PRIMARY, align: 'end', flex: 2, weight: 'bold' })
             ], { margin: 'md' }),
             flexUtils.createBox('horizontal', [
-                flexUtils.createText({ text: '💼 職業', size: 'sm', color: '#555555', flex: 1 }),
-                flexUtils.createText({ text: professionStr, size: 'sm', color: '#673AB7', align: 'end', flex: 2, weight: 'bold' })
-            ], { margin: 'sm' })
-        ];
+                flexUtils.createText({ text: '戰鬥力', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, flex: 1 }),
+                flexUtils.createText({ text: `${stats.final.combatPower.toLocaleString()} ⚡`, size: 'sm', color: flexUtils.COLORS.SECONDARY, align: 'end', flex: 2, weight: 'bold' })
+            ], { margin: 'md' }),
+            flexUtils.createBox('horizontal', [
+                flexUtils.createText({ text: '職業', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, flex: 1 }),
+                flexUtils.createText({ text: professionStr, size: 'sm', color: flexUtils.COLORS.ACCENT, align: 'end', flex: 2, weight: 'bold' })
+            ], { margin: 'md' }),
+            ...(hasCorruption ? [flexUtils.createBox('horizontal', [
+                flexUtils.createText({ text: '貪污值', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, flex: 1 }),
+                flexUtils.createText({ text: corruptionStr, size: 'sm', color: flexUtils.COLORS.DANGER, align: 'end', flex: 2, weight: 'bold' })
+            ], { margin: 'md' })] : []),
+            ...(isMonk ? [flexUtils.createBox('horizontal', [
+                flexUtils.createText({ text: '法號', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, flex: 1 }),
+                flexUtils.createText({ text: monkName, size: 'sm', color: '#FF9800', align: 'end', flex: 2, weight: 'bold' })
+            ], { margin: 'md' })] : []),
+            ...(isMonk ? [flexUtils.createBox('horizontal', [
+                flexUtils.createText({ text: '信徒數', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, flex: 1 }),
+                flexUtils.createText({ text: `${monkFollowers} 人`, size: 'sm', color: '#FF9800', align: 'end', flex: 2, weight: 'bold' })
+            ], { margin: 'md' })] : []),
+            ...(isMonk ? [flexUtils.createBox('horizontal', [
+                flexUtils.createText({ text: '業障值', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, flex: 1 }),
+                flexUtils.createText({ text: monkKarmaStr, size: 'sm', color: currentKarma >= 100 ? '#B71C1C' : '#9E9E9E', align: 'end', flex: 2, weight: 'bold' })
+            ], { margin: 'md' })] : []),
+            ...(isTsmc ? [flexUtils.createBox('horizontal', [
+                flexUtils.createText({ text: '考績分數', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, flex: 1 }),
+                flexUtils.createText({ text: tsmcKpiStr, size: 'sm', color: '#009688', align: 'end', flex: 2, weight: 'bold' })
+            ], { margin: 'md' })] : []),
+            ...(isTsmc ? [flexUtils.createBox('horizontal', [
+                flexUtils.createText({ text: '甩鍋次數', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, flex: 1 }),
+                flexUtils.createText({ text: tsmcBlameCountStr, size: 'sm', color: '#009688', align: 'end', flex: 2, weight: 'bold' })
+            ], { margin: 'md' })] : []),
+            flexUtils.createBox('horizontal', [
+                flexUtils.createText({ text: '兵籍狀態', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, flex: 1 }),
+                flexUtils.createText({ text: militaryStr, size: 'sm', color: flexUtils.COLORS.TEXT_MAIN, align: 'end', flex: 2 })
+            ], { margin: 'md' })
+        ], { paddingAll: 'md', cornerRadius: 'md', backgroundColor: flexUtils.COLORS.BG_CARD, margin: 'md' });
 
-        if (hasCorruption) {
-            bodyContents.push(flexUtils.createBox('horizontal', [
-                flexUtils.createText({ text: '💰 議員貪污值', size: 'sm', color: '#555555', flex: 1 }),
-                flexUtils.createText({ text: corruptionStr, size: 'sm', color: '#E91E63', align: 'end', flex: 2, weight: 'bold' })
-            ], { margin: 'sm' }));
-        }
-
-        bodyContents.push(
+        const crimeCard = flexUtils.createBox('vertical', [
+            flexUtils.createText({ text: '💰 財富與狀態', size: 'xs', color: flexUtils.COLORS.TEXT_SUB, weight: 'bold', margin: 'sm' }),
             flexUtils.createBox('horizontal', [
-                flexUtils.createText({ text: '⚡ 戰鬥力', size: 'sm', color: '#555555', flex: 1 }),
-                flexUtils.createText({ text: `${stats.final.combatPower.toLocaleString()}`, size: 'sm', color: '#E64A19', align: 'end', flex: 2, weight: 'bold' })
-            ], { margin: 'sm' }),
+                flexUtils.createText({ text: '餘額', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, flex: 1 }),
+                flexUtils.createText({ text: `${kuCoin.toLocaleString()} 哭幣`, size: 'sm', color: flexUtils.COLORS.TEXT_MAIN, align: 'end', flex: 2, weight: 'bold' })
+            ], { margin: 'md' }),
+            ...(medicalDebt > 0 ? [flexUtils.createBox('horizontal', [
+                flexUtils.createText({ text: '醫療負債', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, flex: 1 }),
+                flexUtils.createText({ text: `${medicalDebt.toLocaleString()} 哭幣`, size: 'sm', color: '#B71C1C', align: 'end', flex: 2, weight: 'bold' })
+            ], { margin: 'md' })] : []),
             flexUtils.createBox('horizontal', [
-                flexUtils.createText({ text: '💰 餘額', size: 'sm', color: '#555555', flex: 1 }),
-                flexUtils.createText({ text: `${kuCoin.toLocaleString()} 哭幣`, size: 'sm', color: '#333333', align: 'end', flex: 2, weight: 'bold' })
-            ], { margin: 'sm' }),
+                flexUtils.createText({ text: '通緝值', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, flex: 1 }),
+                flexUtils.createText({ text: wantedStr, size: 'sm', color: isWanted ? flexUtils.COLORS.DANGER : flexUtils.COLORS.TEXT_MAIN, align: 'end', flex: 2, weight: 'bold' })
+            ], { margin: 'md' }),
             flexUtils.createBox('horizontal', [
-                flexUtils.createText({ text: '🚨 通緝值', size: 'sm', color: '#555555', flex: 1 }),
-                flexUtils.createText({ text: wantedStr, size: 'sm', color: '#FF4500', align: 'end', flex: 2, weight: 'bold' })
-            ], { margin: 'sm' }),
+                flexUtils.createText({ text: '江湖聲望', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, flex: 1 }),
+                flexUtils.createText({ text: `${mafiaScore} 分`, size: 'sm', color: mafiaScore > 0 ? flexUtils.COLORS.WARNING : flexUtils.COLORS.TEXT_MAIN, align: 'end', flex: 2, weight: 'bold' })
+            ], { margin: 'md' }),
             flexUtils.createBox('horizontal', [
-                flexUtils.createText({ text: '⛓️ 狀態', size: 'sm', color: '#555555', flex: 1 }),
-                flexUtils.createText({ text: jailStr, size: 'sm', color: '#333333', align: 'end', flex: 2 })
-            ], { margin: 'sm' }),
+                flexUtils.createText({ text: '狀態', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, flex: 1 }),
+                flexUtils.createText({ text: jailStr, size: 'sm', color: isJailed ? flexUtils.COLORS.DANGER : flexUtils.COLORS.TEXT_MAIN, align: 'end', flex: 2 })
+            ], { margin: 'md' }),
             flexUtils.createBox('horizontal', [
-                flexUtils.createText({ text: '😈 靈魂契約', size: 'sm', color: '#555555', flex: 1 }),
-                flexUtils.createText({ text: devilStr, size: 'sm', color: '#333333', align: 'end', flex: 2 })
-            ], { margin: 'sm' }),
+                flexUtils.createText({ text: '前科', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, flex: 1 }),
+                flexUtils.createText({ text: `${crimeRecord} 次`, size: 'sm', color: flexUtils.COLORS.TEXT_MAIN, align: 'end', flex: 2 })
+            ], { margin: 'md' }),
             flexUtils.createBox('horizontal', [
-                flexUtils.createText({ text: '📜 前科次數', size: 'sm', color: '#555555', flex: 1 }),
-                flexUtils.createText({ text: `${crimeRecord} 次`, size: 'sm', color: '#333333', align: 'end', flex: 2 })
-            ], { margin: 'sm' }),
+                flexUtils.createText({ text: '今日搶劫', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, flex: 1 }),
+                flexUtils.createText({ text: `${robCount} 次`, size: 'sm', color: flexUtils.COLORS.TEXT_MAIN, align: 'end', flex: 2 })
+            ], { margin: 'md' }),
             flexUtils.createBox('horizontal', [
-                flexUtils.createText({ text: '🦹‍♂️ 今日搶劫', size: 'sm', color: '#555555', flex: 1 }),
-                flexUtils.createText({ text: `${robCount} 次`, size: 'sm', color: '#333333', align: 'end', flex: 2 })
-            ], { margin: 'sm' }),
-            flexUtils.createBox('horizontal', [
-                flexUtils.createText({ text: '🪖 兵籍狀態', size: 'sm', color: '#555555', flex: 1 }),
-                flexUtils.createText({ text: militaryStr, size: 'sm', color: '#333333', align: 'end', flex: 2 })
-            ], { margin: 'sm' })
-        );
+                flexUtils.createText({ text: '靈魂契約', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, flex: 1 }),
+                flexUtils.createText({ text: devilStr, size: 'sm', color: isDevil ? flexUtils.COLORS.ACCENT : flexUtils.COLORS.TEXT_MAIN, align: 'end', flex: 2 })
+            ], { margin: 'md' })
+        ], { paddingAll: 'md', cornerRadius: 'md', backgroundColor: flexUtils.COLORS.BG_CARD, margin: 'md' });
 
         const profileBubble = flexUtils.createBubble({
             size: 'mega',
-            header: flexUtils.createBox('vertical', [
-                flexUtils.createText({ text: '🔍 個人狀態', weight: 'bold', color: '#FFD700', size: 'md' })
-            ], { backgroundColor: '#121212', paddingAll: '12px' }),
-            body: flexUtils.createBox('vertical', bodyContents, { paddingAll: 'xl', backgroundColor: '#FFFFFF' })
+            body: flexUtils.createBox('vertical', [profileBox, rpgCard, crimeCard], { paddingAll: '0px', backgroundColor: flexUtils.COLORS.BG_MAIN, paddingBottom: 'md' })
         });
 
         const leftBox = flexUtils.createBox('vertical', [
-            flexUtils.createText({ text: '⚔️ 屬性', weight: 'bold', color: '#c0392b', size: 'sm', margin: 'sm' }),
+            flexUtils.createText({ text: '⚔️ 戰鬥屬性', weight: 'bold', color: '#c0392b', size: 'sm', margin: 'sm' }),
             flexUtils.createSeparator('sm'),
             flexUtils.createBox('horizontal', [
-                flexUtils.createText({ text: '攻擊', size: 'xs', color: '#555555', flex: 1 }),
-                flexUtils.createText({ text: `${stats.final.atk}`, size: 'xs', color: '#333333', align: 'end', flex: 1 })
+                flexUtils.createText({ text: '攻擊', size: 'xs', color: flexUtils.COLORS.TEXT_MUTED, flex: 1 }),
+                flexUtils.createText({ text: `${stats.final.atk}`, size: 'xs', color: flexUtils.COLORS.TEXT_MAIN, align: 'end', flex: 1, weight: 'bold' })
             ], { margin: 'md' }),
             flexUtils.createBox('horizontal', [
-                flexUtils.createText({ text: '防禦', size: 'xs', color: '#555555', flex: 1 }),
-                flexUtils.createText({ text: `${stats.final.def}`, size: 'xs', color: '#333333', align: 'end', flex: 1 })
+                flexUtils.createText({ text: '防禦', size: 'xs', color: flexUtils.COLORS.TEXT_MUTED, flex: 1 }),
+                flexUtils.createText({ text: `${stats.final.def}`, size: 'xs', color: flexUtils.COLORS.TEXT_MAIN, align: 'end', flex: 1, weight: 'bold' })
             ], { margin: 'md' }),
             flexUtils.createBox('horizontal', [
-                flexUtils.createText({ text: '迴避', size: 'xs', color: '#555555', flex: 1 }),
-                flexUtils.createText({ text: `${stats.final.eva}%`, size: 'xs', color: '#333333', align: 'end', flex: 1 })
+                flexUtils.createText({ text: '迴避', size: 'xs', color: flexUtils.COLORS.TEXT_MUTED, flex: 1 }),
+                flexUtils.createText({ text: `${stats.final.eva}%`, size: 'xs', color: flexUtils.COLORS.TEXT_MAIN, align: 'end', flex: 1, weight: 'bold' })
             ], { margin: 'md' }),
             flexUtils.createBox('horizontal', [
-                flexUtils.createText({ text: '爆擊', size: 'xs', color: '#555555', flex: 1 }),
-                flexUtils.createText({ text: `${stats.final.crit}%`, size: 'xs', color: '#333333', align: 'end', flex: 1 })
+                flexUtils.createText({ text: '爆擊', size: 'xs', color: flexUtils.COLORS.TEXT_MUTED, flex: 1 }),
+                flexUtils.createText({ text: `${stats.final.crit}%`, size: 'xs', color: flexUtils.COLORS.TEXT_MAIN, align: 'end', flex: 1, weight: 'bold' })
             ], { margin: 'md' }),
             flexUtils.createBox('horizontal', [
-                flexUtils.createText({ text: '幸運', size: 'xs', color: '#555555', flex: 1 }),
-                flexUtils.createText({ text: `${stats.final.luk}%`, size: 'xs', color: '#333333', align: 'end', flex: 1 })
+                flexUtils.createText({ text: '幸運', size: 'xs', color: flexUtils.COLORS.TEXT_MUTED, flex: 1 }),
+                flexUtils.createText({ text: `${stats.final.luk}%`, size: 'xs', color: flexUtils.COLORS.TEXT_MAIN, align: 'end', flex: 1, weight: 'bold' })
             ], { margin: 'md' }),
             flexUtils.createBox('horizontal', [
-                flexUtils.createText({ text: '穿透', size: 'xs', color: '#555555', flex: 1 }),
-                flexUtils.createText({ text: `${stats.final.pen}%`, size: 'xs', color: '#333333', align: 'end', flex: 1 })
+                flexUtils.createText({ text: '穿透', size: 'xs', color: flexUtils.COLORS.TEXT_MUTED, flex: 1 }),
+                flexUtils.createText({ text: `${stats.final.pen}%`, size: 'xs', color: flexUtils.COLORS.TEXT_MAIN, align: 'end', flex: 1, weight: 'bold' })
             ], { margin: 'md' })
-        ], { flex: 1, backgroundColor: '#f8f9fa', paddingAll: '8px', cornerRadius: '8px', margin: 'xs' });
+        ], { flex: 1, backgroundColor: flexUtils.COLORS.BG_CARD, paddingAll: '12px', cornerRadius: 'md', margin: 'xs' });
 
         const rightBox = flexUtils.createBox('vertical', [
             flexUtils.createText({ text: '🛡️ 裝備', weight: 'bold', color: '#2980b9', size: 'sm', margin: 'sm' }),
             flexUtils.createSeparator('sm'),
-            flexUtils.createText({ text: `⚔️ ${stats.equipments.weapon ? `+${stats.equipments.weapon.level} ${stats.equipments.weapon.name}` : '無'}`, size: 'xs', color: stats.equipments.weapon ? '#333333' : '#aaaaaa', wrap: true, margin: 'md' }),
-            flexUtils.createText({ text: `🛡️ ${stats.equipments.shield ? `+${stats.equipments.shield.level} ${stats.equipments.shield.name}` : '無'}`, size: 'xs', color: stats.equipments.shield ? '#333333' : '#aaaaaa', wrap: true, margin: 'md' }),
-            flexUtils.createText({ text: `🧭 ${stats.equipments.wings ? `+${stats.equipments.wings.level} ${stats.equipments.wings.name}` : '無'}`, size: 'xs', color: stats.equipments.wings ? '#333333' : '#aaaaaa', wrap: true, margin: 'md' }),
-            flexUtils.createText({ text: `💥 ${stats.equipments.gloves ? `+${stats.equipments.gloves.level} ${stats.equipments.gloves.name}` : '無'}`, size: 'xs', color: stats.equipments.gloves ? '#333333' : '#aaaaaa', wrap: true, margin: 'md' }),
-            flexUtils.createText({ text: `🍀 ${stats.equipments.necklace ? `+${stats.equipments.necklace.level} ${stats.equipments.necklace.name}` : '無'}`, size: 'xs', color: stats.equipments.necklace ? '#333333' : '#aaaaaa', wrap: true, margin: 'md' }),
-            flexUtils.createText({ text: `💍 ${stats.equipments.ring ? `+${stats.equipments.ring.level} ${stats.equipments.ring.name}` : '無'}`, size: 'xs', color: stats.equipments.ring ? '#333333' : '#aaaaaa', wrap: true, margin: 'md' })
-        ], { flex: 1, backgroundColor: '#fdfefe', paddingAll: '8px', cornerRadius: '8px', borderWidth: '1px', borderColor: '#e3e4e6', margin: 'xs' });
-
-        const rpgBodyContents = [
-            flexUtils.createBox('horizontal', [leftBox, rightBox], { alignItems: 'flex-start' })
-        ];
+            flexUtils.createText({ text: `⚔️ ${stats.equipments.weapon ? `+${stats.equipments.weapon.level} ${stats.equipments.weapon.name}` : '無'}`, size: 'xs', color: stats.equipments.weapon ? flexUtils.COLORS.TEXT_MAIN : flexUtils.COLORS.TEXT_MUTED, wrap: true, margin: 'md', weight: stats.equipments.weapon ? 'bold' : 'regular' }),
+            flexUtils.createText({ text: `🛡️ ${stats.equipments.shield ? `+${stats.equipments.shield.level} ${stats.equipments.shield.name}` : '無'}`, size: 'xs', color: stats.equipments.shield ? flexUtils.COLORS.TEXT_MAIN : flexUtils.COLORS.TEXT_MUTED, wrap: true, margin: 'md', weight: stats.equipments.shield ? 'bold' : 'regular' }),
+            flexUtils.createText({ text: `🧭 ${stats.equipments.wings ? `+${stats.equipments.wings.level} ${stats.equipments.wings.name}` : '無'}`, size: 'xs', color: stats.equipments.wings ? flexUtils.COLORS.TEXT_MAIN : flexUtils.COLORS.TEXT_MUTED, wrap: true, margin: 'md', weight: stats.equipments.wings ? 'bold' : 'regular' }),
+            flexUtils.createText({ text: `💥 ${stats.equipments.gloves ? `+${stats.equipments.gloves.level} ${stats.equipments.gloves.name}` : '無'}`, size: 'xs', color: stats.equipments.gloves ? flexUtils.COLORS.TEXT_MAIN : flexUtils.COLORS.TEXT_MUTED, wrap: true, margin: 'md', weight: stats.equipments.gloves ? 'bold' : 'regular' }),
+            flexUtils.createText({ text: `🍀 ${stats.equipments.necklace ? `+${stats.equipments.necklace.level} ${stats.equipments.necklace.name}` : '無'}`, size: 'xs', color: stats.equipments.necklace ? flexUtils.COLORS.TEXT_MAIN : flexUtils.COLORS.TEXT_MUTED, wrap: true, margin: 'md', weight: stats.equipments.necklace ? 'bold' : 'regular' }),
+            flexUtils.createText({ text: `💍 ${stats.equipments.ring ? `+${stats.equipments.ring.level} ${stats.equipments.ring.name}` : '無'}`, size: 'xs', color: stats.equipments.ring ? flexUtils.COLORS.TEXT_MAIN : flexUtils.COLORS.TEXT_MUTED, wrap: true, margin: 'md', weight: stats.equipments.ring ? 'bold' : 'regular' })
+        ], { flex: 1, backgroundColor: flexUtils.COLORS.BG_CARD, paddingAll: '12px', cornerRadius: 'md', margin: 'xs' });
 
         const equipBubble = flexUtils.createBubble({
             size: 'mega',
-            header: flexUtils.createHeader('⚔️ 裝備與戰鬥資訊', '', '#1976D2', '#E3F2FD'),
-            body: flexUtils.createBox('vertical', rpgBodyContents, { paddingAll: 'xl', backgroundColor: '#FFFFFF' })
+            body: flexUtils.createBox('vertical', [
+                flexUtils.createBox('vertical', [
+                    flexUtils.createText({ text: '裝備與戰鬥資訊', weight: 'bold', color: flexUtils.COLORS.TEXT_MAIN, size: 'md', align: 'center' })
+                ], { paddingAll: 'lg' }),
+                flexUtils.createBox('horizontal', [leftBox, rightBox], { alignItems: 'flex-start', paddingAll: 'md' })
+            ], { paddingAll: '0px', backgroundColor: flexUtils.COLORS.BG_MAIN, paddingBottom: 'md' })
         });
 
         const carousel = flexUtils.createCarousel([profileBubble, equipBubble]);
@@ -600,7 +681,57 @@ async function queryPlayerProfile(replyToken, groupId, targetUserId, callerUserI
     }
 }
 
-const { robCoin } = require('../handlers/robberyHandler');
+async function payMedicalDebt(replyToken, groupId, userId) {
+    try {
+        const memberName = await lineUtils.getGroupMemberName(groupId, userId);
+        const result = await db.runTransaction(async (t) => {
+            const { docRef, data } = await getUserProfile(t, userId, memberName);
+            
+            const medicalDebt = data.medicalDebt || 0;
+            if (medicalDebt <= 0) {
+                return { success: false, message: '✅ 你目前沒有任何醫療負債，非常健康！' };
+            }
+            
+            const currentCoins = data.kuCoin || 0;
+            if (currentCoins <= 0) {
+                return { success: false, message: `❌ 你連一塊錢都沒有，拿什麼還債？快去乞討吧！\n(目前負債: ${medicalDebt.toLocaleString()} 哭幣)` };
+            }
+            
+            const payAmount = Math.min(medicalDebt, currentCoins);
+            const remainDebt = medicalDebt - payAmount;
+            
+            t.update(docRef, {
+                kuCoin: db.FieldValue.increment(-payAmount),
+                medicalDebt: db.FieldValue.increment(-payAmount)
+            });
+            
+            return {
+                success: true,
+                payAmount,
+                remainDebt,
+                remainCoins: currentCoins - payAmount
+            };
+        });
+
+        if (!result.success) {
+            await lineUtils.replyText(replyToken, result.message);
+            return;
+        }
+
+        let msg = `🏥 【繳交醫藥費】\n你拿出了 ${result.payAmount.toLocaleString()} 哭幣支付了積欠的醫藥費！\n`;
+        if (result.remainDebt > 0) {
+            msg += `⚠️ 你還剩下 ${result.remainDebt.toLocaleString()} 哭幣的醫療負債尚未還清！(目前餘額: 0)`;
+        } else {
+            msg += `✅ 太棒了！你的醫療負債已全數結清，現在可以重新發起搶劫了！(目前餘額: ${result.remainCoins.toLocaleString()} 哭幣)`;
+        }
+        await lineUtils.replyText(replyToken, msg);
+
+    } catch (e) {
+        console.error('[Economy] payMedicalDebt Error:', e);
+        await lineUtils.replyText(replyToken, `❌ 還款失敗，系統發生錯誤`);
+    }
+}
+
 module.exports = {
   checkBalance,
   transferCoin,
@@ -608,5 +739,6 @@ module.exports = {
   consumeCoin,
   addCoinQuietly,
   addCoinFast,
-  queryPlayerProfile
+  queryPlayerProfile,
+  payMedicalDebt
 };

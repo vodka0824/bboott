@@ -1,3 +1,4 @@
+const flexUtils = require('../utils/flex');
 /**
  * 黑貓物流查詢模組
  */
@@ -48,7 +49,7 @@ function buildTcatFlex(billId, rows, url) {
         layout: "vertical",
         margin: i === 0 ? "none" : "md",
         contents: [
-            { type: "text", text: `📅 ${r.time}`, size: "sm", color: "#888888" },
+            { type: "text", text: `📅 ${r.time}`, size: "sm", color: flexUtils.COLORS.TEXT_MUTED },
             { type: "text", text: `🚚 ${r.status}`, weight: "bold", color: r.status.includes('送達') ? "#22BB33" : "#333333" },
             { type: "text", text: `📍 ${r.location}`, size: "sm", color: "#555555" }
         ]

@@ -49,8 +49,7 @@ const FEATURE_HIERARCHY = {
         label: '娛樂與互動',
         items: {
             voice: '語音與互動', // 講台語, 狂標, 幫我選
-            fun: '趣味功能',     // 剪刀石頭布, 抽圖
-            leaderboard: '群組排行榜'
+            fun: '趣味功能'      // 剪刀石頭布, 抽圖
         }
     },
     economy: {
@@ -59,7 +58,9 @@ const FEATURE_HIERARCHY = {
             bank: '哭幣銀行 (簽到/轉帳/搶劫)',
             rpg: 'RPG商店與裝備',
             atonement: '懺悔與神明系統',
-            auction: '玩家拍賣場'
+            auction: '玩家拍賣場',
+            leaderboard: '財富與賭神榜',
+            rpg_leaderboard: 'RPG戰鬥力榜'
         }
     },
     gambling: {
@@ -71,12 +72,19 @@ const FEATURE_HIERARCHY = {
             dice: '十八啦',
             roulette: '尊爵輪盤',
             horse: '賽馬場',
-            worldcup: '運彩系統',
             lottery: '抽獎系統'
         }
     },
+    worldcup: {
+        label: '運彩系統',
+        items: {}
+    },
     todo: {
         label: '待辦事項',
+        items: {}
+    },
+    tsmc: {
+        label: '台積電輪班',
         items: {}
     }
 };
@@ -94,7 +102,6 @@ const LEGACY_MAP = {
     'news': 'life.news',
 
     // Entertainment
-    'leaderboard': 'entertainment.leaderboard',
     'game': 'entertainment.fun',
     'image': 'entertainment.fun',
     'lottery': 'entertainment.fun',
@@ -102,6 +109,8 @@ const LEGACY_MAP = {
     'taigi': 'entertainment.voice',
     
     // Economy
+    'leaderboard': 'economy.leaderboard',
+    'rpg_leaderboard': 'economy.rpg_leaderboard',
     'rpg': 'economy.rpg',
     'bank': 'economy.bank',
     'atonement': 'economy.atonement',
@@ -109,8 +118,18 @@ const LEGACY_MAP = {
 
     // Gambling
     'casino': 'gambling.casino',
+    'multiplayer': 'gambling.multiplayer',
+    'slot': 'gambling.slot',
+    'dice': 'gambling.dice',
+    'roulette': 'gambling.roulette',
+    'horse': 'gambling.horse',
     'lottery': 'gambling.lottery',
-    'worldcup': 'gambling.worldcup'
+    'worldcup': 'worldcup',
+    
+    // TSMC
+    '台積電': 'tsmc',
+    '輪班': 'tsmc',
+    'tsmc': 'tsmc'
 };
 
 let groupRefreshPromise = null;
@@ -222,9 +241,15 @@ async function registerGroup(code, groupId, userId) {
         },
         gambling: {
             enabled: true,
-            casino: true, multiplayer: true, slot: true, dice: true, roulette: true, horse: true, worldcup: true, lottery: true
+            casino: true, multiplayer: true, slot: true, dice: true, roulette: true, horse: true, lottery: true
+        },
+        worldcup: {
+            enabled: true
         },
         todo: {
+            enabled: true
+        },
+        tsmc: {
             enabled: true
         }
     };
@@ -478,5 +503,6 @@ module.exports = {
     // 餐廳授權
     isRestaurantAuthorized,
     // 功能開關
-    getFeatureToggles
+    getFeatureToggles,
+    FEATURE_HIERARCHY
 };

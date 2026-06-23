@@ -4,6 +4,7 @@ const flexUtils = require('../utils/flex');
 const worldcupView = require('../views/worldcupView');
 const { getTeamWithFlag, generateTicketId } = require('../utils/worldcupUtils');
 const userState = require('../utils/userState');
+const notificationService = require('../services/notificationService');
 
 const MATCHES_COL = 'worldcup_matches';
 const BETS_COL = 'worldcup_bets';
@@ -189,7 +190,7 @@ async function settleMatch(replyToken, adminId, args) {
 
     // Send notifications in background
     for (const notif of notifications) {
-        lineUtils.pushMessage(notif.userId, [{ type: 'text', text: notif.text }]).catch(() => {});
+        notificationService.queueNotification(notif.userId, [{ type: 'text', text: notif.text }]).catch(() => {});
     }
 
     const stats = { winnerCount, pushCount, loseCount, totalWinAmount };
@@ -427,7 +428,7 @@ async function handleAdminPostback(replyToken, userId, dataObj) {
                 });
                 batch.delete(betDoc.ref);
                 // optionally notify user
-                lineUtils.pushMessage(bet.userId, [{ type: 'text', text: `⚠️ 賽事 ${matchId} 已被管理員刪除，您下注的 ${bet.amount} 哭幣已退還。` }]).catch(() => {});
+                notificationService.queueNotification(bet.userId, [{ type: 'text', text: `⚠️ 賽事 ${matchId} 已被管理員刪除，您下注的 ${bet.amount} 哭幣已退還。` }]).catch(() => {});
             }
             await batch.commit();
         }

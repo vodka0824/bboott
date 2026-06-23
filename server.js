@@ -58,6 +58,11 @@ const PORT = process.env.PORT || 8080;
 async function startServer() {
   try {
     await connectDB();
+    
+    // 多人賭桌防吃錢退款機制 (不阻塞啟動)
+    const persistenceService = require('./services/multiplayerPersistenceService');
+    persistenceService.refundAndNotifyOnStartup().catch(e => console.error('[Startup] Failed to run refundAndNotifyOnStartup', e));
+
     cronHandler.initCronJobs(); // 啟動背景排程
     app.listen(PORT, '127.0.0.1', () => {
       console.log(`Server running on 127.0.0.1:${PORT}`);

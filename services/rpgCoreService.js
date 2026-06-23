@@ -10,10 +10,10 @@ function getPlayerTitle(level) {
     if (level >= 60) return { title: '深淵廣宇 ‧ 混沌統御者 🌌', color: '#673AB7' };
     if (level >= 50) return { title: '起源の力 ‧ 死神杀戮者 🔥', color: '#F44336' };
     if (level >= 40) return { title: '破滅之刃 ‧ 命運選擇者 ☄️', color: '#FF5722' };
-    if (level >= 30) return { title: '絕境覺醒 ‧ 黑暗預言者 ⚠️', color: '#FF9800' };
+    if (level >= 30) return { title: '絕境覺醒 ‧ 黑暗預言者 ⚠️', color: flexUtils.COLORS.SECONDARY };
     if (level >= 20) return { title: '天煌の黎明 ‧ 黑狼之牙 ⚔️', color: '#607D8B' };
     if (level >= 10) return { title: '陰影の囚人 ‧ 被流放的靈魂 🌑', color: '#455A64' };
-    return { title: '平民 ‧ 尚未覺醒的存在 🌟', color: '#888888' };
+    return { title: '平民 ‧ 尚未覺醒的存在 🌟', color: flexUtils.COLORS.TEXT_MUTED };
 }
 
 async function getOrInitPlayerStats(userId) {

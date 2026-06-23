@@ -127,11 +127,14 @@ function createEmptyLeaderboardBubble(title, message, headerBgStart, headerBgEnd
         },
         body: flexUtils.createBox('vertical', [
             flexUtils.createText({ text: message, size: 'md', color: '#555555', align: 'center', margin: 'md', wrap: true })
-        ], { paddingAll: 'xl', backgroundColor: '#FFFFFF' })
+        ], { paddingAll: 'xl', backgroundColor: flexUtils.COLORS.BG_MAIN })
     };
 }
 
 const { formatCoins, cleanName, getProfessionName, getProfessionSuffix } = require('../utils/formatUtils');
 module.exports = {
-  showLeaderboard
+  MOCKING_MESSAGES,
+  TITLES,
+  getTitleInfo,
+  createEmptyLeaderboardBubble
 };

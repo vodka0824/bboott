@@ -4,6 +4,7 @@
 const flexUtils = require('../utils/flex');
 const lineUtils = require('../utils/line');
 const economyHandler = require('./economy');
+const persistenceService = require('../services/multiplayerPersistenceService');
 const atonementHandler = require('./atonement');
 const authUtils = require('../utils/auth');
 const { db } = require('../utils/db');
@@ -187,7 +188,7 @@ async function closeTable(replyToken, context) {
 
     if (!table) return;
     if (table.dealerId !== userId) {
-        await lineUtils.replyText(replyToken, '❌ 只有莊家可以解散牌桌！');
+        // await lineUtils.replyText(replyToken, '❌ 只有莊家可以解散牌桌！');
         return;
     }
     if (table.status !== 'waiting') {
@@ -237,6 +238,7 @@ async function placeBet(replyToken, context, amountStr) {
     }
 
     const userName = consumeResult.name || '玩家';
+    persistenceService.recordBet(groupId, '推筒子', userId, betAmount, userName).catch(e => console.error(e));
     const newWanted = await economyHandler.addWantedLevel(userId);
     table.participantWantedLevels.set(userId, newWanted);
 
@@ -263,7 +265,7 @@ async function dealCards(replyToken, context) {
 
     if (!table || table.status !== 'waiting') return;
     if (table.dealerId !== userId) {
-        await lineUtils.replyText(replyToken, '❌ 只有莊家可以發牌！');
+        // await lineUtils.replyText(replyToken, '❌ 只有莊家可以發牌！');
         return;
     }
     if (table.players.size === 0) {
@@ -318,7 +320,7 @@ async function finishGameAndSettle(replyToken, table, titleMsg) {
             playerPayout = p.bet;
             playerNet = 0;
             p.resultStr = '🤝 平手 (退注)';
-            p.color = '#FF9800';
+            p.color = flexUtils.COLORS.SECONDARY;
         }
 
         dealerNetProfit -= playerNet;
@@ -396,21 +398,21 @@ async function sendTableFlex(replyToken, table, altText, extraMessages = []) {
     }
 
     contents.push(
-        flexUtils.createText({ text: `🏦 莊家: ${table.dealerName}`, size: 'md', weight: 'bold', color: '#FFFFFF', margin: 'md' }),
-        flexUtils.createText({ text: dealerCardsStr, size: '3xl', weight: 'bold', color: '#FFFFFF', margin: 'sm' })
+        flexUtils.createText({ text: `🏦 莊家: ${table.dealerName}`, size: 'md', weight: 'bold', color: flexUtils.COLORS.TEXT_MAIN, margin: 'md' }),
+        flexUtils.createText({ text: dealerCardsStr, size: '3xl', weight: 'bold', color: flexUtils.COLORS.TEXT_MAIN, margin: 'sm' })
     );
 
     if (table.status === 'closed') {
         const netColor = table.dealerNetProfit >= 0 ? flexUtils.COLORS.WIN : '#D32F2F';
         contents.push(
-            flexUtils.createText({ text: dealerScoreStr, size: 'sm', color: '#FFD700', margin: 'xs', weight: 'bold' }),
+            flexUtils.createText({ text: dealerScoreStr, size: 'sm', color: flexUtils.COLORS.PRIMARY, margin: 'xs', weight: 'bold' }),
             flexUtils.createText({ text: `結算: ${table.dealerNetProfit > 0 ? '+' : ''}${table.dealerNetProfit.toLocaleString()}`, size: 'md', weight: 'bold', color: netColor, margin: 'xs', wrap: true })
         );
         if (table.dealerFinalBalance !== undefined) {
             contents.push(flexUtils.createText({ text: `餘額: ${table.dealerFinalBalance.toLocaleString()}`, size: 'xs', color: netColor, margin: 'xs' }));
         }
         if (table.taxAmount > 0) {
-            contents.push(flexUtils.createText({ text: `(抽水 5%: -${table.taxAmount.toLocaleString()})`, size: 'xs', color: '#AAAAAA', margin: 'xs' }));
+            contents.push(flexUtils.createText({ text: `(抽水 5%: -${table.taxAmount.toLocaleString()})`, size: 'xs', color: flexUtils.COLORS.TEXT_SUB, margin: 'xs' }));
         }
     }
 
@@ -418,7 +420,7 @@ async function sendTableFlex(replyToken, table, altText, extraMessages = []) {
 
     let totalBets = 0;
     if (table.players.size === 0) {
-        contents.push(flexUtils.createText({ text: '尚無閒家加入', size: 'sm', color: '#888888', align: 'center', margin: 'lg' }));
+        contents.push(flexUtils.createText({ text: '尚無閒家加入', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, align: 'center', margin: 'lg' }));
     } else {
         for (const p of table.players.values()) {
             totalBets += p.bet;
@@ -431,18 +433,18 @@ async function sendTableFlex(replyToken, table, altText, extraMessages = []) {
             }
 
             contents.push(flexUtils.createBox('horizontal', [
-                flexUtils.createText({ text: `👤 ${p.name}`, wrap: true, size: 'sm', weight: 'bold', color: '#E0E0E0', flex: 2 }),
-                flexUtils.createText({ text: `押 ${p.bet.toLocaleString()}`, size: 'xs', color: '#FF9800', flex: 1, align: 'end', adjustMode: 'shrink-to-fit' })
+                flexUtils.createText({ text: `👤 ${p.name}`, wrap: true, size: 'sm', weight: 'bold', color: flexUtils.COLORS.TEXT_MAIN, flex: 2 }),
+                flexUtils.createText({ text: `押 ${p.bet.toLocaleString()}`, size: 'xs', color: flexUtils.COLORS.SECONDARY, flex: 1, align: 'end', adjustMode: 'shrink-to-fit' })
             ], { margin: 'md', alignItems: 'center' }));
 
             if (table.status === 'closed') {
-                contents.push(flexUtils.createText({ text: pStatus, size: 'xxl', color: '#FFFFFF', margin: 'xs' }));
-                contents.push(flexUtils.createText({ text: pScoreStr, size: 'xs', color: '#FFD700', margin: 'xs', weight: 'bold' }));
+                contents.push(flexUtils.createText({ text: pStatus, size: 'xxl', color: flexUtils.COLORS.TEXT_MAIN, margin: 'xs' }));
+                contents.push(flexUtils.createText({ text: pScoreStr, size: 'xs', color: flexUtils.COLORS.PRIMARY, margin: 'xs', weight: 'bold' }));
                 
                 contents.push(flexUtils.createText({ text: `${p.resultStr}`, size: 'sm', weight: 'bold', color: p.color, margin: 'xs' }));
                 if (p.curseStr) contents.push(flexUtils.createText({ text: p.curseStr, size: 'xs', weight: 'bold', color: '#FF1744', margin: 'xs' }));
                 if (p.finalBalance !== undefined) {
-                    contents.push(flexUtils.createText({ text: `餘額: ${p.finalBalance.toLocaleString()}`, size: 'xs', color: '#888888', margin: 'xs' }));
+                    contents.push(flexUtils.createText({ text: `餘額: ${p.finalBalance.toLocaleString()}`, size: 'xs', color: flexUtils.COLORS.TEXT_MUTED, margin: 'xs' }));
                 }
             }
             
@@ -459,17 +461,23 @@ async function sendTableFlex(replyToken, table, altText, extraMessages = []) {
         statusMsg = '遊戲已結束';
     }
 
-    contents.push(flexUtils.createText({ text: statusMsg, size: 'sm', weight: 'bold', color: '#00BCD4', align: 'center', margin: 'xl' }));
+    contents.push(flexUtils.createText({ text: statusMsg, size: 'sm', weight: 'bold', color: flexUtils.COLORS.PRIMARY, align: 'center', margin: 'xl' }));
     if (shortcutMsg) {
-        contents.push(flexUtils.createText({ text: shortcutMsg, size: 'xs', color: '#AAAAAA', align: 'center', margin: 'sm' }));
+        contents.push(flexUtils.createText({ text: shortcutMsg, size: 'xs', color: flexUtils.COLORS.TEXT_SUB, align: 'center', margin: 'sm' }));
     }
 
     const bubble = flexUtils.createBubble({
         size: 'mega',
-        body: flexUtils.createBox('vertical', contents, { backgroundColor: '#121212', paddingAll: 'xl' })
+        body: flexUtils.createBox('vertical', contents, { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: 'xl' })
     });
 
     const messages = [{ type: 'flex', altText: altText, contents: bubble }, ...extraMessages];
+
+    
+    const quickReply = require('../utils/multi_quickReply').getQuickReply(table, '推筒子');
+    if (quickReply) {
+        messages[messages.length - 1].quickReply = quickReply;
+    }
 
     if (messages.length <= 5) {
         await lineUtils.replyToLine(replyToken, messages).catch(console.error);

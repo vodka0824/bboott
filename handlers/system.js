@@ -31,23 +31,24 @@ async function handleToggleFeature(groupId, userId, feature, enable, replyToken)
     const featureMap = {
         '生活': 'life',
         '娛樂': 'entertainment',
-        'AI': 'ai',
+        '經濟': 'economy',
+        '賭場': 'gambling',
         '天氣': 'weather',
         '抽圖': 'image',
-        '遊戲': 'game',
         '銀行': 'bank',
-        'RPG': 'rpg',
-        'RGB': 'rpg'
+        'RPG': 'rpg'
     };
 
     const featureCode = featureMap[feature] || feature;
 
-    if (!Object.values(featureMap).includes(featureCode)) {
-        await lineUtils.replyText(replyToken, `❌ 無效的功能名稱。可用功能：\n${Object.keys(featureMap).join('、')}`);
-        return;
+    const result = await authUtils.toggleGroupFeature(groupId, featureCode, enable);
+    
+    // 如果 authUtils 回傳無效，且不是我們知道的縮寫，就顯示提示
+    if (!result.success && result.message.includes('無效')) {
+         await lineUtils.replyText(replyToken, `${result.message}。可輸入 '查詢功能' 查看代碼，或輸入大分類如 economy, gambling 等。`);
+         return;
     }
 
-    const result = await authUtils.toggleGroupFeature(groupId, featureCode, enable);
     await lineUtils.replyText(replyToken, result.message);
 }
 
@@ -62,24 +63,26 @@ async function handleCheckFeatures(groupId, replyToken) {
         return;
     }
 
-    // Config.features is map { life: true, weather: false ... }
-    const featureMapReverse = {
-        'life': '生活',
-        'entertainment': '娛樂',
-        'ai': 'AI',
-        'weather': '天氣',
-        'image': '抽圖',
-        'game': '遊戲',
-        'rpg': 'RPG'
-    };
-
-    const statusList = [];
-    for (const [code, name] of Object.entries(featureMapReverse)) {
-        const isEnabled = config.features && config.features[code];
-        statusList.push(`${name}: ${isEnabled ? '✅ 開啟' : '🔴 關閉'}`);
+    const hierarchy = authUtils.FEATURE_HIERARCHY;
+    if (!hierarchy) {
+        await lineUtils.replyText(replyToken, '❌ 系統架構讀取失敗');
+        return;
     }
 
-    await lineUtils.replyText(replyToken, `📊 群組功能狀態：\n\n${statusList.join('\n')}`);
+    const statusList = [];
+    for (const [catKey, catData] of Object.entries(hierarchy)) {
+        const catConfig = config[catKey] || {};
+        const catEnabled = catConfig.enabled !== false; // 預設開啟
+        
+        statusList.push(`【${catData.label}】(${catKey}): ${catEnabled ? '✅' : '🔴'}`);
+        
+        for (const [itemKey, itemLabel] of Object.entries(catData.items)) {
+            const itemEnabled = catEnabled && catConfig[itemKey] !== false;
+            statusList.push(`  ├ ${itemLabel}: ${itemEnabled ? '✅' : '🔴'}`);
+        }
+    }
+
+    await lineUtils.replyText(replyToken, `📊 群組模組開關狀態：\n(例如輸入：關閉 economy 或 開啟 life)\n\n${statusList.join('\n')}`);
 }
 
 // === Group Only: 註冊指令 ===
@@ -153,7 +156,7 @@ function buildHelpSection(title, color, items, marginTop = "sm") {
         flexUtils.createText({ text: title, weight: "bold", size: "sm", color, margin: marginTop })
     ];
     items.forEach(item => {
-        contents.push(parseMarkdownText(item, "#666666", "xs", "xs", true));
+        contents.push(parseMarkdownText(item, flexUtils.COLORS.TEXT_MUTED, "xs", "xs", true));
     });
     return contents;
 }
@@ -167,9 +170,9 @@ function parseMarkdownText(text, defaultColor, defaultSize, defaultMargin, wrap)
     for (const part of parts) {
         if (!part) continue;
         if (part.startsWith('`') && part.endsWith('`')) {
-            spans.push({ type: 'span', text: part.slice(1, -1), color: '#1976D2', weight: 'bold', size: defaultSize });
+            spans.push({ type: 'span', text: part.slice(1, -1), color: flexUtils.COLORS.SECONDARY, weight: 'bold', size: defaultSize });
         } else if (part.startsWith('**') && part.endsWith('**')) {
-            spans.push({ type: 'span', text: part.slice(2, -2), color: '#D32F2F', weight: 'bold', size: defaultSize });
+            spans.push({ type: 'span', text: part.slice(2, -2), color: flexUtils.COLORS.DANGER, weight: 'bold', size: defaultSize });
         } else {
             spans.push({ type: 'span', text: part, color: defaultColor, size: defaultSize });
         }
@@ -184,11 +187,11 @@ function buildSystemHelpFlex(isSuper, isAdmin, isAuthorized) {
         if (cat.adminOnly && !isSuper && !isAdmin) return;
 
         const contents = [];
-        contents.push(flexUtils.createText({ text: cat.description, size: "sm", color: "#666666", wrap: true, margin: "sm" }));
+        contents.push(flexUtils.createText({ text: cat.description, size: "sm", color: flexUtils.COLORS.TEXT_SUB, wrap: true, margin: "sm" }));
         contents.push(flexUtils.createSeparator("sm"));
         
         cat.items.forEach(item => {
-            contents.push(flexUtils.createText({ text: item, size: "xs", color: "#444444", margin: "xs" }));
+            contents.push(flexUtils.createText({ text: item, size: "xs", color: flexUtils.COLORS.TEXT_MUTED, margin: "xs" }));
         });
 
         contents.push(flexUtils.createSeparator("md"));
@@ -199,8 +202,8 @@ function buildSystemHelpFlex(isSuper, isAdmin, isAuthorized) {
 
         bubbles.push(flexUtils.createBubble({
             size: "kilo",
-            header: flexUtils.createHeader(cat.title, "系統分區目錄", cat.color),
-            body: flexUtils.createBox("vertical", contents, { paddingAll: "15px", backgroundColor: "#FFFFFF" })
+            header: flexUtils.createHeader(cat.title, "系統分區目錄", cat.color, flexUtils.COLORS.BG_MAIN),
+            body: flexUtils.createBox("vertical", contents, { paddingAll: "15px", backgroundColor: flexUtils.COLORS.BG_MAIN })
         }));
     });
 
@@ -235,10 +238,24 @@ async function handleQueryCommand(context, match) {
     if (!topicKey) {
         // Natural Language Search via AI (優化版本)
         try {
-            // 提供更詳細的選項給 AI 判斷
+            // 提供更詳細的選項給 AI 判斷，包含 subtitle 與截斷後的 content
             const manualContext = Object.entries(DETAILED_MANUALS).map(([key, manual]) => {
-                const subtopics = manual.sections.map(s => s.subtitle).join(' / ');
-                return `ID: ${key} | 名稱: ${manual.title} | 內容包含: ${subtopics}`;
+                let contextStr = `ID: ${key} | 名稱: ${manual.title} | 內容重點:\n`;
+                if (manual.pages) {
+                    manual.pages.forEach(page => {
+                        page.sections.forEach(s => {
+                            // 擷取前 60 字作為 Context，避免 Token 超載
+                            const snippet = s.content.replace(/\n/g, ' ').substring(0, 60);
+                            contextStr += `  - ${s.subtitle}: ${snippet}\n`;
+                        });
+                    });
+                } else if (manual.sections) {
+                    manual.sections.forEach(s => {
+                        const snippet = s.content.replace(/\n/g, ' ').substring(0, 60);
+                        contextStr += `  - ${s.subtitle}: ${snippet}\n`;
+                    });
+                }
+                return contextStr;
             }).join('\n');
 
             const customPrompt = `玩家想查詢遊戲系統指令。請從以下說明書中挑選「最符合玩家意圖」的一個 ID 回傳給我。\n\n【說明書列表】\n${manualContext}\n\n如果玩家問的問題跟上述內容都無關，請絕對要回答 UNKNOWN。只能回傳 ID 或 UNKNOWN，不要有任何其他廢話或解釋。`;
@@ -278,8 +295,8 @@ async function handleSubMenu(context, submenuId) {
 
     submenu.sections.forEach(sec => {
         contents.push(
-            flexUtils.createText({ text: sec.title, weight: 'bold', size: 'md', color: '#111111', margin: 'lg', align: 'start' }),
-            parseMarkdownText(sec.content, '#444444', 'sm', 'sm', true)
+            flexUtils.createText({ text: sec.title, weight: 'bold', size: 'md', color: flexUtils.COLORS.TEXT_MAIN, margin: 'lg', align: 'start' }),
+            parseMarkdownText(sec.content, flexUtils.COLORS.TEXT_SUB, 'sm', 'sm', true)
         );
     });
 
@@ -295,12 +312,12 @@ async function handleSubMenu(context, submenuId) {
     }
 
     contents.push({
-        type: 'button', style: 'primary', action: { type: 'postback', label: '🏠 回到主目錄', data: 'action=query&topic=hub', displayText: '說明' }, margin: 'md', color: '#1DB446'
+        type: 'button', style: 'primary', action: { type: 'postback', label: '🏠 回到主目錄', data: 'action=query&topic=hub', displayText: '說明' }, margin: 'md', color: flexUtils.COLORS.SUCCESS
     });
 
     const bubble = flexUtils.createBubble({
         size: 'mega',
-        body: flexUtils.createBox('vertical', contents, { backgroundColor: '#FFFFFF', paddingAll: 'xl' })
+        body: flexUtils.createBox('vertical', contents, { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: 'xl' })
     });
 
     await lineUtils.replyFlex(replyToken, submenu.title, bubble);
@@ -344,12 +361,12 @@ async function sendTopicManual(context, topicKey) {
                 flexUtils.createSeparator('md')
             ];
 
-            contents.push(flexUtils.createText({ text: page.subtitle, weight: 'bold', size: 'lg', color: '#111111', margin: 'lg', align: 'start' }));
+            contents.push(flexUtils.createText({ text: page.subtitle, weight: 'bold', size: 'lg', color: flexUtils.COLORS.TEXT_MAIN, margin: 'lg', align: 'start' }));
 
             page.sections.forEach(sec => {
                 contents.push(
-                    flexUtils.createText({ text: sec.subtitle, weight: 'bold', size: 'md', color: '#111111', margin: 'lg', align: 'start' }),
-                    parseMarkdownText(sec.content, '#444444', 'sm', 'sm', true)
+                    flexUtils.createText({ text: sec.subtitle, weight: 'bold', size: 'md', color: flexUtils.COLORS.PRIMARY, margin: 'lg', align: 'start' }),
+                    parseMarkdownText(sec.content, flexUtils.COLORS.TEXT_SUB, 'sm', 'sm', true)
                 );
             });
 
@@ -363,16 +380,16 @@ async function sendTopicManual(context, topicKey) {
                 });
             }
             navButtons.push({
-                type: 'button', style: 'primary', height: 'sm', margin: 'sm', color: '#1DB446',
+                type: 'button', style: 'primary', height: 'sm', margin: 'sm', color: flexUtils.COLORS.SUCCESS,
                 action: { type: 'postback', label: '🏠 回主選單', data: 'action=query&topic=hub', displayText: '主選單' }
             });
 
             contents.push(flexUtils.createBox('horizontal', navButtons, { margin: 'md', spacing: 'sm' }));
-            contents.push(flexUtils.createText({ text: `${index + 1} / ${manual.pages.length}`, size: 'xs', color: '#aaaaaa', align: 'center', margin: 'md' }));
+            contents.push(flexUtils.createText({ text: `${index + 1} / ${manual.pages.length}`, size: 'xs', color: flexUtils.COLORS.TEXT_MUTED, align: 'center', margin: 'md' }));
 
             bubbles.push(flexUtils.createBubble({
                 size: 'mega',
-                body: flexUtils.createBox('vertical', contents, { backgroundColor: '#FFFFFF', paddingAll: 'xl' })
+                body: flexUtils.createBox('vertical', contents, { backgroundColor: flexUtils.COLORS.BG_CARD, paddingAll: 'xl' })
             }));
         });
 
@@ -387,8 +404,8 @@ async function sendTopicManual(context, topicKey) {
 
         for (const sec of manual.sections) {
             contents.push(
-                flexUtils.createText({ text: sec.subtitle, weight: 'bold', size: 'md', color: '#111111', margin: 'lg', align: 'start' }),
-                parseMarkdownText(sec.content, '#444444', 'sm', 'sm', true)
+                flexUtils.createText({ text: sec.subtitle, weight: 'bold', size: 'md', color: flexUtils.COLORS.PRIMARY, margin: 'lg', align: 'start' }),
+                parseMarkdownText(sec.content, flexUtils.COLORS.TEXT_SUB, 'sm', 'sm', true)
             );
         }
 
@@ -402,7 +419,7 @@ async function sendTopicManual(context, topicKey) {
             });
         }
         navButtons.push({
-            type: 'button', style: 'primary', height: 'sm', margin: 'sm', color: '#1DB446',
+            type: 'button', style: 'primary', height: 'sm', margin: 'sm', color: flexUtils.COLORS.SUCCESS,
             action: { type: 'postback', label: '🏠 回主選單', data: 'action=query&topic=hub', displayText: '說明' }
         });
 
@@ -410,7 +427,7 @@ async function sendTopicManual(context, topicKey) {
 
         const bubble = flexUtils.createBubble({
             size: 'mega',
-            body: flexUtils.createBox('vertical', contents, { backgroundColor: '#FFFFFF', paddingAll: 'xl' })
+            body: flexUtils.createBox('vertical', contents, { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: 'xl' })
         });
 
         const flex = flexUtils.createFlexMessage(`說明: ${manual.title}`, bubble);
@@ -622,27 +639,27 @@ function buildAdminDashboardFlex() {
         flexUtils.createBubble({
             size: "mega",
             header: flexUtils.createHeader("🛡️ 超級管理員後台", "Super Admin Control Panel", "#CC0000"),
-            body: flexUtils.createBox("vertical", [
+            body: flexUtils.createBox('vertical', [
                 // 1. Generate Code
-                flexUtils.createText({ text: "🔑 註冊碼生成", weight: "bold", size: "sm", color: "#888888", margin: "md" }),
+                flexUtils.createText({ text: "🔑 註冊碼生成", weight: "bold", size: "sm", color: flexUtils.COLORS.TEXT_MUTED, margin: "md" }),
                 flexUtils.createSeparator("sm"),
                 flexUtils.createBox("horizontal", [
                     {
                         type: "button",
                         action: { type: "message", label: "📋 群組代碼", text: "產生註冊碼" },
-                        style: "secondary", height: "sm", color: "#666666"
+                        style: "secondary", height: "sm", color: flexUtils.COLORS.TEXT_MUTED
                     }
                 ], { margin: "md", spacing: "md" }),
 
                 // 2. System Mgmt
-                flexUtils.createText({ text: "⚙️ 系統管理", weight: "bold", size: "sm", color: "#888888", margin: "xl" }),
+                flexUtils.createText({ text: "⚙️ 系統管理", weight: "bold", size: "sm", color: flexUtils.COLORS.TEXT_MUTED, margin: "xl" }),
                 flexUtils.createSeparator("sm"),
                 {
                     type: "button",
                     action: { type: "message", label: "👥 查看管理員列表", text: "管理員列表" },
                     style: "primary", margin: "md", color: "#333333"
                 }
-            ])
+            ], { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: 'xl' })
         })
     );
 }
@@ -652,8 +669,8 @@ async function handleMachineConfig(replyToken) {
 
     // --- 標題 ---
     contents.push(
-        flexUtils.createText({ text: '🎰 賭場機台透明度報告 🎰', weight: 'bold', size: 'xl', color: '#FFD700', align: 'center', margin: 'md' }),
-        flexUtils.createText({ text: '哭霸娛樂城致力於提供公平的遊戲環境\n以下為各機台核心設定與期望值(EV)', size: 'xs', color: '#AAAAAA', align: 'center', wrap: true, margin: 'sm' }),
+        flexUtils.createText({ text: '🎰 賭場機台透明度報告 🎰', weight: 'bold', size: 'xl', color: flexUtils.COLORS.PRIMARY, align: 'center', margin: 'md' }),
+        flexUtils.createText({ text: '哭霸娛樂城致力於提供公平的遊戲環境\n以下為各機台核心設定與期望值(EV)', size: 'xs', color: flexUtils.COLORS.TEXT_SUB, align: 'center', wrap: true, margin: 'sm' }),
         flexUtils.createSeparator('md')
     );
 
@@ -688,8 +705,8 @@ async function handleMachineConfig(replyToken) {
     configs.forEach((item) => {
         contents.push(
             flexUtils.createBox('vertical', [
-                flexUtils.createText({ text: item.title, weight: 'bold', size: 'md', color: '#FFFFFF' }),
-                flexUtils.createText({ text: item.text, size: 'sm', color: '#CCCCCC', wrap: true, margin: 'sm' })
+                flexUtils.createText({ text: item.title, weight: 'bold', size: 'md', color: flexUtils.COLORS.TEXT_MAIN }),
+                flexUtils.createText({ text: item.text, size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, wrap: true, margin: 'sm' })
             ], { paddingAll: 'sm', margin: 'sm', backgroundColor: '#222222', cornerRadius: 'sm' })
         );
     });
@@ -697,12 +714,12 @@ async function handleMachineConfig(replyToken) {
     // --- Footer ---
     contents.push(
         flexUtils.createSeparator('md'),
-        flexUtils.createText({ text: '* EV (Expected Value) 代表長期遊玩的預期回報率。EV越接近 100% 代表越公平。', size: 'xxs', color: '#666666', wrap: true, margin: 'md' })
+        flexUtils.createText({ text: '* EV (Expected Value) 代表長期遊玩的預期回報率。EV越接近 100% 代表越公平。', size: 'xxs', color: flexUtils.COLORS.TEXT_MUTED, wrap: true, margin: 'md' })
     );
 
     const bubble = flexUtils.createBubble({
         size: 'giga',
-        body: flexUtils.createBox('vertical', contents, { backgroundColor: '#111111', paddingAll: 'xl' })
+        body: flexUtils.createBox('vertical', contents, { backgroundColor: flexUtils.COLORS.BG_CARD, paddingAll: 'xl' })
     });
 
     await lineUtils.replyFlex(replyToken, '賭場機台透明度報告', bubble);
@@ -721,7 +738,10 @@ async function handleResetRob(replyToken) {
                     lastRobDate: '', 
                     robSpamCount: 0, 
                     lastRobSpamDate: '' 
-                } 
+                },
+                $unset: {
+                    robCooldownUntil: ""
+                }
             }
         );
         await lineUtils.replyText(replyToken, `✅ [最高權限] 成功重置 ${result.modifiedCount} 名玩家的本日搶劫次數與懲罰紀錄！大家又可以開搶了！`);

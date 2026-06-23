@@ -1,0 +1,29 @@
+Created At: 2026-06-19T09:39:08Z
+Completed At: 2026-06-19T09:39:09Z
+
+				The command completed successfully.
+				Output:
+				8: function getCriminalTitle(record) {
+16: function calculateBailAmount(crimeRecord, kuCoin) 
+23: async function checkJailStatus(userId) {
+46: async function handleBail(replyToken, context) {
+91: async function confirmBail(replyToken, context, pr
+154: async function handleBailOther(replyToken, context
+213: async function confirmBailOther(replyToken, contex
+295: async function handleBlowWarden(replyToken, contex
+371: async function handleJailbreak(replyToken, context
+448: async function confirmJailbreak(replyToken, contex
+577: async function handleDropSoap(replyToken, context)
+694: async function handleLabor(replyToken, context) {
+835: async function handleVisit(replyToken, context, me
+947: async function loadRiotState() {
+970: async function saveRiotState() {
+983: async function handleRiot(replyToken, context) {
+1094: async function resolveRiot(groupId, replyToken = n
+1190: async function handleJailList(replyToken) {
+1260: async function handleJailRank(replyToken) {
+1319: async function handleBribePrompt(replyToken, conte
+1349: async function handleBribe(replyToken, context, am
+1419: async function confirmBribe(replyToken, context, a
+1521: async function handlePressure(replyToken, context)
+

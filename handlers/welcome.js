@@ -68,6 +68,28 @@ async function setWelcomeText(groupId, text, userId) {
 }
 
 /**
+ * 將像素寬高轉換為 LINE 支援的標準比例
+ * LINE 支援：20:13, 1:1, 3:4, 9:16, 1:2 等
+ */
+function normalizeAspectRatio(rawRatio) {
+    if (!rawRatio || typeof rawRatio !== 'string') return '20:13';
+    const parts = rawRatio.split(':');
+    if (parts.length !== 2) return '20:13';
+    const w = parseInt(parts[0], 10);
+    const h = parseInt(parts[1], 10);
+    if (!w || !h) return '20:13';
+    const ratio = w / h;
+    // 映射到最接近的 LINE 標準比例
+    if (ratio >= 2.0)  return '20:9';   // 橫寬圖
+    if (ratio >= 1.5)  return '20:13';  // 16:9 類似橫屏
+    if (ratio >= 1.1)  return '4:3';    // 一般橫屏
+    if (ratio >= 0.9)  return '1:1';    // 正方
+    if (ratio >= 0.7)  return '3:4';    // 輕度直屏
+    if (ratio >= 0.5)  return '9:16';   // 奇携直屏
+    return '1:2';                        // 極長直屏
+}
+
+/**
  * 設定歡迎圖(僅支援上傳圖片)
  */
 async function setWelcomeImage(groupId, url, userId, aspectRatio = '1:1') {
@@ -105,9 +127,8 @@ async function buildWelcomeFlex(memberProfile, config) {
 
     const welcomeText = (config?.text || DEFAULT_WELCOME_TEXT).replace('{user}', displayName);
     let heroUrl = config?.imageUrl || DEFAULT_WELCOME_IMAGE;
-    // 使用儲存的比例或預設 1:1.5 (直向友善) 或 20:13 (LINE預設)
-    // 為了支援長圖，如果沒有設定，這裡使用 1:1 作為一個較好的預設值，搭配 aspectMode: cover
-    const heroAspectRatio = config?.aspectRatio || '1:1';
+    // 將原始的像素寬高比例轉換為 LINE 支援的標準比例
+    const heroAspectRatio = normalizeAspectRatio(config?.aspectRatio);
 
     // ✅ 更加安全的 Hero URL 替換與驗證
     if (heroUrl && heroUrl.includes('/public/')) {
@@ -188,8 +209,8 @@ async function buildWelcomeFlex(memberProfile, config) {
                             type: "box",
                             layout: "vertical",
                             contents: [
-                                { type: 'text', text: `Hi, ${displayName}`, weight: 'bold', size: 'md', wrap: true },
-                                { type: 'text', text: welcomeText, size: 'xs', color: '#555555', margin: 'xs', wrap: true }
+                                { type: 'text', text: `Hi, ${displayName}`, weight: 'bold', size: 'md', color: flexUtils.COLORS.TEXT_MAIN, wrap: true },
+                                { type: 'text', text: welcomeText, size: 'xs', color: flexUtils.COLORS.TEXT_SUB, margin: 'xs', wrap: true }
                             ],
                             margin: "md",
                             flex: 1
@@ -199,7 +220,7 @@ async function buildWelcomeFlex(memberProfile, config) {
                 }
             ],
             paddingAll: "12px",
-            backgroundColor: "#FFFFFF"
+            backgroundColor: flexUtils.COLORS.BG_CARD
         }
     });
 }
@@ -226,8 +247,9 @@ async function handleMemberJoined(event) {
     const firstUserId = newMembers[0].userId || 'unknown';
     
     // 1. Deduplication (Critical for avoiding double welcome)
-    // 如果 LINE 沒傳遞 webhookEventId，則使用時間戳+群組+使用者的組合鍵來防止重複 (防禦 LINE 重試洗版)
-    const deduplicationId = webhookEventId || `join_${groupId}_${firstUserId}_${timestamp}`;
+    // 利用 webhookEventId 或組合鍵，並將時間戳四捨五入到 10 秒級別，防止 LINE 重試蹯版
+    const timeWindow = Math.floor((timestamp || Date.now()) / 10000); // 10 秒時間窗口
+    const deduplicationId = webhookEventId || `join_${groupId}_${firstUserId}_${timeWindow}`;
 
     const isLockAcquired = await dedup.acquireLock(deduplicationId);
     if (!isLockAcquired) {

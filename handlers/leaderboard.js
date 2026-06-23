@@ -219,10 +219,10 @@ async function fetchAndCacheLeaderboard(groupId) {
 
 /**
  * 取得群組排行榜 (Top 10) - Cached
+ * @deprecated Use fetchAndCacheLeaderboard directly
  */
 async function getLeaderboard(groupId) {
     const leaders = await fetchAndCacheLeaderboard(groupId);
-    // Sort by message count (default view) and take top 10
     return [...leaders]
         .sort((a, b) => (b.messageCount || 0) - (a.messageCount || 0))
         .slice(0, 10);
@@ -264,15 +264,15 @@ function buildRankBubble(title, leaders, userRank, valueKey, unit, color, userId
             size: 'micro',
             header: flexUtils.createHeader(title, "", color),
             body: flexUtils.createBox('vertical', [
-                flexUtils.createText({ text: '尚無記錄', size: 'xs', color: '#888888', align: 'center' })
-            ], { paddingAll: '10px' })
+                flexUtils.createText({ text: '尚無記錄', size: 'xs', color: flexUtils.COLORS.TEXT_MUTED, align: 'center' })
+            ], { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: '10px'  })
         });
     }
 
     const medals = ['🥇', '🥈', '🥉'];
     const rows = leaders.slice(0, 5).map((leader, i) =>
         flexUtils.createBox('horizontal', [
-            flexUtils.createText({ text: medals[i] || `${i + 1}.`, size: 'xs', flex: 1, color: i < 3 ? '#FFD700' : '#666666', gravity: 'center' }),
+            flexUtils.createText({ text: medals[i] || `${i + 1}.`, size: 'xs', flex: 1, color: i < 3 ? flexUtils.COLORS.PRIMARY : flexUtils.COLORS.TEXT_MUTED, gravity: 'center' }),
             flexUtils.createText({ text: leader.displayName || '未知', size: 'xs', flex: 4, weight: leader.id === userId ? 'bold' : 'regular', color: leader.id === userId ? '#1E88E5' : '#333333', gravity: 'center', wrap: true }),
             flexUtils.createText({ text: `${leader[valueKey] || 0}`, size: 'xs', flex: 2, align: 'end', color: '#E65100', gravity: 'center' })
         ], { margin: 'xs' })
@@ -289,14 +289,14 @@ function buildRankBubble(title, leaders, userRank, valueKey, unit, color, userId
     // Standard createHeader doesn't support right-aligned unit text easily without modification.
     // So I will construct header manually using createBox but helper for text.
     const customHeader = flexUtils.createBox('horizontal', [
-        flexUtils.createText({ text: title, weight: 'bold', size: 'md', color: '#FFFFFF', flex: 4 }),
-        flexUtils.createText({ text: unit, size: 'xxs', color: '#FFFFFF', align: 'end', flex: 1, gravity: 'bottom' })
+        flexUtils.createText({ text: title, weight: 'bold', size: 'md', color: flexUtils.COLORS.TEXT_MAIN, flex: 4 }),
+        flexUtils.createText({ text: unit, size: 'xxs', color: flexUtils.COLORS.TEXT_MAIN, align: 'end', flex: 1, gravity: 'bottom' })
     ], { backgroundColor: color, paddingAll: '8px' });
 
     const bubbleOpts = {
         size: 'micro',
         header: customHeader,
-        body: flexUtils.createBox('vertical', rows, { paddingAll: '6px' })
+        body: flexUtils.createBox('vertical', rows, { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: '6px'  })
     };
     if (footer) bubbleOpts.footer = footer;
 
@@ -313,53 +313,47 @@ function buildLeaderboardFlex(leaders, userRank, userId) {
     const getValidLeaders = (key) => leaders.filter(l => (l[key] || 0) > 0).sort((a, b) => b[key] - a[key]);
 
     // 1. 發言排行榜
-    const msgLeaders = getValidLeaders('messageCount');
+    const msgLeaders = leaders.messageCount || [];
     bubbles.push(buildRankBubble('🏆 發言榜', msgLeaders,
         { rank: getRank(msgLeaders, userId), stats: userRank.stats },
-        'messageCount', '則', '#FFD700', userId));
+        'messageCount', '則', flexUtils.COLORS.PRIMARY, userId));
 
     // 2. 抽圖總榜
-    const imgLeaders = getValidLeaders('totalImageCount');
+    const imgLeaders = leaders.totalImageCount || [];
     bubbles.push(buildRankBubble('📸 抽圖總榜', imgLeaders,
         { rank: getRank(imgLeaders, userId), stats: userRank.stats },
         'totalImageCount', '次', '#FF334B', userId));
 
     // 3. 各類別分開
-    // 奶子
-    const breastLeaders = getValidLeaders('image_奶子');
+    const breastLeaders = leaders['image_奶子'] || [];
     bubbles.push(buildRankBubble('👙 奶子榜', breastLeaders,
         { rank: getRank(breastLeaders, userId), stats: userRank.stats },
         'image_奶子', '次', '#FF69B4', userId));
 
-    // 美尻
-    const buttLeaders = getValidLeaders('image_美尻');
+    const buttLeaders = leaders['image_美尻'] || [];
     bubbles.push(buildRankBubble('🍑 美尻榜', buttLeaders,
         { rank: getRank(buttLeaders, userId), stats: userRank.stats },
         'image_美尻', '次', '#FF8da1', userId));
 
-    // 絕對領域
-    const zettaiLeaders = getValidLeaders('image_絕對領域');
+    const zettaiLeaders = leaders['image_絕對領域'] || [];
     bubbles.push(buildRankBubble('👗 絕對領域', zettaiLeaders,
         { rank: getRank(zettaiLeaders, userId), stats: userRank.stats },
         'image_絕對領域', '次', '#9C27B0', userId));
 
-    // 黑絲
-    const heisiLeaders = getValidLeaders('image_黑絲');
+    const heisiLeaders = leaders['image_黑絲'] || [];
     bubbles.push(buildRankBubble('🦵 黑絲榜', heisiLeaders,
         { rank: getRank(heisiLeaders, userId), stats: userRank.stats },
         'image_黑絲', '次', '#333333', userId));
 
-    // 白絲 (Replaced Foot)
-    const baisiLeaders = getValidLeaders('image_白絲');
+    const baisiLeaders = leaders['image_白絲'] || [];
     bubbles.push(buildRankBubble('🦶 白絲榜', baisiLeaders,
         { rank: getRank(baisiLeaders, userId), stats: userRank.stats },
-        'image_白絲', '次', '#AAAAAA', userId));
+        'image_白絲', '次', flexUtils.COLORS.TEXT_SUB, userId));
 
-    // JK
-    const jkLeaders = getValidLeaders('image_JK');
+    const jkLeaders = leaders['image_JK'] || [];
     bubbles.push(buildRankBubble('🎀 JK榜', jkLeaders,
         { rank: getRank(jkLeaders, userId), stats: userRank.stats },
-        'image_JK', '次', '#1a237e', userId));
+        'image_JK', '次', flexUtils.COLORS.BG_CARD, userId));
 
     return {
         type: 'carousel',
@@ -376,9 +370,39 @@ function getRank(validList, userId) {
  * 處理排行榜查詢
  */
 async function handleLeaderboard(replyToken, groupId, userId) {
-    const leaders = await getLeaderboard(groupId);
+    const allLeaders = await fetchAndCacheLeaderboard(groupId);
     const userRank = await getUserRank(groupId, userId);
-    const flex = buildLeaderboardFlex(leaders, userRank, userId);
+    
+    // We need to filter and get top 5/10 for each category dynamically
+    const categories = ['messageCount', 'totalImageCount', 'image_奶子', 'image_美尻', 'image_絕對領域', 'image_黑絲', 'image_白絲', 'image_JK'];
+    const filteredLeaders = {};
+    const membershipCache = new Map(); // cache to avoid duplicate API calls
+    
+    const isMember = async (uid) => {
+        if (membershipCache.has(uid)) return membershipCache.get(uid);
+        try {
+            await lineUtils.getGroupMemberProfile(groupId, uid);
+            membershipCache.set(uid, true);
+            return true;
+        } catch (e) {
+            membershipCache.set(uid, false);
+            return false;
+        }
+    };
+
+    for (const cat of categories) {
+        const validList = allLeaders.filter(l => (l[cat] || 0) > 0).sort((a, b) => b[cat] - a[cat]);
+        const topInCat = [];
+        for (const item of validList) {
+            if (await isMember(item.id)) {
+                topInCat.push(item);
+                if (topInCat.length >= 10) break;
+            }
+        }
+        filteredLeaders[cat] = topInCat;
+    }
+
+    const flex = buildLeaderboardFlex(filteredLeaders, userRank, userId);
 
     await lineUtils.replyFlex(replyToken, '群組排行榜', flex);
 }
@@ -408,8 +432,8 @@ async function handleMyRank(replyToken, groupId, userId) {
                     layout: 'horizontal',
                     margin: 'lg',
                     contents: [
-                        { type: 'text', text: '排名', size: 'md', color: '#666666' },
-                        { type: 'text', text: rank > 0 ? `第 ${rank} 名` : '未上榜', size: 'md', weight: 'bold', align: 'end', color: '#FFD700' }
+                        { type: 'text', text: '排名', size: 'md', color: flexUtils.COLORS.TEXT_MUTED },
+                        { type: 'text', text: rank > 0 ? `第 ${rank} 名` : '未上榜', size: 'md', weight: 'bold', align: 'end', color: flexUtils.COLORS.PRIMARY }
                     ]
                 },
                 {
@@ -417,7 +441,7 @@ async function handleMyRank(replyToken, groupId, userId) {
                     layout: 'horizontal',
                     margin: 'md',
                     contents: [
-                        { type: 'text', text: '發言次數', size: 'md', color: '#666666' },
+                        { type: 'text', text: '發言次數', size: 'md', color: flexUtils.COLORS.TEXT_MUTED },
                         { type: 'text', text: `${stats.messageCount || 0} 則`, size: 'md', weight: 'bold', align: 'end', color: '#E65100' }
                     ]
                 }

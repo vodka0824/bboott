@@ -8,7 +8,7 @@ const { getOrInitPlayerStats, getPlayerTitle } = require('./rpgCoreService');
 
 async function getFinalPlayerStats(userId) {
     const baseStats = await getOrInitPlayerStats(userId);
-    const { getEquipmentData } = require('./equipment');
+    const { getEquipmentData } = require('../handlers/equipment');
     
     let equipments = { weapon: null, shield: null, wings: null, gloves: null, necklace: null, ring: null };
     let enchantCount = 0;
@@ -20,7 +20,7 @@ async function getFinalPlayerStats(userId) {
         console.error('[RPG] Failed to fetch equipment data for stats:', e);
     }
     
-    const { getFinalEquipStat } = require('./equipment');
+    const { getFinalEquipStat } = require('../handlers/equipment');
 
     const level = baseStats.level || 1;
     const chatExp = baseStats.chatExp || 0;

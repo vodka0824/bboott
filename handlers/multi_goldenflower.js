@@ -4,6 +4,7 @@
 const flexUtils = require('../utils/flex');
 const lineUtils = require('../utils/line');
 const economyHandler = require('./economy');
+const persistenceService = require('../services/multiplayerPersistenceService');
 const atonementHandler = require('./atonement');
 const authUtils = require('../utils/auth');
 
@@ -187,6 +188,9 @@ async function placeBet(replyToken, ctx, betAmount) {
         return;
     }
 
+    const userName = consumeResult.name || '玩家';
+    persistenceService.recordBet(groupId, '炸金花', userId, betAmt, userName).catch(e => console.error(e));
+
     const newWanted = await economyHandler.addWantedLevel(userId);
     table.participantWantedLevels.set(userId, newWanted);
 
@@ -228,7 +232,7 @@ async function dealCards(replyToken, ctx) {
     }
 
     if (table.dealerId !== userId) {
-        await lineUtils.replyText(replyToken, '❌ 只有莊家可以發牌！');
+        // await lineUtils.replyText(replyToken, '❌ 只有莊家可以發牌！');
         return;
     }
 
@@ -272,7 +276,15 @@ async function finishGameAndSettle(replyToken, table, titleMsg) {
         } else if (cmp < 0) {
             const loseAmount = p.bet * dealerResult.multiplier;
             const extraPenalty = loseAmount - p.bet;
-            if (extraPenalty > 0) extraPenalties.push(economyHandler.consumeCoin(groupId, uid, extraPenalty, true));
+            if (extraPenalty > 0) {
+                extraPenalties.push(
+                    economyHandler.consumeCoin(groupId, uid, extraPenalty, true).then((res) => {
+                        if (res && res.success) {
+                            persistenceService.recordBet(groupId, '炸金花', uid, extraPenalty, p.name).catch(e => console.error(e));
+                        }
+                    })
+                );
+            }
             playerPayout = 0;
             playerNet = -loseAmount;
             p.resultStr = '💸 輸 (' + playerNet.toLocaleString() + ')';
@@ -281,7 +293,7 @@ async function finishGameAndSettle(replyToken, table, titleMsg) {
             playerPayout = p.bet;
             playerNet = 0;
             p.resultStr = '🤝 平手';
-            p.color = '#FF9800';
+            p.color = flexUtils.COLORS.SECONDARY;
         }
 
         dealerNetProfit -= playerNet;
@@ -354,23 +366,23 @@ async function sendTableFlex(replyToken, table, altText, extraMessages = []) {
     }
 
     contents.push(
-        flexUtils.createText({ text: `莊家：${table.dealerName}`, size: 'lg', color: '#FFFFFF', weight: 'bold', margin: 'md', align: 'center' })
+        flexUtils.createText({ text: `莊家：${table.dealerName}`, size: 'lg', color: flexUtils.COLORS.TEXT_MAIN, weight: 'bold', margin: 'md', align: 'center' })
     );
 
     if (table.status === 'closed') {
         const netColor = table.dealerNetProfit >= 0 ? flexUtils.COLORS.WIN : '#D32F2F';
         contents.push(
-            flexUtils.createText({ text: dealerScoreStr, size: 'sm', color: '#AAAAAA', margin: 'xs', align: 'center' }),
+            flexUtils.createText({ text: dealerScoreStr, size: 'sm', color: flexUtils.COLORS.TEXT_SUB, margin: 'xs', align: 'center' }),
             flexUtils.createText({ text: `結算: ${table.dealerNetProfit > 0 ? '+' : ''}${table.dealerNetProfit.toLocaleString()}`, size: 'md', weight: 'bold', color: netColor, margin: 'xs', wrap: true, align: 'center' })
         );
         if (table.dealerFinalBalance !== undefined) {
             contents.push(flexUtils.createText({ text: `餘額: ${table.dealerFinalBalance.toLocaleString()}`, size: 'xs', color: netColor, margin: 'xs', align: 'center' }));
         }
         if (table.taxAmount > 0) {
-            contents.push(flexUtils.createText({ text: `(抽水 5%: -${table.taxAmount.toLocaleString()})`, size: 'xs', color: '#AAAAAA', margin: 'xs', align: 'center' }));
+            contents.push(flexUtils.createText({ text: `(抽水 5%: -${table.taxAmount.toLocaleString()})`, size: 'xs', color: flexUtils.COLORS.TEXT_SUB, margin: 'xs', align: 'center' }));
         }
     } else {
-        contents.push(flexUtils.createText({ text: '發牌後揭曉底牌', size: 'sm', color: '#AAAAAA', align: 'center' }));
+        contents.push(flexUtils.createText({ text: '發牌後揭曉底牌', size: 'sm', color: flexUtils.COLORS.TEXT_SUB, align: 'center' }));
     }
 
     contents.push(flexUtils.createSeparator('lg'));
@@ -378,14 +390,14 @@ async function sendTableFlex(replyToken, table, altText, extraMessages = []) {
     if (table.players.size > 0) {
         for (const p of table.players.values()) {
             contents.push(flexUtils.createBox('horizontal', [
-                flexUtils.createText({ text: `👤 ${p.name}`, wrap: true, size: 'sm', weight: 'bold', color: '#E0E0E0', flex: 2 }),
-                flexUtils.createText({ text: `押 ${p.bet.toLocaleString()}`, size: 'xs', color: '#FF9800', flex: 1, align: 'end', adjustMode: 'shrink-to-fit' })
+                flexUtils.createText({ text: `👤 ${p.name}`, wrap: true, size: 'sm', weight: 'bold', color: flexUtils.COLORS.TEXT_MAIN, flex: 2 }),
+                flexUtils.createText({ text: `押 ${p.bet.toLocaleString()}`, size: 'xs', color: flexUtils.COLORS.SECONDARY, flex: 1, align: 'end', adjustMode: 'shrink-to-fit' })
             ], { margin: 'md', alignItems: 'center' }));
 
             if (table.status === 'closed') {
                 const pRes = p.result;
                 const pScoreStr = `${formatHandStr(pRes)} (賠率 ${pRes.multiplier}x)`;
-                contents.push(flexUtils.createText({ text: pScoreStr, size: 'xs', color: '#AAAAAA', margin: 'xs' }));
+                contents.push(flexUtils.createText({ text: pScoreStr, size: 'xs', color: flexUtils.COLORS.TEXT_SUB, margin: 'xs' }));
                 contents.push(flexUtils.createText({ text: p.resultStr, size: 'sm', weight: 'bold', color: p.color, margin: 'xs' }));
                 
                 if (p.curseStr) {
@@ -395,20 +407,26 @@ async function sendTableFlex(replyToken, table, altText, extraMessages = []) {
             }
         }
     } else {
-        contents.push(flexUtils.createText({ text: '尚無人下注', size: 'sm', color: '#666666', margin: 'xl', align: 'center' }));
+        contents.push(flexUtils.createText({ text: '尚無人下注', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, margin: 'xl', align: 'center' }));
     }
 
     if (table.status === 'waiting') {
         contents.push(flexUtils.createText({ text: '莊家隨時可輸入「發牌」或「+」進行結算', size: 'xs', color: '#444444', margin: 'xl', align: 'center' }));
-        contents.push(flexUtils.createText({ text: '💡 捷徑：下注輸入「+金額」或「歐印」、發牌輸入「+」', size: 'xs', color: '#AAAAAA', align: 'center', margin: 'sm' }));
+        contents.push(flexUtils.createText({ text: '💡 捷徑：下注輸入「+金額」或「歐印」、發牌輸入「+」', size: 'xs', color: flexUtils.COLORS.TEXT_SUB, align: 'center', margin: 'sm' }));
     }
 
     const bubble = flexUtils.createBubble({
         size: 'kilo',
-        body: flexUtils.createBox('vertical', contents, { backgroundColor: '#1A1A1A', paddingAll: 'xl' })
+        body: flexUtils.createBox('vertical', contents, { backgroundColor: flexUtils.COLORS.BG_CARD, paddingAll: 'xl' })
     });
 
     const messages = [{ type: 'flex', altText: altText, contents: bubble }, ...extraMessages];
+
+    
+    const quickReply = require('../utils/multi_quickReply').getQuickReply(table, '炸金花');
+    if (quickReply) {
+        messages[messages.length - 1].quickReply = quickReply;
+    }
 
     if (messages.length <= 5) {
         await lineUtils.replyToLine(replyToken, messages).catch(console.error);
@@ -428,7 +446,7 @@ async function closeTable(replyToken, ctx) {
     }
 
     if (table.dealerId !== userId && !authUtils.isSuperAdmin(userId)) {
-        await lineUtils.replyText(replyToken, '❌ 只有莊家或管理員可以解散牌桌！');
+        // await lineUtils.replyText(replyToken, '❌ 只有莊家或管理員可以解散牌桌！');
         return;
     }
 

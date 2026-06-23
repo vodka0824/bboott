@@ -1,3 +1,4 @@
+const flexUtils = require('../utils/flex');
 /**
  * 爬蟲功能模組
  */
@@ -82,14 +83,14 @@ function buildCrawlerOilFlex(data) {
         contents: [
             { type: "text", text: label, size: "sm", color: "#555555", flex: 3 },
             { type: "text", text: cpcPrice ? `$${cpcPrice}` : '-', size: "sm", align: "end", flex: 2, weight: "bold" },
-            { type: "text", text: fpcPrice ? `$${fpcPrice}` : '-', size: "sm", align: "end", flex: 2, color: "#888888" }
+            { type: "text", text: fpcPrice ? `$${fpcPrice}` : '-', size: "sm", align: "end", flex: 2, color: flexUtils.COLORS.TEXT_MUTED }
         ],
         margin: "md"
     });
 
     const isUp = data.prediction?.direction === '漲';
     const isDown = data.prediction?.direction === '跌';
-    const trendColor = isUp ? '#FF334B' : (isDown ? '#00B900' : '#888888');
+    const trendColor = isUp ? '#FF334B' : (isDown ? '#00B900' : flexUtils.COLORS.TEXT_MUTED);
     const trendIcon = isUp ? '📈' : (isDown ? '📉' : '➖');
 
     const predText = data.prediction
@@ -103,13 +104,13 @@ function buildCrawlerOilFlex(data) {
             type: "box",
             layout: "vertical",
             contents: [
-                { type: "text", text: "⛽ 本週油價", weight: "bold", size: "xl", color: "#FFFFFF" },
+                { type: "text", text: "⛽ 本週油價", weight: "bold", size: "xl", color: flexUtils.COLORS.TEXT_MAIN },
                 {
                     type: "box",
                     layout: "horizontal",
                     contents: [
-                        { type: "text", text: "下週預測", size: "xs", color: "#E0E0E0", flex: 1, gravity: "center" },
-                        { type: "text", text: predText, size: "md", color: "#FFFFFF", weight: "bold", flex: 3, gravity: "center", align: "end" }
+                        { type: "text", text: "下週預測", size: "xs", color: flexUtils.COLORS.TEXT_MAIN, flex: 1, gravity: "center" },
+                        { type: "text", text: predText, size: "md", color: flexUtils.COLORS.TEXT_MAIN, weight: "bold", flex: 3, gravity: "center", align: "end" }
                     ],
                     margin: "md"
                 }
@@ -126,9 +127,9 @@ function buildCrawlerOilFlex(data) {
                     type: "box",
                     layout: "horizontal",
                     contents: [
-                        { type: "text", text: "油品", size: "xs", color: "#AAAAAA", flex: 3 },
-                        { type: "text", text: "中油", size: "xs", color: "#AAAAAA", align: "end", flex: 2 },
-                        { type: "text", text: "台塑", size: "xs", color: "#AAAAAA", align: "end", flex: 2 }
+                        { type: "text", text: "油品", size: "xs", color: flexUtils.COLORS.TEXT_SUB, flex: 3 },
+                        { type: "text", text: "中油", size: "xs", color: flexUtils.COLORS.TEXT_SUB, align: "end", flex: 2 },
+                        { type: "text", text: "台塑", size: "xs", color: flexUtils.COLORS.TEXT_SUB, align: "end", flex: 2 }
                     ]
                 },
                 { type: "separator", margin: "sm" },
@@ -143,11 +144,11 @@ function buildCrawlerOilFlex(data) {
             type: "box",
             layout: "vertical",
             contents: [
-                { type: "text", text: data.forecast || '暫無預測資訊', size: "xs", color: "#666666", wrap: true },
-                { type: "text", text: `更新: ${data.timestamp}`, size: "xxs", color: "#AAAAAA", align: "end", margin: "sm" }
+                { type: "text", text: data.forecast || '暫無預測資訊', size: "xs", color: flexUtils.COLORS.TEXT_MUTED, wrap: true },
+                { type: "text", text: `更新: ${data.timestamp}`, size: "xxs", color: flexUtils.COLORS.TEXT_SUB, align: "end", margin: "sm" }
             ],
             paddingAll: "15px",
-            backgroundColor: "#F5F5F5"
+            backgroundColor: flexUtils.COLORS.TEXT_SUB
         }
     };
 }

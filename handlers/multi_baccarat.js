@@ -4,6 +4,7 @@
 const flexUtils = require('../utils/flex');
 const lineUtils = require('../utils/line');
 const economyHandler = require('./economy');
+const persistenceService = require('../services/multiplayerPersistenceService');
 const atonementHandler = require('./atonement');
 const authUtils = require('../utils/auth');
 
@@ -137,6 +138,8 @@ async function placeBet(replyToken, ctx, betType, betAmount) {
         return;
     }
 
+    persistenceService.recordBet(groupId, '百家樂', userId, betAmt, userName).catch(e => console.error(e));
+
     const newWanted = await economyHandler.addWantedLevel(userId);
     table.participantWantedLevels.set(userId, newWanted);
 
@@ -179,7 +182,7 @@ async function dealCards(replyToken, ctx) {
     }
 
     if (table.dealerId !== userId) {
-        await lineUtils.replyText(replyToken, '❌ 只有開局的賭場老闆可以決定收注開牌！');
+        // await lineUtils.replyText(replyToken, '❌ 只有開局的賭場老闆可以決定收注開牌！');
         return;
     }
 
@@ -339,7 +342,7 @@ async function finishGameAndSettle(replyToken, table, titleMsg) {
 
 async function sendTableFlex(replyToken, table, altText, extraMessages = []) {
     const contents = [
-        flexUtils.createText({ text: '🎰 哭霸娛樂城 - 尊爵百家樂', size: 'lg', weight: 'bold', color: '#FFD700', align: 'center', margin: 'md', adjustMode: 'shrink-to-fit' })
+        flexUtils.createText({ text: '🎰 哭霸娛樂城 - 尊爵百家樂', size: 'lg', weight: 'bold', color: flexUtils.COLORS.PRIMARY, align: 'center', margin: 'md', adjustMode: 'shrink-to-fit' })
     ];
 
     let totalWanted = 0;
@@ -356,17 +359,17 @@ async function sendTableFlex(replyToken, table, altText, extraMessages = []) {
 
     contents.push(
         flexUtils.createText({ text: `莊家：${table.resultType === '莊' ? '👑 ' : ''}${table.bankerScore} 點`, size: 'lg', color: '#FF4500', weight: 'bold', margin: 'md' }),
-        flexUtils.createText({ text: formatCards(table.bankerHand) || '?', size: 'sm', color: '#AAAAAA' }),
+        flexUtils.createText({ text: formatCards(table.bankerHand) || '?', size: 'sm', color: flexUtils.COLORS.TEXT_SUB }),
         flexUtils.createText({ text: `閒家：${table.resultType === '閒' ? '👑 ' : ''}${table.playerScore} 點`, size: 'lg', color: '#1E90FF', weight: 'bold', margin: 'md' }),
-        flexUtils.createText({ text: formatCards(table.playerHand) || '?', size: 'sm', color: '#AAAAAA' }),
+        flexUtils.createText({ text: formatCards(table.playerHand) || '?', size: 'sm', color: flexUtils.COLORS.TEXT_SUB }),
         flexUtils.createSeparator('md'),
-        flexUtils.createText({ text: resultMsg, size: 'xl', weight: 'bold', color: '#FFD700', align: 'center', margin: 'lg' })
+        flexUtils.createText({ text: resultMsg, size: 'xl', weight: 'bold', color: flexUtils.COLORS.PRIMARY, align: 'center', margin: 'lg' })
     );
 
     if (table.status === 'closed' && table.dealerNetProfit !== undefined) {
         const netColor = table.dealerNetProfit >= 0 ? flexUtils.COLORS.WIN : '#D32F2F';
         contents.push(flexUtils.createText({ text: `結算: ${table.dealerNetProfit > 0 ? '+' : ''}${table.dealerNetProfit.toLocaleString()}`, size: 'md', weight: 'bold', color: netColor, align: 'center', margin: 'xs', wrap: true }));
-        contents.push(flexUtils.createText({ text: `目前餘額: ${table.dealerFinalBalance.toLocaleString()}`, size: 'xs', color: '#666666', align: 'center', margin: 'xs' }));
+        contents.push(flexUtils.createText({ text: `目前餘額: ${table.dealerFinalBalance.toLocaleString()}`, size: 'xs', color: flexUtils.COLORS.TEXT_MUTED, align: 'center', margin: 'xs' }));
     }
 
     contents.push(flexUtils.createSeparator('lg'));
@@ -379,12 +382,12 @@ async function sendTableFlex(replyToken, table, altText, extraMessages = []) {
             if (p.bets['和'] > 0) betStrs.push(`和:${p.bets['和']}`);
 
             contents.push(flexUtils.createBox('horizontal', [
-                flexUtils.createText({ text: `👤 ${p.name}`, wrap: true, size: 'sm', weight: 'bold', color: '#E0E0E0', flex: 2 }),
-                flexUtils.createText({ text: `押 ${betStrs.join(', ')}`, size: 'xs', color: '#FF9800', flex: 2, align: 'end', adjustMode: 'shrink-to-fit' })
+                flexUtils.createText({ text: `👤 ${p.name}`, wrap: true, size: 'sm', weight: 'bold', color: flexUtils.COLORS.TEXT_MAIN, flex: 2 }),
+                flexUtils.createText({ text: `押 ${betStrs.join(', ')}`, size: 'xs', color: flexUtils.COLORS.SECONDARY, flex: 2, align: 'end', adjustMode: 'shrink-to-fit' })
             ], { margin: 'md', alignItems: 'center' }));
 
             if (table.status === 'closed') {
-                const color = p.netProfit > 0 ? flexUtils.COLORS.WIN : (p.netProfit < 0 ? '#D32F2F' : '#FF9800');
+                const color = p.netProfit > 0 ? flexUtils.COLORS.WIN : (p.netProfit < 0 ? '#D32F2F' : flexUtils.COLORS.SECONDARY);
                 contents.push(flexUtils.createText({ text: p.resultStr, size: 'sm', weight: 'bold', color: color, margin: 'xs' }));
                 
                 if (p.curseStr) {
@@ -394,7 +397,7 @@ async function sendTableFlex(replyToken, table, altText, extraMessages = []) {
             }
         }
     } else {
-        contents.push(flexUtils.createText({ text: '尚無人下注', size: 'sm', color: '#666666', margin: 'xl', align: 'center' }));
+        contents.push(flexUtils.createText({ text: '尚無人下注', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, margin: 'xl', align: 'center' }));
     }
 
     if (table.status === 'waiting') {
@@ -403,10 +406,16 @@ async function sendTableFlex(replyToken, table, altText, extraMessages = []) {
 
     const bubble = flexUtils.createBubble({
         size: 'kilo',
-        body: flexUtils.createBox('vertical', contents, { backgroundColor: '#1A1A1A', paddingAll: 'xl' })
+        body: flexUtils.createBox('vertical', contents, { backgroundColor: flexUtils.COLORS.BG_CARD, paddingAll: 'xl' })
     });
 
     const messages = [{ type: 'flex', altText: altText, contents: bubble }, ...extraMessages];
+
+    
+    const quickReply = require('../utils/multi_quickReply').getQuickReply(table, '百家樂');
+    if (quickReply) {
+        messages[messages.length - 1].quickReply = quickReply;
+    }
 
     if (messages.length <= 5) {
         await lineUtils.replyToLine(replyToken, messages).catch(console.error);
@@ -426,7 +435,7 @@ async function closeTable(replyToken, ctx) {
     }
 
     if (table.dealerId !== userId && !authUtils.isSuperAdmin(userId)) {
-        await lineUtils.replyText(replyToken, '❌ 只有老闆可以收掉百家樂牌桌！');
+        // await lineUtils.replyText(replyToken, '❌ 只有老闆可以收掉百家樂牌桌！');
         return;
     }
 

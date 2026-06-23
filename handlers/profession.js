@@ -15,7 +15,7 @@ async function getWantedList() {
             .where('wantedLevel', '>', 0)
             .orderBy('wantedLevel', 'desc')
             .orderBy('crimeRecord', 'desc')
-            .limit(10)
+            .limit(50)
             .get();
 
         topList = [];
@@ -63,30 +63,28 @@ async function getMafiaBoss() {
             snapshot.forEach(doc => {
                 if (doc.id === ADMIN_USER_ID) return; // 超級管理員排除在黑道老大競爭之外
                 const d = doc.data();
+                const score = (d.wantedLevel || 0) * 100 + (d.crimeRecord || 0) * 5;
                 members.push({
                     userId: doc.id,
                     name: d.displayName || d.name || '無名氏',
                     crimeRecord: d.crimeRecord || 0,
-                    wantedLevel: d.wantedLevel || 0
+                    wantedLevel: d.wantedLevel || 0,
+                    score: score
                 });
             });
 
-            // 排序：前科次數第一優先 (降序)，通緝值第二優先 (降序)
-            members.sort((a, b) => {
-                if (b.crimeRecord !== a.crimeRecord) {
-                    return b.crimeRecord - a.crimeRecord;
-                }
-                return b.wantedLevel - a.wantedLevel;
-            });
+            // 排序：依據江湖聲望 (降序)
+            members.sort((a, b) => b.score - a.score);
 
             const top = members[0];
-            // 必須至少有 1 次前科或通緝值大於 0，才算作黑道老大 (新加入未犯案者排除)
-            if (top && (top.crimeRecord > 0 || top.wantedLevel > 0)) {
+            // 必須江湖聲望 >= 100，才算作黑道老大
+            if (top && top.score >= 100) {
                 bossInfo = {
                     userId: top.userId,
                     name: top.name,
                     crimeRecord: top.crimeRecord,
                     wantedLevel: top.wantedLevel,
+                    score: top.score,
                     isMafia: true
                 };
             } else {
@@ -97,6 +95,56 @@ async function getMafiaBoss() {
         return bossInfo;
     } catch (e) {
         console.error('[Profession] getMafiaBoss error:', e);
+        return null;
+    }
+}
+
+/**
+ * 取得目前警察局長的資訊 (快取 5 分鐘)
+ * 資格：isPolice: true，且績效 (policeMerit) >= 500。
+ * 排序依 policeMerit 降序，取第一名。
+ */
+async function getPoliceChief() {
+    const cacheKey = 'police_chief_info';
+    let chiefInfo = memoryCache.get(cacheKey);
+    if (chiefInfo !== null || memoryCache.cache.has(cacheKey)) return chiefInfo;
+
+    try {
+        const snapshot = await db.collection(COLLECTION_NAME)
+            .where('isPolice', '==', true)
+            .get();
+
+        if (snapshot.empty) {
+            chiefInfo = null;
+        } else {
+            const members = [];
+            snapshot.forEach(doc => {
+                const d = doc.data();
+                members.push({
+                    userId: doc.id,
+                    name: d.displayName || d.name || '無名氏',
+                    policeMerit: d.policeMerit || 0
+                });
+            });
+
+            members.sort((a, b) => b.policeMerit - a.policeMerit);
+
+            const top = members[0];
+            if (top && top.policeMerit >= 500) {
+                chiefInfo = {
+                    userId: top.userId,
+                    name: top.name,
+                    policeMerit: top.policeMerit,
+                    isPolice: true
+                };
+            } else {
+                chiefInfo = null;
+            }
+        }
+        memoryCache.set(cacheKey, chiefInfo, 300); // 5 分鐘
+        return chiefInfo;
+    } catch (e) {
+        console.error('[Profession] getPoliceChief error:', e);
         return null;
     }
 }
@@ -137,14 +185,17 @@ async function getProfessionTitle(userId) {
         if (isMafiaBoss) {
             currentProfession = '[黑道老大]';
         } 
-        // 1.5. 堂主與小弟 (需加入黑幫 isMafia: true 且前科達標)
-        else if (data.isMafia && (data.crimeRecord || 0) > 0) {
-            if (data.crimeRecord >= 11) {
+        // 1.5. 堂主與小弟 (需加入黑幫 isMafia: true，並依據江湖聲望分級)
+        else if (data.isMafia) {
+            const wl = data.wantedLevel || 0;
+            const cr = data.crimeRecord || 0;
+            const score = (wl * 100) + (cr * 5);
+            if (score >= 60) {
                 currentProfession = '[黑幫堂主]';
-            } else if (data.crimeRecord >= 3) {
-                currentProfession = '[黑道小弟]';
+            } else if (score >= 20) {
+                currentProfession = '[黑道打手]';
             } else {
-                currentProfession = '[黑道泊車小弟]'; // 前科不足但加入了
+                currentProfession = '[黑道泊車小弟]'; // 江湖聲望過低
             }
         }
         // 2. 市議員
@@ -157,7 +208,16 @@ async function getProfessionTitle(userId) {
         }
         // 4. 警察
         else if (data.isPolice) {
-            currentProfession = '[警察]';
+            const policeChief = await getPoliceChief();
+            const isChief = policeChief && policeChief.userId === userId;
+            const merit = data.policeMerit || 0;
+            if (isChief) {
+                currentProfession = '[警察局長]';
+            } else if (merit >= 100) {
+                currentProfession = '[高階警官]';
+            } else {
+                currentProfession = '[菜鳥巡佐]';
+            }
         }
 
         // 惡魔契約 (追加稱號)
@@ -189,26 +249,44 @@ function clearProfessionCache(userId) {
  * @returns {string|null} 'boss', 'capo', 'thug', 或 null
  */
 async function getMafiaRank(userId, data, topList = null) {
-    const { ADMIN_USER_ID } = require('../config/constants');
-    if (userId === ADMIN_USER_ID) return null; // 超級管理員不帶黑道階級
-
     const mafiaBoss = await getMafiaBoss();
     const isBoss = mafiaBoss && mafiaBoss.userId === userId;
     if (isBoss) return 'boss';
 
     if (data && data.isMafia) {
-        const crimeRecord = data.crimeRecord || 0;
-        if (crimeRecord >= 11) return 'capo';
-        if (crimeRecord >= 3) return 'thug';
+        const wl = data.wantedLevel || 0;
+        const cr = data.crimeRecord || 0;
+        const score = (wl * 100) + (cr * 5);
+        if (score >= 60) return 'capo';
+        if (score >= 20) return 'enforcer';
+        return 'thug'; // 泊車小弟也算是一種最基礎的 mafia
     }
     return null;
+}
+
+/**
+ * 取得警察階級字串
+ */
+async function getPoliceRank(userId, data) {
+    if (!data) return null;
+    if (!data.isPolice) return null;
+
+    const policeChief = await getPoliceChief();
+    const isChief = policeChief && policeChief.userId === userId;
+    if (isChief) return 'chief';
+
+    const merit = data.policeMerit || 0;
+    if (merit >= 100) return 'inspector';
+    return 'rookie';
 }
 
 module.exports = {
     getProfessionTitle,
     getWantedList,
     getMafiaBoss,
+    getPoliceChief,
     clearWantedListCache,
     clearProfessionCache,
-    getMafiaRank
+    getMafiaRank,
+    getPoliceRank
 };

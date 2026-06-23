@@ -192,7 +192,7 @@ async function handleCheckDriveStats(replyToken) {
         totalCount += count;
         return flexUtils.createBox('horizontal', [
             flexUtils.createText({ text: name, flex: 3, color: '#555555' }),
-            flexUtils.createText({ text: `${count.toLocaleString()} 張`, flex: 2, align: 'end', weight: 'bold', color: '#111111' })
+            flexUtils.createText({ text: `${count.toLocaleString()} 張`, flex: 2, align: 'end', weight: 'bold', color: flexUtils.COLORS.BG_CARD })
         ], { margin: 'sm' });
     });
     
@@ -205,7 +205,7 @@ async function handleCheckDriveStats(replyToken) {
     const bubble = flexUtils.createBubble({
         size: 'kilo',
         header: flexUtils.createHeader('📊 Google Drive 庫存', '即時雲端數據', '#00B900'),
-        body: flexUtils.createBox('vertical', rows)
+        body: flexUtils.createBox('vertical', rows, { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: 'xl' })
     });
     
     await lineUtils.replyFlex(replyToken, 'Google Drive 庫存狀態', bubble);

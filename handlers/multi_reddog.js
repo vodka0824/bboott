@@ -2,6 +2,7 @@ const lineUtils = require('../utils/line');
 const flexUtils = require('../utils/flex');
 const economyHandler = require('./economy');
 const atonementHandler = require('./atonement');
+const persistenceService = require('../services/multiplayerPersistenceService');
 const { db } = require('../utils/db');
 
 // In-Memory 儲存群組內的牌桌 (Key: groupId)
@@ -91,9 +92,12 @@ async function openTable(replyToken, groupId, userId, amountStr) {
     const consumeResult = await economyHandler.consumeCoin(groupId, userId, potAmount, true);
     if (!consumeResult.success) {
         activeTables.delete(groupId);
-        await lineUtils.replyText(replyToken, `❌ 開桌失敗：${consumeResult.message}`);
+        await lineUtils.replyText(replyToken, `❌ 開局失敗：${consumeResult.message}`);
         return;
     }
+
+    const userName = consumeResult.name || '莊家';
+    persistenceService.recordBet(groupId, '射龍門', userId, potAmount, userName).catch(e => console.error(e));
 
     const dealerName = consumeResult.name || '莊家';
 
@@ -138,13 +142,14 @@ async function openTable(replyToken, groupId, userId, amountStr) {
             flexUtils.createText({ text: '🐉 哭霸娛樂城 - 多人射龍門', size: 'lg', weight: 'bold', color: '#FF4500', align: 'center', margin: 'md', adjustMode: 'shrink-to-fit' }),
             flexUtils.createText({ text: `🚨 賭桌總通緝機率: ${(dealerWanted * 100).toFixed(1)}%`, size: 'xs', color: '#FF5252', align: 'center', margin: 'xs', weight: 'bold' }),
             flexUtils.createSeparator('md'),
-            flexUtils.createText({ text: `莊家：${dealerName}`, size: 'md', color: '#FFFFFF', margin: 'md' }),
-            flexUtils.createText({ text: `目前底池：${potAmount.toLocaleString()} 💰`, size: 'lg', weight: 'bold', color: '#FFD700', margin: 'md' }),
-            flexUtils.createText({ text: '輸入「加」或「+1」一起來撞柱！\n閒家最少需 2 人。莊家請輸入「開始」或「開」。', size: 'sm', color: '#AAAAAA', wrap: true, margin: 'lg' })
-        ], { backgroundColor: '#1A1A1A', paddingAll: 'xl' })
+            flexUtils.createText({ text: `莊家：${dealerName}`, size: 'md', color: flexUtils.COLORS.TEXT_MAIN, margin: 'md' }),
+            flexUtils.createText({ text: `目前底池：${potAmount.toLocaleString()} 💰`, size: 'lg', weight: 'bold', color: flexUtils.COLORS.PRIMARY, margin: 'md' }),
+            flexUtils.createText({ text: '輸入「加」或「+1」一起來撞柱！\n閒家最少需 2 人。莊家請輸入「開始」或「開」。', size: 'sm', color: flexUtils.COLORS.TEXT_SUB, wrap: true, margin: 'lg' })
+        ], { backgroundColor: flexUtils.COLORS.BG_CARD, paddingAll: 'xl' })
     });
 
-    await lineUtils.replyFlex(replyToken, '射龍門開桌', bubble);
+    const quickReply = require('../utils/multi_quickReply').getQuickReply(tableState, '射龍門');
+    await lineUtils.replyFlex(replyToken, '射龍門開桌', bubble, [], quickReply);
 }
 
 /**
@@ -235,6 +240,11 @@ async function startTable(replyToken, groupId, userId) {
 
 async function sendCombinedReply(replyToken, groupId, messages) {
     if (!messages || messages.length === 0) return;
+    
+    const table = activeTables.get(groupId);
+    const quickReply = require('../utils/multi_quickReply').getQuickReply(table, '射龍門');
+    if (quickReply) messages[messages.length - 1].quickReply = quickReply;
+
     if (messages.length <= 5) {
         await lineUtils.replyToLine(replyToken, messages).catch(console.error);
     } else {
@@ -343,17 +353,17 @@ function buildTurnMessages(events, table) {
             }
 
             const contents = [
-                flexUtils.createText({ text: '🃏 你的回合', size: 'xl', weight: 'bold', color: '#FFD700', align: 'center', margin: 'md' }),
+                flexUtils.createText({ text: '🃏 你的回合', size: 'xl', weight: 'bold', color: flexUtils.COLORS.PRIMARY, align: 'center', margin: 'md' }),
                 flexUtils.createText({ text: `🚨 賭桌總通緝機率: ${(totalWanted * 100).toFixed(1)}%`, size: 'xs', color: '#FF5252', align: 'center', margin: 'xs', weight: 'bold' }),
                 flexUtils.createSeparator('md'),
-                flexUtils.createText({ text: `玩家：${event.player.name}`, size: 'lg', color: '#FFFFFF', align: 'center', margin: 'md' }),
-                flexUtils.createText({ text: `${event.cards[0].suit}${event.cards[0].rank}   -   ${event.cards[1].suit}${event.cards[1].rank}`, size: '3xl', weight: 'bold', color: '#00FFFF', align: 'center', margin: 'lg' }),
-                flexUtils.createText({ text: instructionText, size: 'sm', color: '#AAAAAA', wrap: true, align: 'center', margin: 'md' })
+                flexUtils.createText({ text: `玩家：${event.player.name}`, size: 'lg', color: flexUtils.COLORS.TEXT_MAIN, align: 'center', margin: 'md' }),
+                flexUtils.createText({ text: `${event.cards[0].suit}${event.cards[0].rank}   -   ${event.cards[1].suit}${event.cards[1].rank}`, size: '3xl', weight: 'bold', color: flexUtils.COLORS.PRIMARY, align: 'center', margin: 'lg' }),
+                flexUtils.createText({ text: instructionText, size: 'sm', color: flexUtils.COLORS.TEXT_SUB, wrap: true, align: 'center', margin: 'md' })
             ];
 
             const bubble = flexUtils.createBubble({
                 size: 'mega',
-                body: flexUtils.createBox('vertical', contents, { backgroundColor: '#1A1A1A', paddingAll: 'xl' })
+                body: flexUtils.createBox('vertical', contents, { backgroundColor: flexUtils.COLORS.BG_CARD, paddingAll: 'xl' })
             });
 
             messages.push({ type: 'text', text: `輪到 ${event.player.name} 了！你有 1 分鐘的時間決定。` });
@@ -424,6 +434,8 @@ async function handlePlayerAction(replyToken, groupId, userId, actionStr, amount
             await lineUtils.replyText(replyToken, `❌ 下注失敗：${consumeResult.message}`);
             return true;
         }
+        
+        persistenceService.recordBet(groupId, '射龍門', userId, betAmount, consumeResult.name || '玩家').catch(e => console.error(e));
 
         // 發第三張牌
         if (table.deck.length < 1) table.deck = createDeck();
@@ -482,10 +494,12 @@ async function handlePlayerAction(replyToken, groupId, userId, actionStr, amount
         } else {
             table.potAmount += lostAmount;
             if (hitPost) {
-                // 剛剛已經扣了一倍 betAmount，現在補扣剩下的一倍
+                // 已經扣了一次 betAmount，撞柱要再扣一次
                 const extraDeduct = await economyHandler.consumeCoin(groupId, userId, betAmount, true);
                 if (!extraDeduct.success) {
                     await economyHandler.addCoinQuietly(groupId, userId, -betAmount);
+                } else {
+                    persistenceService.recordBet(groupId, '射龍門', userId, betAmount, currentPlayer.name).catch(e => console.error(e));
                 }
                 const userDoc = await db.collection('economy_users').doc(userId).get();
                 finalBalance = userDoc.exists ? (userDoc.data().kuCoin || 0) : 0;
@@ -493,18 +507,18 @@ async function handlePlayerAction(replyToken, groupId, userId, actionStr, amount
         }
 
         const contents = [
-            flexUtils.createText({ text: '🃏 開牌結果', size: 'xl', weight: 'bold', color: '#FFD700', align: 'center', margin: 'md' }),
+            flexUtils.createText({ text: '🃏 開牌結果', size: 'xl', weight: 'bold', color: flexUtils.COLORS.PRIMARY, align: 'center', margin: 'md' }),
             flexUtils.createSeparator('md'),
-            flexUtils.createText({ text: `第三張牌是：`, size: 'sm', color: '#AAAAAA', align: 'center', margin: 'md' }),
+            flexUtils.createText({ text: `第三張牌是：`, size: 'sm', color: flexUtils.COLORS.TEXT_SUB, align: 'center', margin: 'md' }),
             flexUtils.createText({ text: `${card3.suit}${card3.rank}`, size: '4xl', weight: 'bold', color: '#FF4500', align: 'center', margin: 'sm' }),
             flexUtils.createText({ text: resultMsg, size: 'lg', weight: 'bold', color: isWin ? flexUtils.COLORS.WIN : '#D32F2F', align: 'center', margin: 'lg', wrap: true }),
-            flexUtils.createText({ text: `目前底池：${table.potAmount.toLocaleString()} 💰`, size: 'md', weight: 'bold', color: '#FFD700', align: 'center', margin: 'md' }),
-            flexUtils.createText({ text: `目前餘額: ${finalBalance.toLocaleString()}`, size: 'xs', color: '#666666', align: 'center', margin: 'sm' })
+            flexUtils.createText({ text: `目前底池：${table.potAmount.toLocaleString()} 💰`, size: 'md', weight: 'bold', color: flexUtils.COLORS.PRIMARY, align: 'center', margin: 'md' }),
+            flexUtils.createText({ text: `目前餘額: ${finalBalance.toLocaleString()}`, size: 'xs', color: flexUtils.COLORS.TEXT_MUTED, align: 'center', margin: 'sm' })
         ];
 
         const bubble = flexUtils.createBubble({
             size: 'mega',
-            body: flexUtils.createBox('vertical', contents, { backgroundColor: '#1A1A1A', paddingAll: 'xl' })
+            body: flexUtils.createBox('vertical', contents, { backgroundColor: flexUtils.COLORS.BG_CARD, paddingAll: 'xl' })
         });
 
         const resultMsgObj = { type: 'flex', altText: `射龍門開牌：${card3.suit}${card3.rank}`, contents: bubble };
@@ -542,14 +556,14 @@ async function endGame(groupId, reason) {
         const contents = [
             flexUtils.createText({ text: '💥 慘絕人寰', size: '2xl', weight: 'bold', color: '#FF4500', align: 'center', margin: 'md' }),
             flexUtils.createSeparator('md'),
-            flexUtils.createText({ text: '底池已經被閒家徹底清空！', size: 'md', color: '#FFFFFF', align: 'center', margin: 'md' }),
-            flexUtils.createText({ text: `莊家 ${table.dealer.name} 只能躲在角落哭泣。😭`, size: 'sm', color: '#AAAAAA', align: 'center', margin: 'sm', wrap: true }),
+            flexUtils.createText({ text: '底池已經被閒家徹底清空！', size: 'md', color: flexUtils.COLORS.TEXT_MAIN, align: 'center', margin: 'md' }),
+            flexUtils.createText({ text: `莊家 ${table.dealer.name} 只能躲在角落哭泣。😭`, size: 'sm', color: flexUtils.COLORS.TEXT_SUB, align: 'center', margin: 'sm', wrap: true }),
             flexUtils.createText({ text: `結算: -${table.initialPot.toLocaleString()}`, size: 'md', weight: 'bold', color: '#D32F2F', align: 'center', margin: 'md' }),
-            flexUtils.createText({ text: '遊戲結束！', size: 'lg', weight: 'bold', color: '#FFD700', align: 'center', margin: 'lg' })
+            flexUtils.createText({ text: '遊戲結束！', size: 'lg', weight: 'bold', color: flexUtils.COLORS.PRIMARY, align: 'center', margin: 'lg' })
         ];
         const bubble = flexUtils.createBubble({
             size: 'mega',
-            body: flexUtils.createBox('vertical', contents, { backgroundColor: '#1A1A1A', paddingAll: 'xl' })
+            body: flexUtils.createBox('vertical', contents, { backgroundColor: flexUtils.COLORS.BG_CARD, paddingAll: 'xl' })
         });
         const flexMsg = { type: 'flex', altText: '射龍門結算：莊家破產', contents: bubble };
 
@@ -582,11 +596,11 @@ async function endGame(groupId, reason) {
         const profitColor = isWin ? flexUtils.COLORS.WIN : '#D32F2F';
 
         const contents = [
-            flexUtils.createText({ text: '🏁 遊戲結束', size: '2xl', weight: 'bold', color: '#FFD700', align: 'center', margin: 'md' }),
+            flexUtils.createText({ text: '🏁 遊戲結束', size: '2xl', weight: 'bold', color: flexUtils.COLORS.PRIMARY, align: 'center', margin: 'md' }),
             flexUtils.createSeparator('md'),
-            flexUtils.createText({ text: `所有閒家皆已完成回合`, size: 'xs', color: '#AAAAAA', align: 'center', margin: 'sm' }),
-            flexUtils.createText({ text: `莊家：${table.dealer.name}`, size: 'lg', color: '#FFFFFF', align: 'center', margin: 'md' }),
-            flexUtils.createText({ text: `收回底池：${payout.toLocaleString()} 💰`, size: 'xl', weight: 'bold', color: '#00FFFF', align: 'center', margin: 'md' })
+            flexUtils.createText({ text: `所有閒家皆已完成回合`, size: 'xs', color: flexUtils.COLORS.TEXT_SUB, align: 'center', margin: 'sm' }),
+            flexUtils.createText({ text: `莊家：${table.dealer.name}`, size: 'lg', color: flexUtils.COLORS.TEXT_MAIN, align: 'center', margin: 'md' }),
+            flexUtils.createText({ text: `收回底池：${payout.toLocaleString()} 💰`, size: 'xl', weight: 'bold', color: flexUtils.COLORS.PRIMARY, align: 'center', margin: 'md' })
         ];
 
         let detailText = `淨結算: ${dealerNetProfit >= 0 ? '+' : ''}${dealerNetProfit.toLocaleString()}`;
@@ -594,11 +608,11 @@ async function endGame(groupId, reason) {
             detailText = `總獲利: +${(dealerNetProfit + taxAmount).toLocaleString()}\n(系統抽水 5%: -${taxAmount.toLocaleString()})\n\n淨結算: +${dealerNetProfit.toLocaleString()}`;
         }
         contents.push(flexUtils.createText({ text: detailText, size: 'md', color: profitColor, align: 'center', margin: 'md', wrap: true }));
-        contents.push(flexUtils.createText({ text: `目前餘額: ${finalBalance.toLocaleString()}`, size: 'xs', color: '#666666', align: 'center', margin: 'sm' }));
+        contents.push(flexUtils.createText({ text: `目前餘額: ${finalBalance.toLocaleString()}`, size: 'xs', color: flexUtils.COLORS.TEXT_MUTED, align: 'center', margin: 'sm' }));
 
         const bubble = flexUtils.createBubble({
             size: 'mega',
-            body: flexUtils.createBox('vertical', contents, { backgroundColor: '#1A1A1A', paddingAll: 'xl' })
+            body: flexUtils.createBox('vertical', contents, { backgroundColor: flexUtils.COLORS.BG_CARD, paddingAll: 'xl' })
         });
         const flexMsg = { type: 'flex', altText: `射龍門結算：莊家收回 ${payout.toLocaleString()} 哭幣`, contents: bubble };
 

@@ -66,7 +66,7 @@ async function buildLotteryResultMessages(groupId, prize, totalParticipants, win
             flexUtils.createSeparator('lg'),
             flexUtils.createText({ text: `共 ${totalParticipants} 人參與`, size: 'xs', color: COLORS.GRAY, align: 'center', margin: 'md' }),
             flexUtils.createText({ text: '恭喜以上幸運兒！', size: 'md', color: COLORS.DANGER, weight: 'bold', align: 'center', margin: 'xs' })
-        ], { paddingAll: '20px' })
+        ], { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: '20px'  })
     });
 
     // Tagging Text (Text Message v2)
@@ -171,7 +171,7 @@ async function startLottery(replyToken, groupId, userId, prize, winnersStr, dura
                 ], { margin: 'md', spacing: 'sm' }),
                 flexUtils.createSeparator('md'),
                 flexUtils.createText({ text: '點擊下方按鈕或輸入關鍵字參加！', size: 'xs', color: COLORS.GRAY, margin: 'md', align: 'center' })
-            ], { paddingAll: '20px' }),
+            ], { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: '20px'  }),
             footer: flexUtils.createBox('vertical', [
                 flexUtils.createButton({
                     action: { type: 'message', label: '立即參加 🙋', text: keyword },
@@ -418,7 +418,7 @@ async function handleStatusQuery(replyToken, groupId) {
                         action: { type: 'message', label: '立即參加 🙋', text: data.keyword },
                         style: 'secondary', margin: 'md'
                     }) : flexUtils.createText({ text: '⛔ 報名已截止', size: 'sm', color: COLORS.DANGER, align: 'center', margin: 'md' })
-                ], { paddingAll: '20px' })
+                ], { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: '20px'  })
             }));
         });
 

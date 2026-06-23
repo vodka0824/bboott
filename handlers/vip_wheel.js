@@ -95,7 +95,7 @@ async function playVIPWheel(replyToken, groupId, userId) {
         }
 
         // Build Flex Message
-        const color = isJackpot ? '#FFD700' : (result.wonAmount >= ENTRY_FEE ? '#4CAF50' : '#D32F2F');
+        const color = isJackpot ? flexUtils.COLORS.PRIMARY : (result.wonAmount >= ENTRY_FEE ? '#4CAF50' : '#D32F2F');
         
         let title = 'VIP 尊爵輪盤';
         if (isJackpot) title = '👑 JACKPOT 👑';
@@ -104,18 +104,18 @@ async function playVIPWheel(replyToken, groupId, userId) {
         const contents = [
             flexUtils.createText({ text: title, size: 'xl', weight: 'bold', color: color, align: 'center', margin: 'md' }),
             flexUtils.createSeparator('md'),
-            flexUtils.createText({ text: `玩家: ${memberName}`, size: 'sm', color: '#FFFFFF', align: 'center', margin: 'md' }),
+            flexUtils.createText({ text: `玩家: ${memberName}`, size: 'sm', color: flexUtils.COLORS.TEXT_MAIN, align: 'center', margin: 'md' }),
             flexUtils.createText({ text: `結果: ${result.rewardName}`, size: 'xxl', weight: 'bold', color: color, align: 'center', margin: 'md' })
         ];
 
         if (result.wonAmount > 0) {
-            contents.push(flexUtils.createText({ text: `獲得: ${result.wonAmount.toLocaleString()} 哭幣`, size: 'md', color: '#FFD700', align: 'center', margin: 'sm' }));
+            contents.push(flexUtils.createText({ text: `獲得: ${result.wonAmount.toLocaleString()} 哭幣`, size: 'md', color: flexUtils.COLORS.PRIMARY, align: 'center', margin: 'sm' }));
         }
 
         contents.push(
             flexUtils.createSeparator('md'),
-            flexUtils.createText({ text: `目前餘額: ${result.newBalance.toLocaleString()}`, size: 'xs', color: '#AAAAAA', align: 'center', margin: 'md' }),
-            flexUtils.createText({ text: `💰 當前大獎池: ${result.finalPool.toLocaleString()}`, size: 'xs', color: '#FF9800', weight: 'bold', align: 'center', margin: 'sm' })
+            flexUtils.createText({ text: `目前餘額: ${result.newBalance.toLocaleString()}`, size: 'xs', color: flexUtils.COLORS.TEXT_SUB, align: 'center', margin: 'md' }),
+            flexUtils.createText({ text: `💰 當前大獎池: ${result.finalPool.toLocaleString()}`, size: 'xs', color: flexUtils.COLORS.SECONDARY, weight: 'bold', align: 'center', margin: 'sm' })
         );
 
         // Add action button for retry
@@ -132,7 +132,7 @@ async function playVIPWheel(replyToken, groupId, userId) {
 
         const bubble = flexUtils.createBubble({
             size: 'kilo',
-            body: flexUtils.createBox('vertical', contents, { backgroundColor: '#1A1A1A', paddingAll: 'xl' })
+            body: flexUtils.createBox('vertical', contents, { backgroundColor: flexUtils.COLORS.BG_CARD, paddingAll: 'xl' })
         });
 
         const messages = [];

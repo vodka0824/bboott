@@ -67,15 +67,15 @@ function buildRoulettePanel({ shotsRemaining, currentMultiplier, bet, status, fi
     const contents = [
         flexUtils.createText({ text: '🔫 俄羅斯輪盤', size: 'xl', weight: 'bold', color: '#FF4444', align: 'center', margin: 'md' }),
         flexUtils.createSeparator('md'),
-        flexUtils.createText({ text: chamberDisplay, size: 'md', align: 'center', margin: 'lg', color: '#FFFFFF' }),
+        flexUtils.createText({ text: chamberDisplay, size: 'md', align: 'center', margin: 'lg', color: flexUtils.COLORS.TEXT_MAIN }),
         flexUtils.createSeparator('md')
     ];
 
     if (status === 'start' || status === 'survive') {
         contents.push(
-            flexUtils.createText({ text: status === 'start' ? '💰 下注完成，準備開槍！' : '😮 你活下來了！', size: 'md', weight: 'bold', color: '#FFD700', align: 'center', margin: 'md' }),
-            flexUtils.createText({ text: `本金: ${bet.toLocaleString()} 哭幣`, size: 'sm', color: '#AAAAAA', align: 'center', margin: 'sm' }),
-            flexUtils.createText({ text: `當前倍率: ${currentMultiplier}x`, size: 'lg', weight: 'bold', color: '#FF9800', align: 'center', margin: 'sm' }),
+            flexUtils.createText({ text: status === 'start' ? '💰 下注完成，準備開槍！' : '😮 你活下來了！', size: 'md', weight: 'bold', color: flexUtils.COLORS.PRIMARY, align: 'center', margin: 'md' }),
+            flexUtils.createText({ text: `本金: ${bet.toLocaleString()} 哭幣`, size: 'sm', color: flexUtils.COLORS.TEXT_SUB, align: 'center', margin: 'sm' }),
+            flexUtils.createText({ text: `當前倍率: ${currentMultiplier}x`, size: 'lg', weight: 'bold', color: flexUtils.COLORS.SECONDARY, align: 'center', margin: 'sm' }),
             flexUtils.createText({ text: `現可帶走: ${potentialWin.toLocaleString()} 哭幣`, size: 'md', weight: 'bold', color: '#4CAF50', align: 'center', margin: 'sm' })
         );
 
@@ -110,33 +110,33 @@ function buildRoulettePanel({ shotsRemaining, currentMultiplier, bet, status, fi
     } else if (status === 'dead') {
         contents.push(
             flexUtils.createText({ text: '💥 中彈了！！', size: 'xxl', weight: 'bold', color: '#FF0000', align: 'center', margin: 'md' }),
-            flexUtils.createText({ text: `你用 ${bet.toLocaleString()} 哭幣`, size: 'sm', color: '#AAAAAA', align: 'center', margin: 'sm' }),
-            flexUtils.createText({ text: '換了一顆子彈穿頭。', size: 'sm', color: '#AAAAAA', align: 'center', margin: 'xs' }),
+            flexUtils.createText({ text: `你用 ${bet.toLocaleString()} 哭幣`, size: 'sm', color: flexUtils.COLORS.TEXT_SUB, align: 'center', margin: 'sm' }),
+            flexUtils.createText({ text: '換了一顆子彈穿頭。', size: 'sm', color: flexUtils.COLORS.TEXT_SUB, align: 'center', margin: 'xs' }),
             flexUtils.createText({ text: '哭幣已充公 ✅', size: 'md', weight: 'bold', color: '#FF4444', align: 'center', margin: 'md' }),
-            flexUtils.createText({ text: `目前餘額: ${finalBalance.toLocaleString()}`, size: 'xs', color: '#666666', align: 'center', margin: 'md' })
+            flexUtils.createText({ text: `目前餘額: ${finalBalance.toLocaleString()}`, size: 'xs', color: flexUtils.COLORS.TEXT_MUTED, align: 'center', margin: 'md' })
         );
 
     } else if (status === 'cashout') {
         contents.push(
-            flexUtils.createText({ text: '💰 明智之舉！', size: 'xl', weight: 'bold', color: '#FFD700', align: 'center', margin: 'md' }),
+            flexUtils.createText({ text: '💰 明智之舉！', size: 'xl', weight: 'bold', color: flexUtils.COLORS.PRIMARY, align: 'center', margin: 'md' }),
             flexUtils.createText({ text: `獲得: ${potentialWin.toLocaleString()} 哭幣`, size: 'lg', weight: 'bold', color: '#4CAF50', align: 'center', margin: 'sm' }),
             ...(taxMsg ? [flexUtils.createText({ text: taxMsg, size: 'xs', color: '#FF5555', align: 'center', margin: 'xs', weight: 'bold' })] : []),
-            flexUtils.createText({ text: `目前餘額: ${finalBalance.toLocaleString()}`, size: 'xs', color: '#666666', align: 'center', margin: 'md' })
+            flexUtils.createText({ text: `目前餘額: ${finalBalance.toLocaleString()}`, size: 'xs', color: flexUtils.COLORS.TEXT_MUTED, align: 'center', margin: 'md' })
         );
 
     } else if (status === 'survived_all') {
         contents.push(
-            flexUtils.createText({ text: '🏆 你是個神！', size: 'xxl', weight: 'bold', color: '#FFD700', align: 'center', margin: 'md' }),
-            flexUtils.createText({ text: '通過全部 5 槍！', size: 'md', color: '#FFFFFF', align: 'center', margin: 'sm' }),
+            flexUtils.createText({ text: '🏆 你是個神！', size: 'xxl', weight: 'bold', color: flexUtils.COLORS.PRIMARY, align: 'center', margin: 'md' }),
+            flexUtils.createText({ text: '通過全部 5 槍！', size: 'md', color: flexUtils.COLORS.TEXT_MAIN, align: 'center', margin: 'sm' }),
             flexUtils.createText({ text: `獲得: ${potentialWin.toLocaleString()} 哭幣`, size: 'lg', weight: 'bold', color: '#4CAF50', align: 'center', margin: 'sm' }),
             ...(taxMsg ? [flexUtils.createText({ text: taxMsg, size: 'xs', color: '#FF5555', align: 'center', margin: 'xs', weight: 'bold' })] : []),
-            flexUtils.createText({ text: `目前餘額: ${finalBalance.toLocaleString()}`, size: 'xs', color: '#666666', align: 'center', margin: 'md' })
+            flexUtils.createText({ text: `目前餘額: ${finalBalance.toLocaleString()}`, size: 'xs', color: flexUtils.COLORS.TEXT_MUTED, align: 'center', margin: 'md' })
         );
     }
 
     return flexUtils.createBubble({
         size: 'kilo',
-        body: flexUtils.createBox('vertical', contents, { backgroundColor: '#0D0D0D', paddingAll: 'xl' })
+        body: flexUtils.createBox('vertical', contents, { backgroundColor: flexUtils.COLORS.BG_CARD, paddingAll: 'xl' })
     });
 }
 

@@ -198,12 +198,12 @@ function buildHoroscopeFlex(data, type = 'daily') {
     // Footer
     bodyContents.push(flexUtils.createSeparator('lg'));
     bodyContents.push(flexUtils.createBox('horizontal', [
-        flexUtils.createText({ text: 'Source: Cosmopolitan (TW)', size: 'xxs', color: '#CCCCCC', align: 'end' })
+        flexUtils.createText({ text: 'Source: Cosmopolitan (TW)', size: 'xxs', color: flexUtils.COLORS.TEXT_MUTED, align: 'end' })
     ], { margin: 'sm' }));
 
     const HOROSCOPE_COLOR = '#D81B60';
     const header = flexUtils.createHeader(`🔮 ${data.name} 今日運勢`, data.date, HOROSCOPE_COLOR);
-    return flexUtils.createBubble({ size: 'mega', header: header, body: flexUtils.createBox('vertical', bodyContents, { paddingAll: '15px' }) });
+    return flexUtils.createBubble({ size: 'mega', header: header, body: flexUtils.createBox('vertical', bodyContents, { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: '15px'  }) });
 }
 
 /**

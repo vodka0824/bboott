@@ -1,5 +1,6 @@
 const lineUtils = require('../utils/line');
 const flexUtils = require('../utils/flex');
+const notificationService = require('../services/notificationService');
 
 /**
  * 抄寫佛經 (洗白前科)
@@ -940,9 +941,9 @@ async function checkAndDischargeMilitary() {
 
         for (const msgData of dischargeMessages) {
             try {
-                await lineUtils.pushMessage(msgData.groupId, [{ type: 'text', text: msgData.text }]);
+                await notificationService.queueNotification(msgData.groupId, [{ type: 'text', text: msgData.text }]);
             } catch (e) {
-                console.error(`[Military] Failed to push discharge message to ${msgData.groupId}:`, e.message);
+                console.error(`[Military] Failed to queue discharge message to ${msgData.groupId}:`, e.message);
             }
         }
 
@@ -1371,6 +1372,171 @@ async function handleMilitaryGame(replyToken, context, gameType) {
     }
 }
 
+async function handleBatchMilitaryGames(replyToken, context) {
+    const { userId, groupId } = context;
+    const { db } = require('../utils/db');
+    const lineUtils = require('../utils/line');
+    const flexUtils = require('../utils/flex');
+    const memberName = await lineUtils.getGroupMemberName(groupId, userId);
+    
+    try {
+        let results = [];
+        let discharged = false;
+        let newRankName = '';
+        const uniqueGames = ['出公差', '拔草', '掃地', '站夜哨', '裝病', '打靶', '高裝檢', '漢光演習'];
+        const COLLECTION_NAME = 'economy_users';
+
+        await db.runTransaction(async (t) => {
+            const docRef = db.collection(COLLECTION_NAME).doc(userId);
+            const doc = await t.get(docRef);
+            if (!doc.exists) return;
+            const data = doc.data();
+            const now = Date.now();
+
+            if (!data.militaryUntil) {
+                results.push({ error: 'not_military' });
+                return;
+            }
+
+            if (now >= data.militaryUntil) {
+                results.push({ error: 'time_up' });
+                return;
+            }
+
+            let updates = {};
+            let currentUntil = data.militaryUntil;
+            const currentCount = data.militaryEnlistCount || 1;
+            let currentKuCoin = data.kuCoin || 0;
+            let totalKuCoinDiff = 0;
+
+            for (const gameType of uniqueGames) {
+                if (discharged) break; // 若已退伍則不再執行後續勤務
+                
+                const game = GAMES[gameType];
+                const cdKey = `lastMilitary_${gameType}`;
+                const cdMs = game.cd * 60 * 1000;
+                const lastTime = data[cdKey] || 0;
+                
+                if (now - lastTime < cdMs) continue; // 冷卻中跳過
+
+                const rand = Math.random();
+                let cumulative = 0;
+                let selectedOutcome = null;
+
+                for (const outcome of game.outcomes) {
+                    cumulative += outcome.chance;
+                    if (rand < cumulative) {
+                        selectedOutcome = outcome;
+                        break;
+                    }
+                }
+                if (!selectedOutcome) selectedOutcome = game.outcomes[game.outcomes.length - 1];
+
+                updates[cdKey] = now;
+                
+                let title = `【${selectedOutcome.type}】`;
+                let diffText = '';
+                
+                if (selectedOutcome.timeChange === 'SPECIAL') {
+                    updates.militaryUntil = db.FieldValue.delete();
+                    updates.militaryEnlistCount = currentCount + 1;
+                    const rankInfo = getMilitaryRankInfo(currentCount); 
+                    newRankName = rankInfo.name;
+                    updates.kuCoin = db.FieldValue.increment((updates.kuCoin ? updates.kuCoin.operand : 0) + rankInfo.salary);
+                    discharged = true;
+                    title = '🎖️ 【破格晉升】';
+                    diffText = '特赦退伍';
+                } else if (selectedOutcome.timeChange === 'SPECIAL_FAIL') {
+                    updates.militaryUntil = db.FieldValue.delete();
+                    const nextCount = Math.max(1, currentCount - 1);
+                    updates.militaryEnlistCount = nextCount;
+                    const rankInfo = getMilitaryRankInfo(nextCount - 1);
+                    newRankName = rankInfo.name;
+                    discharged = true;
+                    title = '💥 【嚴重事故】';
+                    diffText = '降階勒退';
+                } else {
+                    currentUntil = currentUntil + (selectedOutcome.timeChange * 60 * 1000);
+                    const diff = selectedOutcome.timeChange;
+                    diffText = diff > 0 ? `+${diff} 分鐘` : diff < 0 ? `${diff} 分鐘` : `無增減`;
+                    
+                    if (currentUntil <= now) {
+                        updates.militaryUntil = db.FieldValue.delete();
+                        const rankInfo = getMilitaryRankInfo(currentCount - 1);
+                        newRankName = rankInfo.name;
+                        updates.kuCoin = db.FieldValue.increment((updates.kuCoin ? updates.kuCoin.operand : 0) + rankInfo.salary);
+                        discharged = true;
+                        diffText = '屆滿退伍';
+                    } else {
+                        updates.militaryUntil = currentUntil;
+                    }
+                }
+                
+                let color = '#AAAAAA';
+                if (selectedOutcome.type === '大勝' || selectedOutcome.type === '小勝') color = '#4CAF50';
+                else if (selectedOutcome.type === '小敗' || selectedOutcome.type === '大敗') color = '#F44336';
+
+                results.push({
+                    gameType: game.title,
+                    text: selectedOutcome.text,
+                    title,
+                    diffText,
+                    color
+                });
+            }
+
+            if (Object.keys(updates).length > 0) {
+                t.update(docRef, updates);
+            }
+        });
+
+        if (results.length > 0 && results[0].error === 'not_military') {
+            await lineUtils.replyText(replyToken, '❌ 你又不是軍人，跑來營區幹嘛？（請先使用「入伍」指令）');
+            return;
+        }
+
+        if (results.length > 0 && results[0].error === 'time_up') {
+            await lineUtils.replyText(replyToken, '🪖 你的役期已經滿了，請先去辦理「!退伍」手續，不要再白做工了！');
+            return;
+        }
+
+        if (results.length === 0) {
+            await lineUtils.replyText(replyToken, '⏳ 報告班長！目前所有的勤務都在冷卻中，請稍後再來一鍵執行！');
+            return;
+        }
+
+        const bodyContents = [];
+        results.forEach((res, index) => {
+            bodyContents.push(flexUtils.createBox('horizontal', [
+                flexUtils.createText({ text: res.gameType, size: 'xs', weight: 'bold', color: '#BBBBBB', flex: 2 }),
+                flexUtils.createText({ text: res.text, size: 'xs', color: res.color, flex: 5, wrap: true }),
+                flexUtils.createText({ text: res.diffText, size: 'xxs', weight: 'bold', color: res.color, flex: 2, align: 'end' })
+            ], { margin: 'sm' }));
+            
+            if (index < results.length - 1) {
+                bodyContents.push(flexUtils.createSeparator('sm'));
+            }
+        });
+
+        if (discharged) {
+            bodyContents.push(flexUtils.createSeparator('md'));
+            bodyContents.push(flexUtils.createText({ text: `🎉 已達成退伍條件！\n結算軍階：${newRankName}`, size: 'sm', weight: 'bold', color: '#FFD700', margin: 'md', wrap: true }));
+        }
+
+        const flexBubble = flexUtils.createBubble({
+            size: 'mega',
+            header: flexUtils.createHeader('🚀 一鍵出操報告', `【國軍】${memberName}`, '#1A1A1A', '#2196F3'),
+            body: flexUtils.createBox('vertical', bodyContents, { backgroundColor: '#1A1A1A', paddingAll: 'xl' })
+        });
+
+        await lineUtils.replyFlex(replyToken, '一鍵出操報告', flexBubble);
+
+    } catch (e) {
+        console.error('[Military] handleBatchMilitaryGames Error:', e);
+        await lineUtils.replyText(replyToken, '❌ 執行一鍵勤務發生錯誤。');
+    }
+}
+
 async function handlePension(replyToken, context) {
     const { userId, groupId } = context;
     const { db } = require('../utils/db');
@@ -1485,5 +1651,6 @@ module.exports = {
     handleDonation,
     handleDragDown,
     checkAndDischargeMilitary,
-    getMilitaryRankInfo
+    getMilitaryRankInfo,
+    handleBatchMilitaryGames
 };

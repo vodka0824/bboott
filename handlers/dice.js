@@ -1,3 +1,4 @@
+const flexUtils = require('../utils/flex');
 const lineUtils = require('../utils/line');
 const economyHandler = require('./economy');
 const atonementHandler = require('./atonement');
@@ -90,7 +91,7 @@ async function rollDice(replyToken, groupId, userId, betType, amountStr) {
         body: {
             type: "box",
             layout: "vertical",
-            backgroundColor: "#1A1A1D", // 質感深色背景
+            backgroundColor: flexUtils.COLORS.BG_CARD, // 質感深色背景
             paddingAll: "xl",
             contents: [
                 {
@@ -115,7 +116,7 @@ async function rollDice(replyToken, groupId, userId, betType, amountStr) {
                     size: "4xl",
                     weight: "bold",
                     align: "center",
-                    color: "#FFFFFF",
+                    color: flexUtils.COLORS.TEXT_MAIN,
                     margin: "lg"
                 },
                 {
@@ -124,7 +125,7 @@ async function rollDice(replyToken, groupId, userId, betType, amountStr) {
                     size: "sm",
                     weight: "bold",
                     align: "center",
-                    color: "#CCCCCC",
+                    color: flexUtils.COLORS.TEXT_MUTED,
                     margin: "sm"
                 },
                 {
@@ -150,7 +151,7 @@ async function rollDice(replyToken, groupId, userId, betType, amountStr) {
                             size: "xs",
                             weight: "bold",
                             align: "center",
-                            color: "#888888",
+                            color: flexUtils.COLORS.TEXT_MUTED,
                             margin: "sm"
                         }
                     ]

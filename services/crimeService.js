@@ -149,7 +149,7 @@ async function queryWantedLevel(replyToken, groupId, userId) {
         let color = '#00FF00';
         if (wantedLevel >= 0.01) {
             warningStr = '警方已經注意到了，請小心行事。';
-            color = '#FFD700';
+            color = flexUtils.COLORS.PRIMARY;
         }
         if (wantedLevel >= 0.03) {
             warningStr = '你已經上了警方的黑名單！隨時可能被抓。';
@@ -171,7 +171,7 @@ async function queryWantedLevel(replyToken, groupId, userId) {
                 flexUtils.createText({ text: `${wantedPercent}%`, size: 'xxl', weight: 'bold', color: color, align: 'center', margin: 'md' }),
                 flexUtils.createSeparator('md'),
                 flexUtils.createText({ text: warningStr, size: 'sm', color: '#555555', align: 'center', wrap: true, margin: 'md' })
-            ], { backgroundColor: '#FFFFFF', paddingAll: 'xl' })
+            ], { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: 'xl' })
         });
 
         await lineUtils.replyFlex(replyToken, '個人通緝狀態', bubble);
@@ -191,15 +191,35 @@ async function showCombinedWantedAndJailRank(replyToken, groupId) {
         const flexUtils = require('../utils/flex');
         const { getWantedList, getProfessionTitle } = require('../handlers/profession');
 
-        // 平行查詢通緝榜（前10名）與前科榜（前10名）
-        const [wantedList, criminalSnapshot] = await Promise.all([
+        // 平行查詢通緝榜（最多 50 名）與前科榜（最多 50 名）
+        const fetchLimit = groupId ? 50 : 10;
+        const [wantedListAll, criminalSnapshot] = await Promise.all([
             getWantedList(), 
             db.collection(COLLECTION_NAME)
                 .where('crimeRecord', '>', 0)
                 .orderBy('crimeRecord', 'desc')
-                .limit(10)
+                .limit(fetchLimit)
                 .get()
         ]);
+
+        const filterGroupMembers = async (list) => {
+            if (!groupId) return list.slice(0, 10);
+            const valid = [];
+            for (const item of list) {
+                try {
+                    await lineUtils.getGroupMemberProfile(groupId, item.userId || item.id);
+                    valid.push(item);
+                    if (valid.length >= 10) break;
+                } catch (e) {
+                    // skip
+                }
+            }
+            return valid;
+        };
+
+        const wantedList = await filterGroupMembers(wantedListAll);
+        const criminalDocsAll = criminalSnapshot.empty ? [] : criminalSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const criminalDocs = await filterGroupMembers(criminalDocsAll);
 
         const cleanName = (name) => {
             if (!name) return '';
@@ -262,7 +282,7 @@ async function showCombinedWantedAndJailRank(replyToken, groupId) {
                                     {
                                         type: 'box',
                                         layout: 'vertical',
-                                        backgroundColor: '#F5F5F5',
+                                        backgroundColor: flexUtils.COLORS.TEXT_SUB,
                                         cornerRadius: 'md',
                                         paddingStart: '6px',
                                         paddingEnd: '6px',
@@ -273,7 +293,7 @@ async function showCombinedWantedAndJailRank(replyToken, groupId) {
                                                 type: 'text',
                                                 text: professionName,
                                                 size: 'xxs',
-                                                color: '#616161',
+                                                color: '#FEFEFE',
                                                 weight: 'bold'
                                             }
                                         ]
@@ -337,7 +357,7 @@ async function showCombinedWantedAndJailRank(replyToken, groupId) {
                 },
                 body: flexUtils.createBox('vertical', [
                     flexUtils.createText({ text: '🕊️ 目前沒有任何通緝犯，大家都是奉公守法的好公民！', size: 'md', color: '#555555', align: 'center', margin: 'md', wrap: true })
-                ], { paddingAll: 'xl', backgroundColor: '#FFFFFF' })
+                ], { paddingAll: 'xl', backgroundColor: '#F7F7F7' })
             });
         } else {
             const contents = [];
@@ -345,7 +365,7 @@ async function showCombinedWantedAndJailRank(replyToken, groupId) {
             for (let i = 0; i < wantedList.length; i++) {
                 const item = wantedList[i];
                 let rankStr = `${i + 1}.`;
-                let rankColor = '#757575';
+                let rankColor = flexUtils.COLORS.TEXT_SUB;
                 if (i === 0) { rankStr = '🥇'; rankColor = '#D4AF37'; }
                 else if (i === 1) { rankStr = '🥈'; rankColor = '#C0C0C0'; }
                 else if (i === 2) { rankStr = '🥉'; rankColor = '#CD7F32'; }
@@ -369,7 +389,7 @@ async function showCombinedWantedAndJailRank(replyToken, groupId) {
                 ));
                 
                 if (i < wantedList.length - 1) {
-                    contents.push(flexUtils.createSeparator('sm', '#EEEEEE'));
+                    contents.push(flexUtils.createSeparator('sm', flexUtils.COLORS.TEXT_SUB));
                 }
             }
 
@@ -396,14 +416,13 @@ async function showCombinedWantedAndJailRank(replyToken, groupId) {
                     layout: 'vertical',
                     contents: contents,
                     paddingAll: 'lg',
-                    backgroundColor: '#FFFFFF'
+                    backgroundColor: '#F7F7F7'
                 }
             };
         }
 
-        // ================= 2. 建立前科榜 Bubble =================
         let criminalBubble;
-        if (criminalSnapshot.empty) {
+        if (criminalDocs.length === 0) {
             criminalBubble = flexUtils.createBubble({
                 size: 'mega',
                 header: {
@@ -423,27 +442,26 @@ async function showCombinedWantedAndJailRank(replyToken, groupId) {
                 },
                 body: flexUtils.createBox('vertical', [
                     flexUtils.createText({ text: '🕊️ 目前群組內還沒有任何前科犯！大家都是乖寶寶！', size: 'md', color: '#555555', align: 'center', margin: 'md', wrap: true })
-                ], { paddingAll: 'xl', backgroundColor: '#FFFFFF' })
+                ], { paddingAll: 'xl', backgroundColor: '#F7F7F7' })
             });
         } else {
             const contents = [];
-            const docs = criminalSnapshot.docs;
             
-            for (let i = 0; i < docs.length; i++) {
-                const doc = docs[i];
-                const data = doc.data();
+            for (let i = 0; i < criminalDocs.length; i++) {
+                const data = criminalDocs[i];
+                const userId = data.id || data.userId;
                 let rankStr = `${i + 1}.`;
-                let rankColor = '#757575';
+                let rankColor = flexUtils.COLORS.TEXT_SUB;
                 if (i === 0) { rankStr = '🥇'; rankColor = '#D4AF37'; }
                 else if (i === 1) { rankStr = '🥈'; rankColor = '#C0C0C0'; }
                 else if (i === 2) { rankStr = '🥉'; rankColor = '#CD7F32'; }
 
                 const crimeRecord = data.crimeRecord || 0;
                 
-                const professionTitle = await getProfessionTitle(doc.id);
+                const professionTitle = await getProfessionTitle(userId);
                 const professionName = parseProfession(professionTitle);
                 
-                const { getCriminalTitle } = require('./jail');
+                const { getCriminalTitle } = require('../handlers/jail');
                 const crimeTitle = getCriminalTitle(crimeRecord);
                 const displayName = crimeTitle + cleanName(data.displayName || data.name || '未知');
                 
@@ -460,8 +478,8 @@ async function showCombinedWantedAndJailRank(replyToken, groupId) {
                     '#00796B'
                 ));
                 
-                if (i < docs.length - 1) {
-                    contents.push(flexUtils.createSeparator('sm', '#EEEEEE'));
+                if (i < criminalDocs.length - 1) {
+                    contents.push(flexUtils.createSeparator('sm', flexUtils.COLORS.TEXT_SUB));
                 }
             }
 
@@ -488,7 +506,7 @@ async function showCombinedWantedAndJailRank(replyToken, groupId) {
                     layout: 'vertical',
                     contents: contents,
                     paddingAll: 'lg',
-                    backgroundColor: '#FFFFFF'
+                    backgroundColor: '#F7F7F7'
                 }
             };
         }
@@ -515,7 +533,24 @@ async function showCriminalList(replyToken, context) {
     const { userId, groupId } = context;
     try {
         const { getWantedList, getMafiaBoss } = require('../handlers/profession');
-        const topList = await getWantedList();
+        const allTopList = await getWantedList();
+        
+        const filterGroupMembers = async (list) => {
+            if (!groupId) return list.slice(0, 10);
+            const valid = [];
+            for (const item of list) {
+                try {
+                    await lineUtils.getGroupMemberProfile(groupId, item.userId);
+                    valid.push(item);
+                    if (valid.length >= 10) break;
+                } catch (e) {
+                    // skip
+                }
+            }
+            return valid;
+        };
+
+        const topList = await filterGroupMembers(allTopList);
 
         if (!topList || topList.length === 0) {
             await lineUtils.replyText(replyToken, '💭 目前沒有任何有前科紀錄的犯罪者，天下太平！');
@@ -531,24 +566,24 @@ async function showCriminalList(replyToken, context) {
 
         const contents = [
             flexUtils.createText({ text: '🕶️ 槍擊要犯通緝名單', weight: 'bold', size: 'xl', color: '#FF4500', align: 'center' }),
-            flexUtils.createText({ text: '依通緝值排序，最高且具黑幫身份者為【黑道老大】', size: 'xxs', color: '#AAAAAA', align: 'center', margin: 'sm' }),
+            flexUtils.createText({ text: '依通緝值排序，最高且具黑幫身份者為【黑道老大】', size: 'xxs', color: flexUtils.COLORS.TEXT_SUB, align: 'center', margin: 'sm' }),
             flexUtils.createSeparator('md')
         ];
 
         topList.forEach((entry, i) => {
             const rank = i + 1;
             let rankStr = `${rank}.`;
-            let rankColor = '#FFFFFF';
+            let rankColor = flexUtils.COLORS.TEXT_MAIN;
             let namePrefix = '';
             
             const isBoss = mafiaBossId && entry.userId === mafiaBossId;
 
             if (isBoss) {
                 rankStr = '👑';
-                rankColor = '#FFD700';
+                rankColor = flexUtils.COLORS.PRIMARY;
                 namePrefix = '【黑道老大】';
             } else {
-                if (rank === 1) { rankStr = '🥇'; rankColor = '#FFD700'; }
+                if (rank === 1) { rankStr = '🥇'; rankColor = flexUtils.COLORS.PRIMARY; }
                 else if (rank === 2) { rankStr = '🥈'; rankColor = '#C0C0C0'; }
                 else if (rank === 3) { rankStr = '🥉'; rankColor = '#CD7F32'; }
             }
@@ -560,21 +595,21 @@ async function showCriminalList(replyToken, context) {
             contents.push(flexUtils.createBox('vertical', [
                 flexUtils.createBox('horizontal', [
                     flexUtils.createText({ text: rankStr, size: 'md', color: rankColor, flex: 1, weight: 'bold' }),
-                    flexUtils.createText({ text: `${namePrefix}${cleanName}`, size: 'md', color: '#FFFFFF', flex: 8, wrap: true, weight: isBoss ? 'bold' : 'regular' })
+                    flexUtils.createText({ text: `${namePrefix}${cleanName}`, size: 'md', color: flexUtils.COLORS.TEXT_MAIN, flex: 8, wrap: true, weight: isBoss ? 'bold' : 'regular' })
                 ], { alignItems: 'center' }),
                 flexUtils.createBox('horizontal', [
-                    flexUtils.createText({ text: `前科：${entry.crimeRecord} 次`, size: 'xs', color: '#FF9800', flex: 1 }),
+                    flexUtils.createText({ text: `前科：${entry.crimeRecord} 次`, size: 'xs', color: flexUtils.COLORS.SECONDARY, flex: 1 }),
                     flexUtils.createText({ text: `通緝值：${wantedPct}`, size: 'xs', color: '#FF4500', flex: 1, align: 'end' })
                 ], { margin: 'sm' }),
                 flexUtils.createBox('horizontal', [
-                    flexUtils.createText({ text: `💰 懸賞：${bounty.toLocaleString()} 哭幣`, size: 'xs', color: '#FFD700', flex: 1 })
+                    flexUtils.createText({ text: `💰 懸賞：${bounty.toLocaleString()} 哭幣`, size: 'xs', color: flexUtils.COLORS.PRIMARY, flex: 1 })
                 ], { margin: 'xs' })
             ], { margin: 'lg' }));
         });
 
         const bubble = flexUtils.createBubble({
             size: 'mega',
-            body: flexUtils.createBox('vertical', contents, { backgroundColor: '#1A1A1A', paddingAll: 'xl' })
+            body: flexUtils.createBox('vertical', contents, { backgroundColor: flexUtils.COLORS.BG_CARD, paddingAll: 'xl' })
         });
 
         // 如果是警察，加入快速逮捕按鈕
@@ -662,14 +697,14 @@ async function handleRigBidding(replyToken, context) {
                 rewards = Math.floor(Math.random() * 100000000) + 150000000; // 1.5億 ~ 2.5億
                 title = '💎 世紀大案得標';
                 desc = '太神啦！你完美打通所有關節，獨攬了捷運聯合開發案的超級大工程，準備數錢數到手軟！';
-                color = '#FFD700';
+                color = flexUtils.COLORS.PRIMARY;
             } else {
                 // 東窗事發 30%
                 lostCouncilor = true;
                 title = '🚨 東窗事發！';
                 desc = '你的白手套在喝醉時把事情全抖了出來，檢調單位直接持搜索票衝進你的辦公室！';
                 color = '#FF0000';
-                rewards = -Math.floor((data.kuCoin || 0) * 0.5); // 扣一半財產
+                rewards = -Math.floor((data.kuCoin || 0) * 0.3); // 扣 30% 財產
                 if (rewards > -100000000 && (data.kuCoin || 0) >= 100000000) {
                     rewards = -100000000; // 最少扣 1 億
                 }
@@ -739,12 +774,12 @@ async function handleRigBidding(replyToken, context) {
         }
 
         let bodyContents = [
-            flexUtils.createText({ text: resultData.desc, size: 'sm', color: '#FFFFFF', wrap: true }),
+            flexUtils.createText({ text: resultData.desc, size: 'sm', color: flexUtils.COLORS.TEXT_MAIN, wrap: true }),
             flexUtils.createSeparator('md')
         ];
 
         if (resultData.isSuccess) {
-            bodyContents.push(flexUtils.createText({ text: `💸 獲得暴利：${resultData.rewards.toLocaleString()} 哭幣`, size: 'sm', color: '#FFD700', weight: 'bold', margin: 'md' }));
+            bodyContents.push(flexUtils.createText({ text: `💸 獲得暴利：${resultData.rewards.toLocaleString()} 哭幣`, size: 'sm', color: flexUtils.COLORS.PRIMARY, weight: 'bold', margin: 'md' }));
             bodyContents.push(flexUtils.createText({ text: `💰 目前貪污值：${corruptionStr}`, size: 'xs', color: '#E91E63', margin: 'sm' }));
         } else {
             bodyContents.push(flexUtils.createText({ text: `💸 財產遭扣押：${Math.abs(resultData.rewards).toLocaleString()} 哭幣`, size: 'sm', color: '#FF0000', weight: 'bold', margin: 'md' }));
@@ -758,16 +793,16 @@ async function handleRigBidding(replyToken, context) {
         }
 
         // 加上結算後的總資產
-        bodyContents.push(flexUtils.createText({ text: `💰 結算總資產：${resultData.newBalance.toLocaleString()} 哭幣`, size: 'sm', weight: 'bold', color: '#FFD700', margin: 'md' }));
+        bodyContents.push(flexUtils.createText({ text: `💰 結算總資產：${resultData.newBalance.toLocaleString()} 哭幣`, size: 'sm', weight: 'bold', color: flexUtils.COLORS.PRIMARY, margin: 'md' }));
 
         // 加上冷卻提示
         const nextTimeStr = new Date(resultData.now + 12 * 60 * 60 * 1000).toLocaleString('zh-TW', { timeZone: 'Asia/Taipei', hour12: false });
-        bodyContents.push(flexUtils.createText({ text: `⏳ 冷卻時間：12 小時\n（可於 ${nextTimeStr} 後再次圍標）`, size: 'xs', color: '#AAAAAA', wrap: true, margin: 'sm' }));
+        bodyContents.push(flexUtils.createText({ text: `⏳ 冷卻時間：12 小時\n（可於 ${nextTimeStr} 後再次圍標）`, size: 'xs', color: flexUtils.COLORS.TEXT_SUB, wrap: true, margin: 'sm' }));
 
         const flexBubble = flexUtils.createBubble({
             size: 'mega',
-            header: flexUtils.createHeader(resultData.title, `【市議員】${memberName}`, '#1A1A1A', resultData.color),
-            body: flexUtils.createBox('vertical', bodyContents, { backgroundColor: '#1A1A1A', paddingAll: 'xl' })
+            header: flexUtils.createHeader(resultData.title, `【市議員】${memberName}`, flexUtils.COLORS.BG_CARD, resultData.color),
+            body: flexUtils.createBox('vertical', bodyContents, { backgroundColor: flexUtils.COLORS.BG_CARD, paddingAll: 'xl' })
         });
 
         // 發送結果
@@ -898,7 +933,7 @@ async function handleEmbezzle(replyToken, context) {
             }
 
             let bodyContents = [
-                flexUtils.createText({ text: '調查局接獲檢舉，查出你長期利用人頭詐領助理費中飽私囊！', size: 'sm', color: '#FFFFFF', wrap: true }),
+                flexUtils.createText({ text: '調查局接獲檢舉，查出你長期利用人頭詐領助理費中飽私囊！', size: 'sm', color: flexUtils.COLORS.TEXT_MAIN, wrap: true }),
                 flexUtils.createSeparator('md')
             ];
 
@@ -911,15 +946,15 @@ async function handleEmbezzle(replyToken, context) {
             }
 
             // 加上結算後的總資產
-            bodyContents.push(flexUtils.createText({ text: `💰 結算總資產：${resultData.newBalance.toLocaleString()} 哭幣`, size: 'sm', weight: 'bold', color: '#FFD700', margin: 'md' }));
+            bodyContents.push(flexUtils.createText({ text: `💰 結算總資產：${resultData.newBalance.toLocaleString()} 哭幣`, size: 'sm', weight: 'bold', color: flexUtils.COLORS.PRIMARY, margin: 'md' }));
 
             // 加上冷卻提示
-            bodyContents.push(flexUtils.createText({ text: `⏳ 冷卻時間：2 小時\n（可於 ${nextTimeStr} 後再次詐領）`, size: 'xs', color: '#AAAAAA', wrap: true, margin: 'sm' }));
+            bodyContents.push(flexUtils.createText({ text: `⏳ 冷卻時間：2 小時\n（可於 ${nextTimeStr} 後再次詐領）`, size: 'xs', color: flexUtils.COLORS.TEXT_SUB, wrap: true, margin: 'sm' }));
 
             const flexBubble = flexUtils.createBubble({
                 size: 'mega',
-                header: flexUtils.createHeader('🚨 詐領助理費遭法辦', `【市議員】${memberName}`, '#1A1A1A', '#FF0000'),
-                body: flexUtils.createBox('vertical', bodyContents, { backgroundColor: '#1A1A1A', paddingAll: 'xl' })
+                header: flexUtils.createHeader('🚨 詐領助理費遭法辦', `【市議員】${memberName}`, flexUtils.COLORS.BG_CARD, '#FF0000'),
+                body: flexUtils.createBox('vertical', bodyContents, { backgroundColor: flexUtils.COLORS.BG_CARD, paddingAll: 'xl' })
             });
 
             await lineUtils.replyFlex(replyToken, '議員詐領助理費遭法辦！', flexBubble);
@@ -927,19 +962,19 @@ async function handleEmbezzle(replyToken, context) {
             const corruptionStr = (resultData.corruptionLevel * 100).toFixed(0) + '%';
 
             let bodyContents = [
-                flexUtils.createText({ text: '你順利利用親戚當人頭報帳，把市府的公款洗進自己的口袋裡。', size: 'sm', color: '#FFFFFF', wrap: true }),
+                flexUtils.createText({ text: '你順利利用親戚當人頭報帳，把市府的公款洗進自己的口袋裡。', size: 'sm', color: flexUtils.COLORS.TEXT_MAIN, wrap: true }),
                 flexUtils.createSeparator('md'),
                 flexUtils.createText({ text: `💸 獲得公款：${resultData.rewards.toLocaleString()} 哭幣`, size: 'sm', color: '#4CAF50', weight: 'bold', margin: 'md' }),
                 flexUtils.createText({ text: `💰 目前貪污值：${corruptionStr}`, size: 'xs', color: '#E91E63', margin: 'sm' }),
-                flexUtils.createText({ text: `⚠️ (檢調盯上你的風險已提升至 ${Math.round(resultData.embezzleRisk.rate * 100)}%)`, size: 'xs', color: '#AAAAAA', wrap: true, margin: 'sm' }),
-                flexUtils.createText({ text: `💰 結算總資產：${resultData.newBalance.toLocaleString()} 哭幣`, size: 'sm', weight: 'bold', color: '#FFD700', margin: 'md' }),
-                flexUtils.createText({ text: `⏳ 冷卻時間：2 小時\n（可於 ${nextTimeStr} 後再次詐領）`, size: 'xs', color: '#AAAAAA', wrap: true, margin: 'sm' })
+                flexUtils.createText({ text: `⚠️ (檢調盯上你的風險已提升至 ${Math.round(resultData.embezzleRisk.rate * 100)}%)`, size: 'xs', color: flexUtils.COLORS.TEXT_SUB, wrap: true, margin: 'sm' }),
+                flexUtils.createText({ text: `💰 結算總資產：${resultData.newBalance.toLocaleString()} 哭幣`, size: 'sm', weight: 'bold', color: flexUtils.COLORS.PRIMARY, margin: 'md' }),
+                flexUtils.createText({ text: `⏳ 冷卻時間：2 小時\n（可於 ${nextTimeStr} 後再次詐領）`, size: 'xs', color: flexUtils.COLORS.TEXT_SUB, wrap: true, margin: 'sm' })
             ];
 
             const flexBubble = flexUtils.createBubble({
                 size: 'mega',
-                header: flexUtils.createHeader('📜 詐領助理費', `【市議員】${memberName}`, '#1A1A1A', '#8BC34A'),
-                body: flexUtils.createBox('vertical', bodyContents, { backgroundColor: '#1A1A1A', paddingAll: 'xl' })
+                header: flexUtils.createHeader('📜 詐領助理費', `【市議員】${memberName}`, flexUtils.COLORS.BG_CARD, '#8BC34A'),
+                body: flexUtils.createBox('vertical', bodyContents, { backgroundColor: flexUtils.COLORS.BG_CARD, paddingAll: 'xl' })
             });
 
             await lineUtils.replyFlex(replyToken, '議員成功詐領助理費！', flexBubble);
@@ -952,8 +987,7 @@ async function handleEmbezzle(replyToken, context) {
     }
 }
 
-const { robCoin } = require('../handlers/robberyHandler');
-exportsList.push('robCoin');
+
 module.exports = {
   addWantedLevel,
   queryWantedLevel,
@@ -961,6 +995,5 @@ module.exports = {
   showCombinedWantedAndJailRank,
   showCriminalList,
   handleRigBidding,
-  handleEmbezzle,
-  robCoin
+  handleEmbezzle
 };

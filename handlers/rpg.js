@@ -25,10 +25,10 @@ function getPlayerTitle(level) {
     if (level >= 60) return { title: '深淵廣宇 ‧ 混沌統御者 🌌', color: '#673AB7' };
     if (level >= 50) return { title: '起源の力 ‧ 死神杀戮者 🔥', color: '#F44336' };
     if (level >= 40) return { title: '破滅之刃 ‧ 命運選擇者 ☄️', color: '#FF5722' };
-    if (level >= 30) return { title: '絕境覺醒 ‧ 黑暗預言者 ⚠️', color: '#FF9800' };
+    if (level >= 30) return { title: '絕境覺醒 ‧ 黑暗預言者 ⚠️', color: flexUtils.COLORS.SECONDARY };
     if (level >= 20) return { title: '天煌の黎明 ‧ 黑狼之牙 ⚔️', color: '#607D8B' };
     if (level >= 10) return { title: '陰影の囚人 ‧ 被流放的靈魂 🌑', color: '#455A64' };
-    return { title: '平民 ‧ 尚未覺醒的存在 🌟', color: '#888888' };
+    return { title: '平民 ‧ 尚未覺醒的存在 🌟', color: flexUtils.COLORS.TEXT_MUTED };
 }
 
 /**
@@ -135,9 +135,10 @@ async function getFinalPlayerStats(userId) {
     const level = baseStats.level || 1;
     const chatExp = baseStats.chatExp || 0;
     
-    // 新版等級加成：Level + floor(Level^2 / 30)
-    const levelBonus = level + Math.floor((level * level) / 30);
-    const levelBonusPct = 0; // 百搭機率屬性不再有等級加成
+    // 新版等級加成：Lv * 15 + floor(Lv^2 / 4)
+    const levelBonus = level * 15 + Math.floor((level * level) / 4);
+    // 新版機率屬性加成：每 10 等 +1% (最高 8% 於 80 等)
+    const levelBonusPct = Math.floor(level / 10);
     
     const finalStats = { ...baseStats };
     // 移除 chatExp 和 level 以免混入最終數值
@@ -163,8 +164,9 @@ async function getFinalPlayerStats(userId) {
     applyEquipStats('necklace', equipments.necklace);
     applyEquipStats('ring', equipments.ring);
     
-    // 獲取議員狀態 (議會戰神特權)
+    // 獲取議員狀態與虛弱狀態
     let isCouncilor = false;
+    let weakUntil = 0;
     try {
         const economyDoc = await db.collection('economy_users').doc(userId).get();
         if (economyDoc.exists) {
@@ -172,9 +174,12 @@ async function getFinalPlayerStats(userId) {
             if (economyData.councilorUntil && Date.now() < economyData.councilorUntil) {
                 isCouncilor = true;
             }
+            if (economyData.weakUntil && Date.now() < economyData.weakUntil) {
+                weakUntil = economyData.weakUntil;
+            }
         }
     } catch (e) {
-        console.error('[RPG] Failed to check councilor status:', e);
+        console.error('[RPG] Failed to check councilor or weak status:', e);
     }
     
     // 最終屬性 = 基礎 + 等級加成 + 裝備加成
@@ -188,6 +193,12 @@ async function getFinalPlayerStats(userId) {
     // 套用議會戰神 buff
     if (isCouncilor) {
         finalStats.atk += 30;
+    }
+
+    // 套用斷指虛弱 debuff
+    if (weakUntil > 0) {
+        finalStats.atk = Math.max(0, finalStats.atk - 20);
+        finalStats.def = Math.max(0, finalStats.def - 20);
     }
     
     // 套用上限限制 (所有百分比屬性上限統一為 80%)
@@ -212,163 +223,6 @@ async function getFinalPlayerStats(userId) {
 /**
  * 處理查詢狀態指令 (!狀態, !我的屬性)
  */
-async function handleMyStats(context) {
-    const { replyToken, groupId, userId } = context;
-
-    // 取得玩家名稱與頭像
-    let profile = { displayName: '未知玩家', pictureUrl: null };
-    try {
-        if (groupId) {
-            profile = await lineUtils.getGroupMemberProfile(groupId, userId);
-        } else {
-            profile = await lineUtils.getProfile(userId);
-        }
-    } catch (e) {
-        console.error('[RPG] Failed to fetch profile:', e.message);
-    }
-
-    const stats = await getFinalPlayerStats(userId);
-    const { title, color } = getPlayerTitle(stats.level);
-
-    // 計算經驗值進度 (本級所需 ~ 下級所需)
-    const currentLvlExp = 10 * Math.pow(stats.level, 2);
-    const nextLvlExp = 10 * Math.pow(stats.level + 1, 2);
-    const expNeeded = nextLvlExp - currentLvlExp;
-    const expEarned = stats.chatExp - currentLvlExp;
-    const progress = Math.min(100, Math.max(0, (expEarned / expNeeded) * 100));
-
-    // 建立屬性面板 Flex Message
-    const flex = {
-        type: 'bubble',
-        size: 'mega',
-        header: flexUtils.createHeader('📜 個人狀態面板', '', '#2c3e50'),
-        body: flexUtils.createBox('vertical', [
-            // 頭像與名稱區塊
-            flexUtils.createBox('horizontal', [
-                profile.pictureUrl ? {
-                    type: 'image',
-                    url: profile.pictureUrl,
-                    size: 'sm',
-                    aspectRatio: '1:1',
-                    aspectMode: 'cover',
-                    flex: 1
-                } : flexUtils.createText({ text: '👤', size: 'xl', flex: 1, align: 'center', gravity: 'center' }),
-                flexUtils.createBox('vertical', [
-                    // 名稱
-                    flexUtils.createText({ text: profile.displayName, weight: 'bold', size: 'md', color: '#333333' }),
-                    // 稱號
-                    flexUtils.createText({ text: title, size: 'xxs', color: color, weight: 'bold', margin: 'xs', wrap: true }),
-                    // 戰鬥力（移至名稱下方）
-                    flexUtils.createText({ text: `戰鬥力: ${stats.final.combatPower.toLocaleString()} ⚡`, size: 'sm', weight: 'bold', color: '#FF9800', margin: 'xs' }),
-                    // 等級 + EXP 同一行
-                    flexUtils.createBox('horizontal', [
-                        flexUtils.createText({ text: `Lv.${stats.level}`, size: 'xs', color: '#555555', weight: 'bold', flex: 0 }),
-                        flexUtils.createText({ text: `EXP: ${stats.chatExp} / ${nextLvlExp}`, size: 'xxs', color: '#aaaaaa', align: 'end', flex: 1 })
-                    ], { margin: 'xs', alignItems: 'center' }),
-                    // 等級進度條
-                    flexUtils.createBox('vertical', [
-                        flexUtils.createBox('vertical', [], { width: `${progress}%`, backgroundColor: color, height: '4px' })
-                    ], { height: '4px', cornerRadius: '2px', backgroundColor: '#e3e4e6', margin: 'xs' })
-                ], { flex: 3, margin: 'md', justifyContent: 'center' })
-            ], { alignItems: 'center', margin: 'md' }),
-            
-            { type: 'separator', margin: 'lg' },
-            
-            // 屬性數值區塊（三排顯示）
-            flexUtils.createBox('vertical', [
-                // 第一排：攻擊 / 防禦 / 迴避
-                flexUtils.createBox('horizontal', [
-                    flexUtils.createBox('vertical', [
-                        flexUtils.createText({ text: '⚔️ 攻擊', size: 'sm', color: '#c0392b', weight: 'bold' }),
-                        flexUtils.createText({ text: `${stats.final.atk}`, size: 'md', color: '#333333', weight: 'bold', margin: 'xs' }),
-                        flexUtils.createText({ text: `(+${stats.additions.atk}${stats.isCouncilor ? ' 戰神' : ''})`, size: 'xxs', color: '#888888' })
-                    ], { flex: 1, alignItems: 'center' }),
-                    flexUtils.createBox('vertical', [
-                        flexUtils.createText({ text: '🛡️ 防禦', size: 'sm', color: '#2980b9', weight: 'bold' }),
-                        flexUtils.createText({ text: `${stats.final.def}`, size: 'md', color: '#333333', weight: 'bold', margin: 'xs' }),
-                        flexUtils.createText({ text: `(+${stats.additions.def})`, size: 'xxs', color: '#888888' })
-                    ], { flex: 1, alignItems: 'center' }),
-                    flexUtils.createBox('vertical', [
-                        flexUtils.createText({ text: '🧭 迴避', size: 'sm', color: '#27ae60', weight: 'bold' }),
-                        flexUtils.createText({ text: `${stats.final.eva}%`, size: 'md', color: '#333333', weight: 'bold', margin: 'xs' }),
-                        flexUtils.createText({ text: `(+${stats.additions.eva}%)`, size: 'xxs', color: '#888888' })
-                    ], { flex: 1, alignItems: 'center' })
-                ], { margin: 'md', justifyContent: 'space-between' }),
-                // 第二排：爆擊 / 幸運 / 穿透
-                flexUtils.createBox('horizontal', [
-                    flexUtils.createBox('vertical', [
-                        flexUtils.createText({ text: '💥 爆擊', size: 'sm', color: '#8e44ad', weight: 'bold' }),
-                        flexUtils.createText({ text: `${stats.final.crit}%`, size: 'md', color: '#333333', weight: 'bold', margin: 'xs' }),
-                        flexUtils.createText({ text: `(+${stats.additions.crit}%)`, size: 'xxs', color: '#888888' })
-                    ], { flex: 1, alignItems: 'center' }),
-                    flexUtils.createBox('vertical', [
-                        flexUtils.createText({ text: '🍀 幸運', size: 'sm', color: '#f39c12', weight: 'bold' }),
-                        flexUtils.createText({ text: `${stats.final.luk}%`, size: 'md', color: '#333333', weight: 'bold', margin: 'xs' }),
-                        flexUtils.createText({ text: `(+${stats.additions.luk}%)`, size: 'xxs', color: '#888888' })
-                    ], { flex: 1, alignItems: 'center' }),
-                    flexUtils.createBox('vertical', [
-                        flexUtils.createText({ text: '💍 穿透', size: 'sm', color: '#9C27B0', weight: 'bold' }),
-                        flexUtils.createText({ text: `${stats.final.pen}%`, size: 'md', color: '#333333', weight: 'bold', margin: 'xs' }),
-                        flexUtils.createText({ text: `(+${stats.additions.pen}%)`, size: 'xxs', color: '#888888' })
-                    ], { flex: 1, alignItems: 'center' })
-                ], { margin: 'xl', justifyContent: 'space-between' })
-            ], { margin: 'lg', backgroundColor: '#f8f9fa', paddingAll: '10px', cornerRadius: '8px' }),
-            
-            { type: 'separator', margin: 'lg' },
-
-            // 已穿戴裝備區塊
-            flexUtils.createBox('vertical', [
-                flexUtils.createText({ text: '🛡️ 已穿戴裝備', size: 'xs', color: '#555555', weight: 'bold', margin: 'sm' }),
-                flexUtils.createBox('horizontal', [
-                    flexUtils.createText({ 
-                        text: `⚔️ 武器: ${stats.equipments.weapon ? `+${stats.equipments.weapon.level} ${stats.equipments.weapon.name}` : '無'}`, 
-                        size: 'xs', 
-                        color: stats.equipments.weapon ? '#333333' : '#aaaaaa', 
-                        flex: 1 
-                    }),
-                    flexUtils.createText({ 
-                        text: `🛡️ 盾牌: ${stats.equipments.shield ? `+${stats.equipments.shield.level} ${stats.equipments.shield.name}` : '無'}`, 
-                        size: 'xs', 
-                        color: stats.equipments.shield ? '#333333' : '#aaaaaa', 
-                        flex: 1 
-                    })
-                ], { margin: 'md' }),
-                flexUtils.createBox('horizontal', [
-                    flexUtils.createText({ 
-                        text: `🧭 翅膀: ${stats.equipments.wings ? `+${stats.equipments.wings.level} ${stats.equipments.wings.name}` : '無'}`, 
-                        size: 'xs', 
-                        color: stats.equipments.wings ? '#333333' : '#aaaaaa', 
-                        flex: 1 
-                    }),
-                    flexUtils.createText({ 
-                        text: `💥 手套: ${stats.equipments.gloves ? `+${stats.equipments.gloves.level} ${stats.equipments.gloves.name}` : '無'}`, 
-                        size: 'xs', 
-                        color: stats.equipments.gloves ? '#333333' : '#aaaaaa', 
-                        flex: 1 
-                    })
-                ], { margin: 'md' }),
-                flexUtils.createBox('horizontal', [
-                    flexUtils.createText({ 
-                        text: `🍀 項鍊: ${stats.equipments.necklace ? `+${stats.equipments.necklace.level} ${stats.equipments.necklace.name}` : '無'}`, 
-                        size: 'xs', 
-                        color: stats.equipments.necklace ? '#333333' : '#aaaaaa', 
-                        flex: 1 
-                    }),
-                    flexUtils.createText({ 
-                        text: `💍 戒指: ${stats.equipments.ring ? `+${stats.equipments.ring.level} ${stats.equipments.ring.name}` : '無'}`, 
-                        size: 'xs', 
-                        color: stats.equipments.ring ? '#333333' : '#aaaaaa', 
-                        flex: 1 
-                    })
-                ], { margin: 'md' })
-            ], { margin: 'lg', backgroundColor: '#fdfefe', paddingAll: '10px', cornerRadius: '8px', borderWidth: '1px', borderColor: '#e3e4e6' }),
-            
-
-        ], { paddingAll: '15px' })
-    };
-
-    await lineUtils.replyFlex(replyToken, '個人狀態面板', flex);
-}
 
 
 /**
@@ -392,17 +246,15 @@ async function handleRpgRank(context) {
             nameMap.set(doc.id, displayName);
             
             if (data.wantedLevel && data.wantedLevel > 0) {
-                wantedList.push({ name: displayName, wantedLevel: data.wantedLevel });
+                wantedList.push({ userId: doc.id, name: displayName, wantedLevel: data.wantedLevel });
             }
             if (data.crimeRecord && data.crimeRecord > 0) {
-                crimeList.push({ name: displayName, crimeRecord: data.crimeRecord });
+                crimeList.push({ userId: doc.id, name: displayName, crimeRecord: data.crimeRecord });
             }
         });
         
         wantedList.sort((a, b) => b.wantedLevel - a.wantedLevel);
         crimeList.sort((a, b) => b.crimeRecord - a.crimeRecord);
-        const topWanted = wantedList.slice(0, 10);
-        const topCrime = crimeList.slice(0, 10);
 
         // 取得所有玩家資料 (計算戰鬥力)
         const playersSnapshot = await db.collection('players').get();
@@ -466,7 +318,25 @@ async function handleRpgRank(context) {
         });
         
         combatPowers.sort((a, b) => b.cp - a.cp);
-        const topCp = combatPowers.slice(0, 10);
+        
+        const filterTopGroupMembers = async (list) => {
+            if (!context.groupId) return list.slice(0, 10);
+            const valid = [];
+            for (const item of list) {
+                try {
+                    await lineUtils.getGroupMemberProfile(context.groupId, item.userId);
+                    valid.push(item);
+                    if (valid.length >= 10) break;
+                } catch (e) {
+                    // skip
+                }
+            }
+            return valid;
+        };
+
+        const topCp = await filterTopGroupMembers(combatPowers);
+        const topWanted = await filterTopGroupMembers(wantedList);
+        const topCrime = await filterTopGroupMembers(crimeList);
         
         // 建立 Flex Message Bubbles
         const bubbles = [];
@@ -476,10 +346,10 @@ async function handleRpgRank(context) {
             if (topCp.length === 0) {
                 return flexUtils.createBubble({
                     size: 'mega',
-                    header: flexUtils.createHeader('⚡ 戰鬥力排行榜 (Top 10)', '目前沒有玩家資料。', '#121212', '#FF9800'),
+                    header: flexUtils.createHeader('⚡ 戰鬥力排行榜 (Top 10)', '目前沒有玩家資料。', flexUtils.COLORS.BG_MAIN, flexUtils.COLORS.SECONDARY),
                     body: flexUtils.createBox('vertical', [
-                        flexUtils.createText({ text: '尚未有玩家覺醒力量！', size: 'sm', color: '#888888', align: 'center', margin: 'xl' })
-                    ], { paddingAll: 'xl' })
+                        flexUtils.createText({ text: '尚未有玩家覺醒力量！', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, align: 'center', margin: 'xl' })
+                    ], { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: 'xl'  })
                 });
             }
             
@@ -487,7 +357,7 @@ async function handleRpgRank(context) {
             topCp.forEach((player, idx) => {
                 let emoji = '🏅';
                 let color = '#333333';
-                if (idx === 0) { emoji = '🥇'; color = '#FFD700'; }
+                if (idx === 0) { emoji = '🥇'; color = flexUtils.COLORS.PRIMARY; }
                 else if (idx === 1) { emoji = '🥈'; color = '#C0C0C0'; }
                 else if (idx === 2) { emoji = '🥉'; color = '#CD7F32'; }
                 
@@ -500,7 +370,7 @@ async function handleRpgRank(context) {
                             flexUtils.createText({ text: `${player.name}`, size: 'sm', weight: 'bold', color: '#333333', wrap: true }),
                             flexUtils.createText({ text: `Lv.${player.level} | ${title}`, size: 'xs', color: titleColor, wrap: true })
                         ], { flex: 6 }),
-                        flexUtils.createText({ text: `${player.cp.toLocaleString()}⚡`, size: 'sm', weight: 'bold', color: '#FF9800', flex: 3, align: 'end' })
+                        flexUtils.createText({ text: `${player.cp.toLocaleString()}⚡`, size: 'sm', weight: 'bold', color: flexUtils.COLORS.SECONDARY, flex: 3, align: 'end' })
                     ], { margin: 'md', alignItems: 'center' })
                 );
                 if (idx < topCp.length - 1) contents.push(flexUtils.createSeparator('sm'));
@@ -508,7 +378,7 @@ async function handleRpgRank(context) {
             
             return flexUtils.createBubble({
                 size: 'mega',
-                header: flexUtils.createHeader('⚡ 戰鬥力排行榜 (Top 10)', '綜合屬性評分', '#121212', '#FF9800'),
+                header: flexUtils.createHeader('⚡ 戰鬥力排行榜 (Top 10)', '綜合屬性評分', flexUtils.COLORS.BG_MAIN, flexUtils.COLORS.SECONDARY),
                 body: flexUtils.createBox('vertical', contents, { paddingAll: 'lg', backgroundColor: '#FFFDF9' })
             });
         };
@@ -519,10 +389,10 @@ async function handleRpgRank(context) {
             if (topWanted.length === 0) {
                 return flexUtils.createBubble({
                     size: 'mega',
-                    header: flexUtils.createHeader('🚨 通緝排行榜 (Top 10)', '目前天下太平。', '#121212', '#D32F2F'),
+                    header: flexUtils.createHeader('🚨 通緝排行榜 (Top 10)', '目前天下太平。', flexUtils.COLORS.BG_MAIN, '#D32F2F'),
                     body: flexUtils.createBox('vertical', [
-                        flexUtils.createText({ text: '目前沒有任何人被通緝！', size: 'sm', color: '#888888', align: 'center', margin: 'xl' })
-                    ], { paddingAll: 'xl' })
+                        flexUtils.createText({ text: '目前沒有任何人被通緝！', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, align: 'center', margin: 'xl' })
+                    ], { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: 'xl'  })
                 });
             }
             
@@ -530,7 +400,7 @@ async function handleRpgRank(context) {
             topWanted.forEach((player, idx) => {
                 let emoji = '🏅';
                 let color = '#333333';
-                if (idx === 0) { emoji = '🥇'; color = '#FFD700'; }
+                if (idx === 0) { emoji = '🥇'; color = flexUtils.COLORS.PRIMARY; }
                 else if (idx === 1) { emoji = '🥈'; color = '#C0C0C0'; }
                 else if (idx === 2) { emoji = '🥉'; color = '#CD7F32'; }
                 
@@ -547,7 +417,7 @@ async function handleRpgRank(context) {
             
             return flexUtils.createBubble({
                 size: 'mega',
-                header: flexUtils.createHeader('🚨 通緝排行榜 (Top 10)', '頭號罪犯名單', '#121212', '#D32F2F'),
+                header: flexUtils.createHeader('🚨 通緝排行榜 (Top 10)', '頭號罪犯名單', flexUtils.COLORS.BG_MAIN, '#D32F2F'),
                 body: flexUtils.createBox('vertical', contents, { paddingAll: 'lg', backgroundColor: '#FFF5F5' })
             });
         };
@@ -558,10 +428,10 @@ async function handleRpgRank(context) {
             if (topCrime.length === 0) {
                 return flexUtils.createBubble({
                     size: 'mega',
-                    header: flexUtils.createHeader('🏆 前科排行榜 (Top 10)', '目前無人入獄。', '#121212', '#424242'),
+                    header: flexUtils.createHeader('🏆 前科排行榜 (Top 10)', '目前無人入獄。', flexUtils.COLORS.BG_MAIN, '#424242'),
                     body: flexUtils.createBox('vertical', [
-                        flexUtils.createText({ text: '目前大家都是乖寶寶！', size: 'sm', color: '#888888', align: 'center', margin: 'xl' })
-                    ], { paddingAll: 'xl' })
+                        flexUtils.createText({ text: '目前大家都是乖寶寶！', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, align: 'center', margin: 'xl' })
+                    ], { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: 'xl'  })
                 });
             }
             
@@ -569,7 +439,7 @@ async function handleRpgRank(context) {
             topCrime.forEach((player, idx) => {
                 let emoji = '🏅';
                 let color = '#333333';
-                if (idx === 0) { emoji = '🥇'; color = '#FFD700'; }
+                if (idx === 0) { emoji = '🥇'; color = flexUtils.COLORS.PRIMARY; }
                 else if (idx === 1) { emoji = '🥈'; color = '#C0C0C0'; }
                 else if (idx === 2) { emoji = '🥉'; color = '#CD7F32'; }
                 
@@ -590,7 +460,7 @@ async function handleRpgRank(context) {
             
             return flexUtils.createBubble({
                 size: 'mega',
-                header: flexUtils.createHeader('🏆 前科排行榜 (Top 10)', '監獄常客榜單', '#FFFFFF', '#424242'),
+                header: flexUtils.createHeader('🏆 前科排行榜 (Top 10)', '監獄常客榜單', flexUtils.COLORS.BG_MAIN, '#424242'),
                 body: flexUtils.createBox('vertical', contents, { paddingAll: 'lg', backgroundColor: '#FAFAFA' })
             });
         };
@@ -611,7 +481,6 @@ module.exports = {
     getOrInitPlayerStats,
     getFinalPlayerStats,
     getPlayerTitle,
-    handleMyStats,
     addExp,
     handleRpgRank
 };

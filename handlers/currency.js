@@ -129,7 +129,7 @@ function buildCurrencyFlex(data) {
             ]),
             flexUtils.createSeparator('sm'),
             ...rows
-        ], { paddingAll: '12px' })
+        ], { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: '12px'  })
     });
 }
 
@@ -177,7 +177,7 @@ async function handleConversion(replyToken, amount, currencyCode) {
                 flexUtils.createText({ text: '即期賣出匯率', size: 'xs', color: COLORS.GRAY }),
                 flexUtils.createText({ text: `${rate.spotSell}`, size: 'xs', color: COLORS.GRAY, align: 'end' })
             ], { margin: 'md' })
-        ], { paddingAll: '15px' })
+        ], { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: '15px'  })
     });
 
     await lineUtils.replyFlex(replyToken, '匯率換算', bubble);
@@ -219,7 +219,7 @@ async function handleBuyForeign(replyToken, twdAmount, currencyCode) {
                 flexUtils.createText({ text: '即期賣出匯率', size: 'xs', color: COLORS.GRAY }),
                 flexUtils.createText({ text: `${rate.spotSell}`, size: 'xs', color: COLORS.GRAY, align: 'end' })
             ], { margin: 'md' })
-        ], { paddingAll: '15px' })
+        ], { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: '15px'  })
     });
 
     await lineUtils.replyFlex(replyToken, '匯率換算', bubble);

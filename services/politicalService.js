@@ -41,7 +41,7 @@ async function handleLiveStream(replyToken, context) {
             }
 
             // 取得幸運值
-            const { getFinalPlayerStats } = require('./rpg');
+            const { getFinalPlayerStats } = require('../handlers/rpg');
             const stats = await getFinalPlayerStats(userId);
             const luk = stats.final.luk || 0;
 
@@ -485,6 +485,11 @@ async function handleElection(replyToken, context) {
                 return { success: false, message: `警察為中立執法人員，禁止參與政治競選！請先「辭職」後再來登記參選。` };
             }
 
+            // 4. 檢查是否是出家人
+            if (data.profession === 'monk') {
+                return { success: false, message: `出家人六根清淨，不得參與世俗政治！請先還俗再來登記參選。` };
+            }
+
             const kuCoin = data.kuCoin || 0;
             if (kuCoin < cost) {
                 return { success: false, message: `參選保證金與競選經費需要 ${cost.toLocaleString()} 哭幣，你錢不夠！` };
@@ -497,7 +502,8 @@ async function handleElection(replyToken, context) {
                 wantedLevel: 0,
                 councilorUntil: Date.now() + cdMs * 7, // 7天特權 (1週)
                 councilorPressureToken: 1,          // 1次施壓額度
-                corruptionLevel: db.FieldValue.delete() // 清空舊任期貪污值！
+                corruptionLevel: db.FieldValue.delete(), // 清空舊任期貪污值！
+                isMafia: db.FieldValue.delete() // 自動脫離黑社會
             });
 
             return { success: true, name: memberName || data.displayName || data.name };

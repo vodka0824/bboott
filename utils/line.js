@@ -5,9 +5,9 @@ const axios = require('axios');
 const { CHANNEL_ACCESS_TOKEN } = require('../config/constants');
 const logger = require('./logger');
 const memoryCache = require('./memoryCache');
+const notificationService = require('../services/notificationService');
 
 // === 被動推播管理器 ===
-const pendingGroupMessages = new Map();
 const tokenToGroupId = new Map();
 
 function registerReplyToken(replyToken, groupId) {
@@ -20,22 +20,19 @@ function registerReplyToken(replyToken, groupId) {
     }
 }
 
-function addPendingMessage(groupId, messages) {
+async function addPendingMessage(groupId, messages) {
     if (!groupId || !messages || messages.length === 0) return;
-    if (!pendingGroupMessages.has(groupId)) {
-        pendingGroupMessages.set(groupId, []);
-    }
-    pendingGroupMessages.get(groupId).push(...messages);
+    await notificationService.queueNotification(groupId, messages);
 }
 
 async function flushPendingMessages(replyToken, groupId) {
-    if (pendingGroupMessages.has(groupId)) {
-        const queue = pendingGroupMessages.get(groupId);
-        if (queue.length > 0) {
-            // 透過 replyToLine 發送空陣列，它會自動將 pending messages 合併進去
-            await replyToLine(replyToken, []);
-            return true; // 回覆 token 已被消耗
-        }
+    if (!groupId) return false;
+    const queue = await notificationService.fetchAndClearNotifications(groupId);
+    if (queue && queue.length > 0) {
+        // 透過 replyToLine 發送空陣列，它會自動將 pending messages 合併進去
+        // 由於 replyToLine 會再 fetch 一次，為了避免重複讀取空，我們直接將讀取到的傳給它
+        await replyToLine(replyToken, queue);
+        return true; // 回覆 token 已被消耗
     }
     return false;
 }
@@ -48,12 +45,11 @@ async function replyToLine(replyToken, messages) {
     const groupId = tokenToGroupId.get(replyToken);
     
     // 如果有註冊的群組，且該群組有待發送的被動推播訊息，則合併發送
-    if (groupId && pendingGroupMessages.has(groupId)) {
-        const queue = pendingGroupMessages.get(groupId);
-        if (queue.length > 0) {
+    if (groupId) {
+        const queue = await notificationService.fetchAndClearNotifications(groupId);
+        if (queue && queue.length > 0) {
             // 將當下的回覆放在最前面，確保指令回應不被過多的待推播訊息擠掉
             finalMessages = finalMessages.concat(queue);
-            pendingGroupMessages.set(groupId, []); // 清空序列
         }
     }
     
@@ -83,8 +79,12 @@ async function replyToLine(replyToken, messages) {
         if (error.response && error.response.data) {
             // CRITICAL: Log detailed LINE API error message
             console.error('[LINE API Error Details]:', error.response.data.message || 'Unknown error');
+            if (error.response.data.details) {
+                console.error('[LINE API Error Details Array]:', JSON.stringify(error.response.data.details, null, 2));
+            }
             logger.debug('[LINE] API error details', {
                 data: error.response.data.message || 'Unknown error',
+                details: error.response.data.details,
                 payloadTypes: messages.map(m => m.type)
             });
         }
@@ -106,17 +106,42 @@ async function replyText(replyToken, text, quickReply = null) {
  */
 async function replyFlex(replyToken, alt, flex, extraMessages = [], quickReply = null) {
     if (!replyToken) return;
+    
+    // 智慧防破版：確保所有 Bubble 都有明確的背景色（避免在深色模式下變成黑底黑字）
+    function injectBackground(obj) {
+        if (!obj || typeof obj !== 'object') return;
+        if (Array.isArray(obj)) {
+            obj.forEach(injectBackground);
+        } else {
+            if (obj.type === 'bubble' && obj.body && obj.body.type === 'box' && !obj.body.backgroundColor) {
+                const flexUtils = require('./flex');
+                obj.body.backgroundColor = flexUtils.COLORS.BG_MAIN;
+            }
+            for (const key of Object.keys(obj)) {
+                if (typeof obj[key] === 'object') {
+                    injectBackground(obj[key]);
+                }
+            }
+        }
+    }
+    injectBackground(flex);
+
     try {
         const msg = { type: 'flex', altText: alt, contents: flex };
         if (quickReply) msg.quickReply = quickReply;
         await replyToLine(replyToken, [msg, ...extraMessages]);
     } catch (error) {
         // ✅ 詳細記錄 LINE API 錯誤
+        const errorDetails = error.response?.data?.details;
+        if (errorDetails) {
+            console.error('[LINE API Error Details Array]:', JSON.stringify(errorDetails, null, 2));
+        }
         logger.error('[LINE API Error Details]:', {
             message: error.message,
             status: error.response?.status,
             statusText: error.response?.statusText,
-            data: error.response?.data?.message || 'Unknown error'
+            data: error.response?.data?.message || 'Unknown error',
+            details: errorDetails
         });
         throw error;
     }
@@ -138,7 +163,10 @@ async function getGroupMemberProfile(groupId, userId) {
         try {
             const type = groupId.startsWith('R') ? 'room' : 'group';
             const url = `https://api.line.me/v2/bot/${type}/${groupId}/member/${userId}`;
-            const response = await axios.get(url, { headers: { 'Authorization': `Bearer ${CHANNEL_ACCESS_TOKEN}` }});
+            const response = await axios.get(url, { 
+                headers: { 'Authorization': `Bearer ${CHANNEL_ACCESS_TOKEN}` },
+                timeout: 10000 // 10秒 timeout 防止卡死
+            });
             memoryCache.set(cacheKey, response.data, 300);
             return response.data;
         } catch (error) {
@@ -177,17 +205,6 @@ async function getGroupMemberName(groupId, userId) {
         profile = await getProfile(userId);
     }
     let displayName = (profile && profile.displayName) ? profile.displayName : '成員';
-
-    try {
-        const { getProfessionTitle } = require('../handlers/profession');
-        const professionTitle = await getProfessionTitle(userId);
-        if (professionTitle) {
-            displayName += professionTitle;
-        }
-    } catch (error) {
-        logger.error('[LINE] Failed to append profession title', error);
-    }
-
     return displayName;
 }
 
@@ -204,7 +221,10 @@ async function getProfile(userId) {
     const fetchProfile = async () => {
         try {
             const url = `https://api.line.me/v2/bot/profile/${userId}`;
-            const response = await axios.get(url, { headers: { 'Authorization': `Bearer ${CHANNEL_ACCESS_TOKEN}` }});
+            const response = await axios.get(url, { 
+                headers: { 'Authorization': `Bearer ${CHANNEL_ACCESS_TOKEN}` },
+                timeout: 10000 // 10秒 timeout 防止卡死
+            });
             return response.data;
         } catch (error) {
             logger.error(`[LINE] Failed to get user profile`, { userId, error: error.message });
@@ -249,17 +269,8 @@ async function getProfile(userId) {
  * 主動推播訊息到 LINE
  */
 async function pushMessage(to, messages) {
-    try {
-        await axios.post('https://api.line.me/v2/bot/message/push', {
-            to,
-            messages
-        }, {
-            headers: { 'Authorization': `Bearer ${CHANNEL_ACCESS_TOKEN}` }
-        });
-    } catch (error) {
-        logger.error('[LINE] Push message failed', error);
-        throw error; // 讓呼叫者知道失敗
-    }
+    logger.error('[LINE] pushMessage is FORBIDDEN. Please use notificationService.queueNotification instead.');
+    throw new Error('嚴禁使用 LINE 的 pushMessage API，請使用被動回覆機制');
 }
 
 /**

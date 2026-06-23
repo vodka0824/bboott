@@ -8,7 +8,7 @@ async function handleRpgRank(context) {
     const { replyToken } = context;
 
     try {
-        const { getFinalEquipStat } = require('./equipment');
+        const { getFinalEquipStat } = require('../handlers/equipment');
         
         // 取得通緝值與前科資料 (這裡有名字)
         const economySnapshot = await db.collection('economy_users').get();
@@ -106,10 +106,10 @@ async function handleRpgRank(context) {
             if (topCp.length === 0) {
                 return flexUtils.createBubble({
                     size: 'mega',
-                    header: flexUtils.createHeader('⚡ 戰鬥力排行榜 (Top 10)', '目前沒有玩家資料。', '#121212', '#FF9800'),
+                    header: flexUtils.createHeader('⚡ 戰鬥力排行榜 (Top 10)', '目前沒有玩家資料。', flexUtils.COLORS.BG_MAIN, flexUtils.COLORS.SECONDARY),
                     body: flexUtils.createBox('vertical', [
-                        flexUtils.createText({ text: '尚未有玩家覺醒力量！', size: 'sm', color: '#888888', align: 'center', margin: 'xl' })
-                    ], { paddingAll: 'xl' })
+                        flexUtils.createText({ text: '尚未有玩家覺醒力量！', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, align: 'center', margin: 'xl' })
+                    ], { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: 'xl'  })
                 });
             }
             
@@ -117,7 +117,7 @@ async function handleRpgRank(context) {
             topCp.forEach((player, idx) => {
                 let emoji = '🏅';
                 let color = '#333333';
-                if (idx === 0) { emoji = '🥇'; color = '#FFD700'; }
+                if (idx === 0) { emoji = '🥇'; color = flexUtils.COLORS.PRIMARY; }
                 else if (idx === 1) { emoji = '🥈'; color = '#C0C0C0'; }
                 else if (idx === 2) { emoji = '🥉'; color = '#CD7F32'; }
                 
@@ -130,7 +130,7 @@ async function handleRpgRank(context) {
                             flexUtils.createText({ text: `${player.name}`, size: 'sm', weight: 'bold', color: '#333333', wrap: true }),
                             flexUtils.createText({ text: `Lv.${player.level} | ${title}`, size: 'xs', color: titleColor, wrap: true })
                         ], { flex: 6 }),
-                        flexUtils.createText({ text: `${player.cp.toLocaleString()}⚡`, size: 'sm', weight: 'bold', color: '#FF9800', flex: 3, align: 'end' })
+                        flexUtils.createText({ text: `${player.cp.toLocaleString()}⚡`, size: 'sm', weight: 'bold', color: flexUtils.COLORS.SECONDARY, flex: 3, align: 'end' })
                     ], { margin: 'md', alignItems: 'center' })
                 );
                 if (idx < topCp.length - 1) contents.push(flexUtils.createSeparator('sm'));
@@ -138,7 +138,7 @@ async function handleRpgRank(context) {
             
             return flexUtils.createBubble({
                 size: 'mega',
-                header: flexUtils.createHeader('⚡ 戰鬥力排行榜 (Top 10)', '綜合屬性評分', '#121212', '#FF9800'),
+                header: flexUtils.createHeader('⚡ 戰鬥力排行榜 (Top 10)', '綜合屬性評分', flexUtils.COLORS.BG_MAIN, flexUtils.COLORS.SECONDARY),
                 body: flexUtils.createBox('vertical', contents, { paddingAll: 'lg', backgroundColor: '#FFFDF9' })
             });
         };
@@ -149,10 +149,10 @@ async function handleRpgRank(context) {
             if (topWanted.length === 0) {
                 return flexUtils.createBubble({
                     size: 'mega',
-                    header: flexUtils.createHeader('🚨 通緝排行榜 (Top 10)', '目前天下太平。', '#121212', '#D32F2F'),
+                    header: flexUtils.createHeader('🚨 通緝排行榜 (Top 10)', '目前天下太平。', flexUtils.COLORS.BG_MAIN, '#D32F2F'),
                     body: flexUtils.createBox('vertical', [
-                        flexUtils.createText({ text: '目前沒有任何人被通緝！', size: 'sm', color: '#888888', align: 'center', margin: 'xl' })
-                    ], { paddingAll: 'xl' })
+                        flexUtils.createText({ text: '目前沒有任何人被通緝！', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, align: 'center', margin: 'xl' })
+                    ], { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: 'xl'  })
                 });
             }
             
@@ -160,7 +160,7 @@ async function handleRpgRank(context) {
             topWanted.forEach((player, idx) => {
                 let emoji = '🏅';
                 let color = '#333333';
-                if (idx === 0) { emoji = '🥇'; color = '#FFD700'; }
+                if (idx === 0) { emoji = '🥇'; color = flexUtils.COLORS.PRIMARY; }
                 else if (idx === 1) { emoji = '🥈'; color = '#C0C0C0'; }
                 else if (idx === 2) { emoji = '🥉'; color = '#CD7F32'; }
                 
@@ -177,7 +177,7 @@ async function handleRpgRank(context) {
             
             return flexUtils.createBubble({
                 size: 'mega',
-                header: flexUtils.createHeader('🚨 通緝排行榜 (Top 10)', '頭號罪犯名單', '#121212', '#D32F2F'),
+                header: flexUtils.createHeader('🚨 通緝排行榜 (Top 10)', '頭號罪犯名單', flexUtils.COLORS.BG_MAIN, '#D32F2F'),
                 body: flexUtils.createBox('vertical', contents, { paddingAll: 'lg', backgroundColor: '#FFF5F5' })
             });
         };
@@ -188,10 +188,10 @@ async function handleRpgRank(context) {
             if (topCrime.length === 0) {
                 return flexUtils.createBubble({
                     size: 'mega',
-                    header: flexUtils.createHeader('🏆 前科排行榜 (Top 10)', '目前無人入獄。', '#121212', '#424242'),
+                    header: flexUtils.createHeader('🏆 前科排行榜 (Top 10)', '目前無人入獄。', flexUtils.COLORS.BG_MAIN, '#424242'),
                     body: flexUtils.createBox('vertical', [
-                        flexUtils.createText({ text: '目前大家都是乖寶寶！', size: 'sm', color: '#888888', align: 'center', margin: 'xl' })
-                    ], { paddingAll: 'xl' })
+                        flexUtils.createText({ text: '目前大家都是乖寶寶！', size: 'sm', color: flexUtils.COLORS.TEXT_MUTED, align: 'center', margin: 'xl' })
+                    ], { backgroundColor: flexUtils.COLORS.BG_MAIN, paddingAll: 'xl'  })
                 });
             }
             
@@ -199,11 +199,11 @@ async function handleRpgRank(context) {
             topCrime.forEach((player, idx) => {
                 let emoji = '🏅';
                 let color = '#333333';
-                if (idx === 0) { emoji = '🥇'; color = '#FFD700'; }
+                if (idx === 0) { emoji = '🥇'; color = flexUtils.COLORS.PRIMARY; }
                 else if (idx === 1) { emoji = '🥈'; color = '#C0C0C0'; }
                 else if (idx === 2) { emoji = '🥉'; color = '#CD7F32'; }
                 
-                const { getCriminalTitle } = require('./jail');
+                const { getCriminalTitle } = require('../handlers/jail');
                 const title = getCriminalTitle ? getCriminalTitle(player.crimeRecord) : '';
                 
                 contents.push(
@@ -220,7 +220,7 @@ async function handleRpgRank(context) {
             
             return flexUtils.createBubble({
                 size: 'mega',
-                header: flexUtils.createHeader('🏆 前科排行榜 (Top 10)', '監獄常客榜單', '#FFFFFF', '#424242'),
+                header: flexUtils.createHeader('🏆 前科排行榜 (Top 10)', '監獄常客榜單', flexUtils.COLORS.BG_MAIN, '#424242'),
                 body: flexUtils.createBox('vertical', contents, { paddingAll: 'lg', backgroundColor: '#FAFAFA' })
             });
         };

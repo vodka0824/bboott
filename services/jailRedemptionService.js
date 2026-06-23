@@ -1,6 +1,7 @@
 const lineUtils = require('../utils/line');
 const flexUtils = require('../utils/flex');
 const notificationService = require('../services/notificationService');
+const { MILITARY_RANKS } = require('../config/constants');
 
 /**
  * 抄寫佛經 (洗白前科)
@@ -753,24 +754,6 @@ async function handleSnitch(replyToken, context, messageObject) {
     }
 }
 
-const MILITARY_RANKS = [
-    { name: '二兵', salary: 100000, pension: 0 },
-    { name: '一兵', salary: 200000, pension: 0 },
-    { name: '上兵', salary: 300000, pension: 0 },
-    { name: '下士', salary: 500000, pension: 0 },
-    { name: '中士', salary: 700000, pension: 0 },
-    { name: '上士', salary: 1000000, pension: 0 },
-    { name: '士官長', salary: 1500000, pension: 0 },
-    { name: '少尉', salary: 2000000, pension: 0 },
-    { name: '中尉', salary: 2500000, pension: 0 },
-    { name: '上尉', salary: 3000000, pension: 0 },
-    { name: '少校', salary: 4000000, pension: 500000 },
-    { name: '中校', salary: 5000000, pension: 1000000 },
-    { name: '上校', salary: 6000000, pension: 2000000 },
-    { name: '少將', salary: 8000000, pension: 3000000 },
-    { name: '中將', salary: 10000000, pension: 5000000 },
-    { name: '上將', salary: 15000000, pension: 10000000 }
-];
 
 function getMilitaryRankInfo(enlistCount) {
     const idx = Math.min(enlistCount || 0, MILITARY_RANKS.length - 1);

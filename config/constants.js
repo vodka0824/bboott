@@ -54,6 +54,30 @@ const CACHE_DURATION = {
     JAV: 60 * 60 * 1000           // 1 小時
 };
 
+// === 兵役階級設定 ===
+const MILITARY_RANKS = [
+    { name: '二兵', salary: 100000, pension: 0 },
+    { name: '一兵', salary: 200000, pension: 0 },
+    { name: '上兵', salary: 300000, pension: 0 },
+    { name: '下士', salary: 500000, pension: 0 },
+    { name: '中士', salary: 700000, pension: 0 },
+    { name: '上士', salary: 1000000, pension: 0 },
+    { name: '士官長', salary: 1500000, pension: 0 },
+    { name: '少尉', salary: 2000000, pension: 0 },
+    { name: '中尉', salary: 2500000, pension: 0 },
+    { name: '上尉', salary: 3000000, pension: 0 },
+    { name: '少校', salary: 4000000, pension: 500000 },
+    { name: '中校', salary: 5000000, pension: 1000000 },
+    { name: '上校', salary: 6000000, pension: 2000000 },
+    { name: '少將', salary: 8000000, pension: 3000000 },
+    { name: '中將', salary: 10000000, pension: 5000000 },
+    { name: '上將', salary: 15000000, pension: 10000000 },
+    { name: '一星上將', salary: 20000000, pension: 15000000 },
+    { name: '三星上將', salary: 30000000, pension: 20000000 },
+    { name: '四星上將', salary: 50000000, pension: 30000000 },
+    { name: '五星上將', salary: 100000000, pension: 50000000 }
+];
+
 /**
  * 驗證必要的環境變數
  */
@@ -98,5 +122,6 @@ module.exports = {
     BASE_URL,
     CRAWLER_URLS,
     KEYWORD_MAP,
-    CACHE_DURATION
+    CACHE_DURATION,
+    MILITARY_RANKS
 };

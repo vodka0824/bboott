@@ -1713,6 +1713,6 @@ module.exports = {
     handleDragDown,
     checkAndDischargeMilitary,
     getMilitaryRankInfo,
-    handleBatchMilitaryGames
-    handleMedicalDischarge,
+    handleBatchMilitaryGames,
+    handleMedicalDischarge
 };

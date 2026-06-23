@@ -9,6 +9,24 @@ async function handleRpgRank(context) {
 
     try {
         const { getFinalEquipStat } = require('../handlers/equipment');
+        const groupId = context.groupId;
+        
+        // 過濾群組成員的輔助函數
+        const filterGroupMembers = async (list) => {
+            if (!groupId) return list.slice(0, 10);
+            const valid = [];
+            for (const item of list) {
+                try {
+                    const profile = await lineUtils.getGroupMemberProfile(groupId, item.userId || item.id);
+                    if (profile.inGroup === false) continue;
+                    valid.push(item);
+                    if (valid.length >= 10) break;
+                } catch (e) {
+                    // skip
+                }
+            }
+            return valid;
+        };
         
         // 取得通緝值與前科資料 (這裡有名字)
         const economySnapshot = await db.collection('economy_users').get();
@@ -22,17 +40,17 @@ async function handleRpgRank(context) {
             nameMap.set(doc.id, displayName);
             
             if (data.wantedLevel && data.wantedLevel > 0) {
-                wantedList.push({ name: displayName, wantedLevel: data.wantedLevel });
+                wantedList.push({ userId: doc.id, name: displayName, wantedLevel: data.wantedLevel });
             }
             if (data.crimeRecord && data.crimeRecord > 0) {
-                crimeList.push({ name: displayName, crimeRecord: data.crimeRecord });
+                crimeList.push({ userId: doc.id, name: displayName, crimeRecord: data.crimeRecord });
             }
         });
         
         wantedList.sort((a, b) => b.wantedLevel - a.wantedLevel);
         crimeList.sort((a, b) => b.crimeRecord - a.crimeRecord);
-        const topWanted = wantedList.slice(0, 10);
-        const topCrime = crimeList.slice(0, 10);
+        const topWanted = await filterGroupMembers(wantedList);
+        const topCrime = await filterGroupMembers(crimeList);
 
         // 取得所有玩家資料 (計算戰鬥力)
         const playersSnapshot = await db.collection('players').get();
@@ -96,7 +114,7 @@ async function handleRpgRank(context) {
         });
         
         combatPowers.sort((a, b) => b.cp - a.cp);
-        const topCp = combatPowers.slice(0, 10);
+        const topCp = await filterGroupMembers(combatPowers);
         
         // 建立 Flex Message Bubbles
         const bubbles = [];

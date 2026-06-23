@@ -207,7 +207,8 @@ async function showCombinedWantedAndJailRank(replyToken, groupId) {
             const valid = [];
             for (const item of list) {
                 try {
-                    await lineUtils.getGroupMemberProfile(groupId, item.userId || item.id);
+                    const profile = await lineUtils.getGroupMemberProfile(groupId, item.userId || item.id);
+                    if (profile.inGroup === false) continue;
                     valid.push(item);
                     if (valid.length >= 10) break;
                 } catch (e) {
@@ -540,7 +541,8 @@ async function showCriminalList(replyToken, context) {
             const valid = [];
             for (const item of list) {
                 try {
-                    await lineUtils.getGroupMemberProfile(groupId, item.userId);
+                    const profile = await lineUtils.getGroupMemberProfile(groupId, item.userId || item.id);
+                    if (profile.inGroup === false) continue;
                     valid.push(item);
                     if (valid.length >= 10) break;
                 } catch (e) {

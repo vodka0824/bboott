@@ -167,13 +167,15 @@ async function getGroupMemberProfile(groupId, userId) {
                 headers: { 'Authorization': `Bearer ${CHANNEL_ACCESS_TOKEN}` },
                 timeout: 10000 // 10秒 timeout 防止卡死
             });
-            memoryCache.set(cacheKey, response.data, 300);
-            return response.data;
+            const data = response.data;
+            data.inGroup = true;
+            memoryCache.set(cacheKey, data, 300);
+            return data;
         } catch (error) {
             if (!error.response || error.response.status !== 404) {
                 logger.error(`[LINE] Failed to get member profile`, { groupId, userId, error: error.message });
             }
-            return { displayName: '成員', pictureUrl: null };
+            return { displayName: '成員', pictureUrl: null, inGroup: false };
         }
     };
 

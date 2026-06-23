@@ -381,9 +381,10 @@ async function handleLeaderboard(replyToken, groupId, userId) {
     const isMember = async (uid) => {
         if (membershipCache.has(uid)) return membershipCache.get(uid);
         try {
-            await lineUtils.getGroupMemberProfile(groupId, uid);
-            membershipCache.set(uid, true);
-            return true;
+            const profile = await lineUtils.getGroupMemberProfile(groupId, uid);
+            const valid = profile.inGroup !== false;
+            membershipCache.set(uid, valid);
+            return valid;
         } catch (e) {
             membershipCache.set(uid, false);
             return false;

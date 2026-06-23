@@ -324,7 +324,8 @@ async function handleRpgRank(context) {
             const valid = [];
             for (const item of list) {
                 try {
-                    await lineUtils.getGroupMemberProfile(context.groupId, item.userId);
+                    const profile = await lineUtils.getGroupMemberProfile(context.groupId, item.userId);
+                    if (profile.inGroup === false) continue;
                     valid.push(item);
                     if (valid.length >= 10) break;
                 } catch (e) {

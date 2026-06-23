@@ -230,11 +230,12 @@ async function showAllLeaderboards(replyToken, groupId) {
                 const validUsers = [];
                 for (const user of docs) {
                     try {
-                        await lineUtils.getGroupMemberProfile(groupId, user.id);
+                        const profile = await lineUtils.getGroupMemberProfile(groupId, user.id);
+                        if (profile.inGroup === false) continue;
                         validUsers.push(user);
                         if (validUsers.length >= 10) break;
                     } catch (err) {
-                        // Not in group, skip
+                        // error from api
                     }
                 }
                 return validUsers;

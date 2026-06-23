@@ -16,12 +16,18 @@ function createHeader(title, subtitle = '', color = '#007AFF', textColor = '#FFF
 
 function createText({ text, size = 'sm', color = '#1C1C1E', weight = 'regular', align, margin, flex, gravity, wrap, adjustMode, action, decoration, position, offsetTop, offsetBottom, offsetStart, offsetEnd, contents }) {
     // 智慧防破版：若未設定 wrap 且未設定 adjustMode，一律套用 shrink-to-fit
-    if (!wrap && adjustMode === undefined) {
+    if (!wrap && adjustMode === undefined && !contents) {
         adjustMode = 'shrink-to-fit';
     }
-    const obj = { type: 'text', size, color, weight, align, margin, flex, gravity, wrap, adjustMode, action, decoration, position, offsetTop, offsetBottom, offsetStart, offsetEnd };
-    if (contents) obj.contents = contents;
-    else obj.text = text;
+    const obj = { type: 'text', size, color, weight, align, margin, flex, gravity, wrap, action, decoration, position, offsetTop, offsetBottom, offsetStart, offsetEnd };
+    if (adjustMode !== undefined) obj.adjustMode = adjustMode;
+    
+    if (contents) {
+        obj.contents = contents;
+        delete obj.adjustMode; // LINE API 不支援 contents 和 adjustMode 同時存在
+    } else {
+        obj.text = text;
+    }
     return obj;
 }
 

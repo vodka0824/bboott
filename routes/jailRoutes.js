@@ -111,6 +111,10 @@ module.exports = function(router, handlers) {
         await jailHandler.handleDischarge(context.replyToken, context);
     }, { feature: 'economy', isGroupOnly: true, needAuth: true });
 
+    router.register(/^(驗退)$/, async (context) => {
+        await jailHandler.handleMedicalDischarge(context.replyToken, context);
+    }, { feature: 'economy', isGroupOnly: true, needAuth: true });
+
     router.register(/^\s*(絕食|開始絕食)\s*$/, async (context) => {
         await jailHandler.handleHungerStrike(context.replyToken, context);
     }, { feature: 'economy', isGroupOnly: true, needAuth: true });

@@ -220,12 +220,12 @@ async function checkStatusBlock(context, feature = null) {
             const enlistCount = data.militaryEnlistCount || 1;
             const rankIndex = enlistCount - 1;
             
-            let allowedMilitaryCommands = /^(?:每日簽到|簽到|領哭幣|領錢|退伍|除草|拔草|掃地|出公差|站夜哨|裝病逃操|裝病|打靶測驗|打靶|高裝檢|漢光演習|領終身俸|狀態|屬性|我的屬性|我的狀態|冷卻|查冷卻|我的冷卻|冷卻時間)$/i;
+            let allowedMilitaryCommands = /^(?:每日簽到|簽到|領哭幣|領錢|退伍|驗退|除草|拔草|掃地|出公差|站夜哨|裝病逃操|裝病|打靶測驗|打靶|高裝檢|漢光演習|領終身俸|狀態|屬性|我的屬性|我的狀態|冷卻|查冷卻|我的冷卻|冷卻時間)$/i;
             
             if (rankIndex >= 18) { // 四星上將 或 五星上將
-                allowedMilitaryCommands = /^(?:每日簽到|簽到|領哭幣|領錢|退伍|領終身俸|狀態|屬性|我的屬性|我的狀態|冷卻|查冷卻|我的冷卻|冷卻時間|發動戰爭|研發軍火)$/i;
+                allowedMilitaryCommands = /^(?:每日簽到|簽到|領哭幣|領錢|退伍|驗退|領終身俸|狀態|屬性|我的屬性|我的狀態|冷卻|查冷卻|我的冷卻|冷卻時間|發動戰爭|研發軍火)$/i;
             } else if (rankIndex >= 15) { // 上將、二星、三星
-                allowedMilitaryCommands = /^(?:每日簽到|簽到|領哭幣|領錢|退伍|高裝檢|漢光演習|領終身俸|狀態|屬性|我的屬性|我的狀態|冷卻|查冷卻|我的冷卻|冷卻時間)$/i;
+                allowedMilitaryCommands = /^(?:每日簽到|簽到|領哭幣|領錢|退伍|驗退|高裝檢|漢光演習|領終身俸|狀態|屬性|我的屬性|我的狀態|冷卻|查冷卻|我的冷卻|冷卻時間)$/i;
             }
 
             const msgText = (context.message || '').trim().replace(/^[!/！]/, '');

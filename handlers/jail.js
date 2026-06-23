@@ -48,6 +48,7 @@ module.exports = {
     handleMilitaryGame: jailRedemptionService.handleMilitaryGame,
     handleBatchMilitaryGames: jailRedemptionService.handleBatchMilitaryGames,
     handlePension: jailRedemptionService.handlePension,
+    handleMedicalDischarge: jailRedemptionService.handleMedicalDischarge,
     handleDeclareWar: militaryEndgameService.handleDeclareWar,
     handleArmsDealer: militaryEndgameService.handleArmsDealer,
     handleArmsDealerMenu: militaryEndgameService.handleArmsDealerMenu
